@@ -10,6 +10,10 @@ const transactions = [
 ];
 
 const PaymentSchema = Yup.object().shape({
+  nameOnCard: Yup.string()
+    .min(3, 'Name is too short')
+    .matches(/(\s)/, { message: 'Please enter your full name as it appears on the card', excludeEmptyString: true })
+    .required('Name on card is required'),
   cardNumber: Yup.string()
     .matches(/^[0-9]{16}$/, 'Card number must be 16 digits')
     .required('Card number is required'),
@@ -81,21 +85,34 @@ const Payments: React.FC = () => {
             </div>
             <Formik
               initialValues={{
+                nameOnCard: '',
                 cardNumber: '',
                 expiryDate: '',
                 cvc: '',
                 amount: '250.00',
               }}
               validationSchema={PaymentSchema}
-              onSubmit={(values, { setSubmitting }) => {
+              onSubmit={(values, { setSubmitting, resetForm }) => {
                 setTimeout(() => {
                   alert(`Payment of $${values.amount} submitted successfully! (mock)`);
                   setSubmitting(false);
+                  resetForm();
                 }, 500);
               }}
             >
               {({ errors, touched, isValid, isSubmitting }) => (
                 <Form className="space-y-4">
+                   <div>
+                    <label htmlFor="nameOnCard" className="block text-sm font-medium text-gray-700">Name on Card</label>
+                    <Field 
+                        type="text" 
+                        id="nameOnCard"
+                        name="nameOnCard" 
+                        placeholder="JOHN M DOE" 
+                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.nameOnCard && touched.nameOnCard ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    <ErrorMessage name="nameOnCard" component="p" className="text-red-500 text-xs mt-1" />
+                  </div>
                   <div>
                     <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">Card Number</label>
                     <Field 

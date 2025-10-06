@@ -31,5 +31,6 @@ export const TangerineIcon: React.FC = () => (
 );
 export const ClockIcon: React.FC = () => <IconWrapper><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></IconWrapper>;
 export const BellIcon: React.FC = () => <IconWrapper><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></IconWrapper>;
-export const ChevronDownIcon: React.FC = () => <IconWrapper className="w-4 h-4 ml-1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></IconWrapper>;
-export const LogoutIcon: React.FC = () => <IconWrapper><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></IconWrapper>;
+export const ChevronDownIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className || "w-4 h-4 ml-1"}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></IconWrapper>;
+export const SearchIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></IconWrapper>;
+export const LogoutIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className || "w-5 h-5"}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></IconWrapper>;
