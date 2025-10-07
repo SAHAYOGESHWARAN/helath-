@@ -14,10 +14,11 @@ import Referrals from '../../pages/provider/Referrals';
 import Billing from '../../pages/provider/Billing';
 import ProviderReports from '../../pages/provider/ProviderReports';
 import WaitingRoom from '../../pages/provider/WaitingRoom';
+import Subscription from '../../pages/provider/Subscription';
 
 const ProviderLayout: React.FC = () => {
   return (
-    <div className="flex h-screen bg-gray-100 font-sans">
+    <div className="flex h-screen bg-slate-50 font-sans">
       <Sidebar navItems={PROVIDER_NAV} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
@@ -32,6 +33,7 @@ const ProviderLayout: React.FC = () => {
             <Route path="/e-prescribing" element={<EPrescribing />} />
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/billing" element={<Billing />} />
+            <Route path="/subscription" element={<Subscription />} />
             <Route path="/reports" element={<ProviderReports />} />
             <Route path="/waiting-room" element={<WaitingRoom />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

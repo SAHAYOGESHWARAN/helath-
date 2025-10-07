@@ -1,9 +1,151 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
+import { VideoCameraIcon } from '../../components/shared/Icons';
+
+// Modal Component for updating profile picture
+const ProfilePictureModal: React.FC<{
+  onClose: () => void;
+  onSave: (imageDataUrl: string) => void;
+}> = ({ onClose, onSave }) => {
+  const [view, setView] = useState<'options' | 'camera' | 'preview'>('options');
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const stopCamera = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+  }, [stream]);
+
+  const startCamera = async () => {
+    setError(null);
+    stopCamera();
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStream(newStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+      }
+      setView('camera');
+    } catch (err) {
+      console.error("Camera access denied:", err);
+      setError("Camera access was denied. Please enable camera permissions in your browser settings.");
+      setView('options');
+    }
+  };
+
+  const takePicture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      if (!context) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+      
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      setImageData(dataUrl);
+      stopCamera();
+      setView('preview');
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageData(reader.result as string);
+        setView('preview');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const reset = () => {
+    setImageData(null);
+    setError(null);
+    stopCamera();
+    setView('options');
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
+  const renderContent = () => {
+    switch (view) {
+      case 'camera':
+        return (
+          <div className="flex flex-col items-center">
+            <video ref={videoRef} autoPlay playsInline className="w-full h-64 bg-gray-900 rounded-md mb-4 object-cover"></video>
+            <div className="flex w-full justify-between">
+              <button onClick={() => setView('options')} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Back</button>
+              <button onClick={takePicture} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">Take Picture</button>
+            </div>
+          </div>
+        );
+      case 'preview':
+        return (
+          <div className="flex flex-col items-center">
+            {imageData && <img src={imageData} alt="Preview" className="w-full h-64 object-contain rounded-md mb-4" />}
+            <div className="flex w-full justify-between">
+              <button onClick={reset} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Try Again</button>
+              <button onClick={() => imageData && onSave(imageData)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">Use this Picture</button>
+            </div>
+          </div>
+        );
+      case 'options':
+      default:
+        return (
+          <div className="text-center">
+            {error && <p className="text-red-500 mb-4 bg-red-100 p-3 rounded-md border border-red-200">{error}</p>}
+            <div className="space-y-4">
+              <button onClick={handleChooseFile} className="w-full text-white bg-primary-600 hover:bg-primary-700 font-medium rounded-lg text-lg px-5 py-3.5 text-center">
+                Upload a Photo
+              </button>
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+              <button onClick={startCamera} className="w-full text-white bg-tangerine hover:bg-tangerine-dark font-medium rounded-lg text-lg px-5 py-3.5 text-center">
+                Use Camera
+              </button>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 animate-fade-in">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 relative animate-slide-in-up">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800 text-center">Update Profile Picture</h3>
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        {renderContent()}
+        <canvas ref={canvasRef} className="hidden"></canvas>
+      </div>
+    </div>
+  );
+};
+
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -11,6 +153,7 @@ const Profile: React.FC = () => {
     phone: '555-123-4567',
     address: '123 Main St, Anytown, USA',
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -25,8 +168,14 @@ const Profile: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically handle the form submission, e.g., API call
     alert('Profile updated successfully!');
+  };
+
+  const handleSavePicture = (imageDataUrl: string) => {
+    if (user) {
+      updateUser({ avatarUrl: imageDataUrl });
+      setIsModalOpen(false);
+    }
   };
 
   if (!user) {
@@ -39,17 +188,26 @@ const Profile: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1">
           <Card className="text-center">
-            <img 
-              src={user.avatarUrl}
-              alt="User Avatar"
-              className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-primary-200"
-            />
+            <div className="relative group w-32 h-32 mx-auto mb-4">
+              <img 
+                src={user.avatarUrl}
+                alt="User Avatar"
+                className="w-32 h-32 rounded-full mx-auto border-4 border-primary-200"
+              />
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center rounded-full transition-opacity duration-300"
+                aria-label="Update profile picture"
+              >
+                <VideoCameraIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            </div>
             <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
             <p className="text-gray-500">{user.email}</p>
           </Card>
         </div>
         <div className="md:col-span-2">
-          <Card>
+          <Card title="Personal Information">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
@@ -118,6 +276,7 @@ const Profile: React.FC = () => {
           </Card>
         </div>
       </div>
+      {isModalOpen && <ProfilePictureModal onClose={() => setIsModalOpen(false)} onSave={handleSavePicture} />}
     </div>
   );
 };

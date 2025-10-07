@@ -5,38 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tangerine Health</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideInUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      body {
+        background-color: #F8F9FA; /* slate-50 */
+        font-family: 'Inter', sans-serif;
+        color: #1F2937; /* gray-800 */
+      }
+
+      /* Staggered list animations */
+      .stagger-list > * {
+        animation: slideInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        animation-delay: calc(var(--stagger-index) * 70ms);
+      }
+      
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d1d5db; /* gray-300 */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af; /* gray-400 */
+      }
+
+    </style>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              primary: {
-                50: '#eff6ff',
-                100: '#dbeafe',
-                200: '#bfdbfe',
-                300: '#93c5fd',
-                400: '#60a5fa',
-                500: '#3b82f6',
-                600: '#2563eb',
-                700: '#1d4ed8',
-                800: '#1e40af',
-                900: '#1e3a8a',
-                950: '#172554',
+              'primary': {
+                '50': '#eff6ff',
+                '100': '#dbeafe',
+                '200': '#bfdbfe',
+                '300': '#93c5fd',
+                '400': '#60a5fa',
+                '500': '#3b82f6',
+                '600': '#2563eb',
+                '700': '#1d4ed8',
+                '800': '#1e40af',
+                '900': '#1e3a8a',
               },
-              tangerine: {
-                light: '#f9b474',
-                DEFAULT: '#f59e0b',
-                dark: '#d97706',
+              'tangerine': {
+                 DEFAULT: '#f59e0b', // amber-500
+                 'light': '#fde68a', // amber-200
+                 'dark': '#b45309' // amber-700
               }
             },
             keyframes: {
-              'fade-in-up': {
-                '0%': { opacity: '0', transform: 'translateY(-10px)' },
+              'fade-in': {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              'slide-in-up': {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
               },
             },
             animation: {
-              'fade-in-up': 'fade-in-up 0.2s ease-out',
+              'fade-in': 'fade-in 0.5s ease-out forwards',
+              'slide-in-up': 'slide-in-up 0.5s ease-out forwards',
             },
           },
           fontFamily: {
@@ -47,21 +91,22 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script type="importmap">
-      {
-        "imports": {
-          "react": "https://aistudiocdn.com/react@^19.2.0",
-          "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-          "react/": "https://aistudiocdn.com/react@^19.2.0/",
-          "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.3",
-          "formik": "https://aistudiocdn.com/formik@^2.4.6",
-          "yup": "https://aistudiocdn.com/yup@^1.7.1",
-          "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
-          "recharts": "https://aistudiocdn.com/recharts@^3.2.1"
-        }
-      }
-    </script>
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.3",
+    "formik": "https://aistudiocdn.com/formik@^2.4.6",
+    "yup": "https://aistudiocdn.com/yup@^1.7.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
+    "@heroicons/react/": "https://aistudiocdn.com/@heroicons/react@^2.2.0/"
+  }
+}
+</script>
   <link rel="stylesheet" href="/index.css">
 </head>
   <body>

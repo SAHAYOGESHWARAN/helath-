@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -15,7 +14,7 @@ import Compliance from '../../pages/admin/Compliance';
 
 const AdminLayout: React.FC = () => {
   return (
-    <div className="flex h-screen bg-gray-100 font-sans">
+    <div className="flex h-screen bg-slate-50 font-sans">
       <Sidebar navItems={ADMIN_NAV} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
