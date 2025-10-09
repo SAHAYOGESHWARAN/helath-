@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -15,6 +16,9 @@ import Billing from '../../pages/provider/Billing';
 import ProviderReports from '../../pages/provider/ProviderReports';
 import WaitingRoom from '../../pages/provider/WaitingRoom';
 import Subscription from '../../pages/provider/Subscription';
+import Messaging from '../../pages/provider/Messaging';
+import ProviderProfile from '../../pages/provider/ProviderProfile';
+import ProviderSettings from '../../pages/provider/ProviderSettings';
 
 const ProviderLayout: React.FC = () => {
   return (
@@ -29,6 +33,7 @@ const ProviderLayout: React.FC = () => {
             <Route path="/calendar" element={<ProviderCalendar />} />
             <Route path="/appointments" element={<ProviderAppointments />} />
             <Route path="/patients" element={<PatientManagement />} />
+            <Route path="/messaging" element={<Messaging />} />
             <Route path="/progress-notes" element={<ProgressNotes />} />
             <Route path="/e-prescribing" element={<EPrescribing />} />
             <Route path="/referrals" element={<Referrals />} />
@@ -36,6 +41,8 @@ const ProviderLayout: React.FC = () => {
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/reports" element={<ProviderReports />} />
             <Route path="/waiting-room" element={<WaitingRoom />} />
+            <Route path="/profile" element={<ProviderProfile />} />
+            <Route path="/settings" element={<ProviderSettings />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>

@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { BellIcon, ChevronDownIcon, SearchIcon, LogoutIcon, ProfileIcon, CogIcon } from '../shared/Icons';
+import { useNotifications } from '../../hooks/useNotifications';
+import NotificationPanel from './NotificationPanel';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
-  const unreadNotifications = 3; // Mock data
+  const { notifications } = useNotifications();
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <header className="relative flex items-center justify-between px-4 sm:px-6 py-3 bg-white border-b border-gray-200 z-10">
+    <header className="relative flex items-center justify-between px-4 sm:px-6 py-3 bg-white border-b border-gray-200 z-20">
       {/* Global Search Bar */}
       <div className="flex-1 flex justify-start">
         <div className="relative w-full max-w-xs lg:max-w-md">
@@ -30,26 +35,33 @@ const Header: React.FC = () => {
       {/* Right side icons and user menu */}
       <div className="flex items-center space-x-4 sm:space-x-5 ml-4">
         {/* Notification Bell */}
-        <button className="relative text-gray-500 hover:text-primary-600 focus:outline-none transition-colors">
-          <BellIcon className="w-6 h-6"/>
-          {unreadNotifications > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold">
-              {unreadNotifications}
-            </span>
-          )}
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setIsNotificationsOpen(prev => !prev)}
+            className="relative text-gray-500 hover:text-primary-600 focus:outline-none transition-colors"
+          >
+            <BellIcon className="w-6 h-6"/>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          {isNotificationsOpen && <NotificationPanel onClose={() => setIsNotificationsOpen(false)} />}
+        </div>
+
 
         {/* User Profile Dropdown */}
         <div className="relative group">
           <button className="flex items-center focus:outline-none transition-transform transform">
             {user?.avatarUrl && <img src={user.avatarUrl} alt="avatar" className="w-9 h-9 rounded-full border-2 border-gray-300 group-hover:border-primary-500 transition-colors" />}
-            <div className="ml-3 hidden md:flex flex-col items-start">
+            <div className="ml-3 hidden md:flex items-baseline space-x-2">
               <span className="text-sm font-semibold text-gray-800">{user?.name}</span>
-              <span className="text-xs text-gray-500 capitalize">{user?.role.toLowerCase()}</span>
+              {user?.role && <span className="text-xs text-gray-500 capitalize">({user.role.toLowerCase()})</span>}
             </div>
             <ChevronDownIcon className="ml-1 hidden md:block w-5 h-5 text-gray-400" />
           </button>
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 hidden group-hover:block animate-fade-in origin-top-right">
+          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 hidden group-hover:block animate-fade-in origin-top-right z-10">
             <a href="#/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 <ProfileIcon className="w-5 h-5 mr-3 text-gray-400"/>
                 <span>My Profile</span>

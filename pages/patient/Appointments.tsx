@@ -1,10 +1,8 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../../components/shared/Card';
 import { Appointment } from '../../types';
 import { CalendarIcon, BellIcon, ClockIcon, MailIcon, DeviceMobileIcon, CheckIcon } from '../../components/shared/Icons';
 
-// FIX: Added the 'type' property to each appointment object to match the Appointment type definition.
 const initialAppointments: Appointment[] = [
   { id: 'appt1', patientName: 'John Doe', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '10:30 AM', reason: 'Annual Check-up', type: 'In-Person', status: 'Confirmed' },
   { id: 'appt2', patientName: 'John Doe', providerName: 'Dr. David Chen', date: '2024-08-20', time: '02:00 PM', reason: 'Dermatology Follow-up', type: 'In-Person', status: 'Confirmed' },
@@ -142,7 +140,7 @@ const SchedulingModal = ({ isOpen, onClose, onAppointmentScheduled }: { isOpen: 
 
     const handleSubmit = () => {
         if (!details.service || !details.provider || !details.date || !details.time) return;
-        // FIX: Added the 'type' property to the new appointment object to match the Appointment type definition.
+        
         const newAppointment: Appointment = {
             id: `appt_${Date.now()}`,
             patientName: 'John Doe',
@@ -156,7 +154,7 @@ const SchedulingModal = ({ isOpen, onClose, onAppointmentScheduled }: { isOpen: 
         const reminderSettings = details.setReminder ? {
             channels: details.reminderChannels,
             timeOption: details.reminderTimeOption,
-            customDateTime: null // Only relative times for new appts
+            customDateTime: null
         } : null;
 
         onAppointmentScheduled({

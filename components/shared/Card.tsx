@@ -4,7 +4,6 @@ interface CardProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
-  // FIX: Add style prop to allow passing CSS properties for animations.
   style?: React.CSSProperties;
 }
 

@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { 
     HomeIcon, CalendarIcon, DocumentTextIcon, UsersIcon, CogIcon, ShieldCheckIcon, ProfileIcon,
     CreditCardIcon, SparklesIcon, VideoCameraIcon, ClipboardListIcon, PillIcon, ShareIcon,
-    CurrencyDollarIcon, ChartBarIcon, CubeIcon, CollectionIcon, BriefcaseIcon, PencilAltIcon
+    CurrencyDollarIcon, ChartBarIcon, CubeIcon, CollectionIcon, BriefcaseIcon, PencilAltIcon, MessageSquareIcon
 } from './components/shared/Icons';
 
 // Using CollectionIcon and aliasing for semantic clarity
@@ -13,6 +12,8 @@ export const PATIENT_NAV = [
   { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon /> },
   { name: 'Appointments', href: '/appointments', icon: <CalendarIcon /> },
   { name: 'Health Records', href: '/records', icon: <DocumentTextIcon /> },
+  { name: 'Medications', href: '/medications', icon: <PillIcon /> },
+  { name: 'Messaging', href: '/messaging', icon: <MessageSquareIcon /> },
   { name: 'Video Consults', href: '/video-consults', icon: <VideoCameraIcon /> },
   { name: 'Claims', href: '/claims', icon: <ClipboardListIcon /> },
   { name: 'Payments', href: '/payments', icon: <CreditCardIcon /> },
@@ -29,12 +30,15 @@ export const PROVIDER_NAV = [
   { name: 'Appointments', href: '/appointments', icon: <ClipboardListIcon /> },
   { name: 'Waiting Room', href: '/waiting-room', icon: <UsersIcon /> },
   { name: 'Patient Management', href: '/patients', icon: <UsersIcon /> },
+  { name: 'Messaging', href: '/messaging', icon: <MessageSquareIcon /> },
   { name: 'Progress Notes', href: '/progress-notes', icon: <PencilAltIcon /> },
   { name: 'E-Prescribing', href: '/e-prescribing', icon: <PillIcon /> },
   { name: 'Referrals', href: '/referrals', icon: <ShareIcon /> },
   { name: 'Billing', href: '/billing', icon: <CurrencyDollarIcon /> },
   { name: 'Subscription', href: '/subscription', icon: <SubscriptionIcon /> },
   { name: 'Reports', href: '/reports', icon: <ChartBarIcon /> },
+  { name: 'Profile', href: '/profile', icon: <ProfileIcon /> },
+  { name: 'Settings', href: '/settings', icon: <CogIcon /> },
 ];
 
 export const ADMIN_NAV = [

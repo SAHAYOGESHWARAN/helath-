@@ -1,5 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
+import { DownloadIcon, FilterIcon } from '../../components/shared/Icons';
 
 const mockLogs = [
   { id: 1, timestamp: '2024-08-15 10:32:15', user: 'Dr. Jane Smith', userRole: 'Provider', action: 'Login Success', details: 'User logged in from IP 192.168.1.1' },
@@ -17,48 +19,60 @@ const actionTypes = [...new Set(mockLogs.map(log => log.action))];
 const Compliance: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('All');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   const filteredLogs = useMemo(() => {
     return mockLogs.filter(log => {
+      const logDate = new Date(log.timestamp);
+      const startDate = dateRange.start ? new Date(dateRange.start) : null;
+      const endDate = dateRange.end ? new Date(dateRange.end) : null;
+
+      if(startDate) startDate.setHours(0,0,0,0);
+      if(endDate) endDate.setHours(23,59,59,999);
+
       const matchesAction = actionFilter === 'All' || log.action === actionFilter;
       const matchesSearch = searchTerm === '' ||
         log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.details.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesAction && matchesSearch;
+      const matchesDate = (!startDate || logDate >= startDate) && (!endDate || logDate <= endDate);
+
+      return matchesAction && matchesSearch && matchesDate;
     });
-  }, [searchTerm, actionFilter]);
+  }, [searchTerm, actionFilter, dateRange]);
 
   const handleClear = () => {
     setSearchTerm('');
     setActionFilter('All');
+    setDateRange({ start: '', end: '' });
   };
 
-  const isFiltered = searchTerm !== '' || actionFilter !== 'All';
+  const isFiltered = searchTerm !== '' || actionFilter !== 'All' || dateRange.start || dateRange.end;
 
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Compliance & Auditing</h1>
       <Card title="Audit Log">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+            <div className="flex flex-wrap items-center gap-4 w-full">
                 <input
                     type="text"
-                    placeholder="Search by user, action, or details..."
+                    placeholder="Search logs..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full sm:max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md"
                 />
                 <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
-                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md"
                 >
                     <option value="All">All Actions</option>
-                    {actionTypes.map(action => (
-                        <option key={action} value={action}>{action}</option>
-                    ))}
+                    {actionTypes.map(action => (<option key={action} value={action}>{action}</option>))}
                 </select>
+                <input type="date" value={dateRange.start} onChange={e => setDateRange(d => ({...d, start: e.target.value}))} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="date" value={dateRange.end} onChange={e => setDateRange(d => ({...d, end: e.target.value}))} className="px-3 py-2 border border-gray-300 rounded-md" />
+                
                 {isFiltered && (
                     <button onClick={handleClear} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -66,8 +80,9 @@ const Compliance: React.FC = () => {
                     </button>
                 )}
             </div>
-            <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm w-full sm:w-auto">
-                Export Log
+            <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm w-full sm:w-auto flex items-center justify-center gap-2">
+                <DownloadIcon className="w-4 h-4" />
+                <span>Export Log</span>
             </button>
         </div>
 

@@ -1,15 +1,22 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import Card from '../../components/shared/Card';
 import Spinner from '../../components/shared/Spinner';
 import { useAuth } from '../../hooks/useAuth';
-import { SparklesIcon } from '../../components/shared/Icons';
+import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
+
+interface GroundingChunk {
+  web: {
+    uri: string;
+    title: string;
+  };
+}
 
 interface Message {
   role: 'user' | 'model';
   parts: { text: string }[];
   suggestions?: string[];
+  groundingChunks?: GroundingChunk[];
 }
 
 const AI_Assistant: React.FC = () => {
@@ -36,7 +43,7 @@ const AI_Assistant: React.FC = () => {
         {
           role: 'model',
           parts: [{ text: `Hello, ${user.name}! I am your AI Health Assistant, powered by Gemini. I can help you understand your appointments, lab results, and more. How can I help you today?` }],
-          suggestions: ["Tell me about my next appointment", "Show my latest lab results", "How do I prepare for a check-up?"],
+          suggestions: ["Tell me about my next appointment", "What are the symptoms of a cold?", "Show my latest lab results"],
         },
       ]);
     }
@@ -57,33 +64,44 @@ const AI_Assistant: React.FC = () => {
     setLoading(true);
 
     try {
-      const systemInstruction = `You are Tangerine Health's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data. Current user: ${user?.name}. Today's date: ${new Date().toLocaleDateString()}.
+      const systemInstruction = `You are Tangerine Health's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data or by searching the web. Current user: ${user?.name}. Today's date: ${new Date().toLocaleDateString()}.
       
       Available (mock) patient data:
       - Upcoming Appointment: Annual Check-up with Dr. Jane Smith in 3 days.
       - Past Appointment: Dermatology Follow-up with Dr. David Chen, 2 weeks ago.
       - Latest Lab Results: Cholesterol Panel (Total: 180, LDL: 100, HDL: 60 - all normal), taken last week.
       
-      IMPORTANT: Always include a disclaimer that you are an AI assistant and not a medical professional, and that the user should consult their doctor for medical advice. Do not make up medical information. Use the provided data to answer questions. Be concise and use markdown for formatting if helpful.`;
+      IMPORTANT: If the user asks a question that requires up-to-date information or is outside the scope of the provided data (e.g., "what are the latest covid symptoms?"), use the Google Search tool. ALWAYS cite your sources when using search. Always include a disclaimer that you are an AI assistant and not a medical professional, and that the user should consult their doctor for medical advice.`;
       
-      const contents = [...history.map(msg => ({ role: msg.role, parts: msg.parts })), { role: 'user', parts: [{ text }] }];
+      const contents = history.map(msg => ({ role: msg.role, parts: msg.parts }));
+      contents.push({ role: 'user', parts: [{ text }] });
       
       const responseStream = await ai.current.models.generateContentStream({
         model: 'gemini-2.5-flash',
         contents: contents,
         config: {
           systemInstruction: systemInstruction,
+          tools: [{googleSearch: {}}]
         }
       });
 
       let currentResponseText = '';
-      setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }] }]);
+      let finalGroundingChunks: GroundingChunk[] = [];
+      setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }], groundingChunks: [] }]);
 
       for await (const chunk of responseStream) {
         currentResponseText += chunk.text;
+         if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+          finalGroundingChunks = chunk.candidates[0].groundingMetadata.groundingChunks;
+        }
+
         setHistory(prev => {
           const newHistory = [...prev];
-          newHistory[newHistory.length - 1].parts[0].text = currentResponseText;
+          const lastMessage = newHistory[newHistory.length - 1];
+          if (lastMessage) {
+            lastMessage.parts[0].text = currentResponseText;
+            lastMessage.groundingChunks = finalGroundingChunks;
+          }
           return newHistory;
         });
       }
@@ -120,6 +138,29 @@ const AI_Assistant: React.FC = () => {
                 )}
                 <div className={`max-w-xl p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
                   <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
+                   {msg.role === 'model' && msg.groundingChunks && msg.groundingChunks.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-300">
+                        <h4 className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
+                          <GlobeAltIcon className="w-4 h-4 mr-1.5" />
+                          Sources
+                        </h4>
+                        <ol className="list-decimal list-inside space-y-1">
+                          {msg.groundingChunks.map((chunk, i) => (
+                            <li key={i} className="text-xs">
+                              <a 
+                                href={chunk.web.uri} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-blue-600 hover:underline truncate block"
+                                title={chunk.web.title}
+                              >
+                                {chunk.web.title}
+                              </a>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
                 </div>
               </div>
               {msg.role === 'model' && msg.suggestions && (

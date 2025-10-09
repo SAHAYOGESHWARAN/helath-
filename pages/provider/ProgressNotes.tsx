@@ -11,6 +11,11 @@ const mockNotes: ProgressNote[] = [
     { id: 'note4', patientId: 'p5', patientName: 'Diana Prince', date: '2024-08-12', status: 'Signed', content: { subjective: 'Routine physical exam.', objective: 'All systems normal.', assessment: 'Healthy.', plan: 'Return in 1 year.' } },
 ];
 
+const NOTE_TEMPLATES = {
+    'SOAP': { subjective: 'Chief Complaint:\n\nHistory of Present Illness:\n\nReview of Systems:\n', objective: 'Vital Signs:\n\nPhysical Exam:\n', assessment: 'Primary Diagnosis:\n\nSecondary Diagnosis:\n', plan: 'Medications:\n\nFollow-up:\n' },
+    'Annual Physical': { subjective: 'Here for annual physical. No complaints.', objective: 'Vital signs stable. Exam unremarkable.', assessment: 'Healthy adult.', plan: 'Routine labs ordered. Follow up in 1 year.' },
+};
+
 const getStatusColor = (status: 'Draft' | 'Pending Signature' | 'Signed') => {
     if (status === 'Signed') return 'bg-emerald-100 text-emerald-800';
     if (status === 'Pending Signature') return 'bg-yellow-100 text-yellow-800';
@@ -25,30 +30,44 @@ const NoteEditorModal: React.FC<{ note: ProgressNote | null; onClose: () => void
         const { name, value } = e.target;
         setEditedNote(prev => ({...prev!, content: {...prev!.content, [name]: value}}));
     };
+    
+    const applyTemplate = (templateName: keyof typeof NOTE_TEMPLATES) => {
+        setEditedNote(prev => ({...prev!, content: NOTE_TEMPLATES[templateName] }));
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 animate-fade-in">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 p-6 animate-slide-in-up">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Edit Note for {editedNote.patientName}</h2>
-                <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 p-6 animate-slide-in-up h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800">Edit Note for {editedNote.patientName}</h2>
+                    <div className="flex items-center space-x-2">
+                        <label className="text-sm font-medium">Template:</label>
+                        <select onChange={(e) => applyTemplate(e.target.value as keyof typeof NOTE_TEMPLATES)} className="text-sm border-gray-300 rounded-md">
+                            <option value="">None</option>
+                            <option value="SOAP">SOAP Note</option>
+                            <option value="Annual Physical">Annual Physical</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="space-y-4 overflow-y-auto flex-1 pr-2">
                     <div>
                         <label className="font-semibold text-gray-700">Subjective</label>
-                        <textarea name="subjective" value={editedNote.content.subjective} onChange={handleChange} rows={3} className="w-full p-2 border rounded mt-1"></textarea>
+                        <textarea name="subjective" value={editedNote.content.subjective} onChange={handleChange} rows={4} className="w-full p-2 border rounded mt-1"></textarea>
                     </div>
                     <div>
                         <label className="font-semibold text-gray-700">Objective</label>
-                        <textarea name="objective" value={editedNote.content.objective} onChange={handleChange} rows={3} className="w-full p-2 border rounded mt-1"></textarea>
+                        <textarea name="objective" value={editedNote.content.objective} onChange={handleChange} rows={4} className="w-full p-2 border rounded mt-1"></textarea>
                     </div>
                     <div>
                         <label className="font-semibold text-gray-700">Assessment</label>
-                        <textarea name="assessment" value={editedNote.content.assessment} onChange={handleChange} rows={3} className="w-full p-2 border rounded mt-1"></textarea>
+                        <textarea name="assessment" value={editedNote.content.assessment} onChange={handleChange} rows={4} className="w-full p-2 border rounded mt-1"></textarea>
                     </div>
                     <div>
                         <label className="font-semibold text-gray-700">Plan</label>
-                        <textarea name="plan" value={editedNote.content.plan} onChange={handleChange} rows={3} className="w-full p-2 border rounded mt-1"></textarea>
+                        <textarea name="plan" value={editedNote.content.plan} onChange={handleChange} rows={4} className="w-full p-2 border rounded mt-1"></textarea>
                     </div>
                 </div>
-                <div className="flex justify-end space-x-3 mt-6">
+                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
                     <button onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
                     <button onClick={() => onSave(editedNote)} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">Save Draft</button>
                 </div>

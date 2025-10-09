@@ -15,7 +15,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const MOCK_USERS: Record<UserRole, User> = {
   [UserRole.PATIENT]: { id: 'pat1', name: 'John Doe', email: 'john.doe@email.com', role: UserRole.PATIENT, avatarUrl: 'https://picsum.photos/seed/patient/100', dob: '1985-05-20', phone: '555-123-4567', address: '123 Health St, Wellness City, USA' },
-  [UserRole.PROVIDER]: { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider/100', phone: '555-987-6543' },
+  [UserRole.PROVIDER]: { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider/100', phone: '555-987-6543', specialty: 'Cardiology' },
   [UserRole.ADMIN]: { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/admin/100', phone: '555-555-1212' },
 };
 

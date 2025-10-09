@@ -28,8 +28,8 @@ const glucoseData = [
 ];
 
 const mockAllergies: Allergy[] = [
-    { id: 'alg1', name: 'Penicillin', severity: 'Severe' },
-    { id: 'alg2', name: 'Peanuts', severity: 'Moderate' },
+    { id: 'alg1', name: 'Penicillin', severity: 'Severe', reaction: 'Anaphylaxis' },
+    { id: 'alg2', name: 'Peanuts', severity: 'Moderate', reaction: 'Hives' },
 ];
 
 const mockConditions = ['Hypertension', 'Asthma'];

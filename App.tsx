@@ -13,6 +13,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import PatientRegister from './pages/auth/PatientRegister';
 import ProviderRegister from './pages/auth/ProviderRegister';
 import AdminRegister from './pages/auth/AdminRegister';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 // --- Global App Context for Toasts/Modals ---
 interface Toast {
@@ -119,9 +120,11 @@ export default function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <HashRouter>
-          <AppRoutes />
-        </HashRouter>
+        <NotificationProvider>
+          <HashRouter>
+            <AppRoutes />
+          </HashRouter>
+        </NotificationProvider>
       </AppProvider>
     </AuthProvider>
   );

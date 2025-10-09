@@ -1,13 +1,76 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
-import { ClaimStatus } from '../../types';
+import { Claim, ClaimStatus } from '../../types';
+import Modal from '../../components/shared/Modal';
 
-const mockClaims = [
-  { id: 'CLM78901', serviceDate: '2024-07-15', provider: 'Dr. Jane Smith', total: 450.00, patientOwes: 50.00, status: ClaimStatus.PAID_IN_FULL },
-  { id: 'CLM78902', serviceDate: '2024-07-22', provider: 'Anytown General Hospital', total: 1250.00, patientOwes: 250.00, status: ClaimStatus.PROCESSING },
-  { id: 'CLM78903', serviceDate: '2024-06-10', provider: 'Dr. David Chen', total: 180.00, patientOwes: 0.00, status: ClaimStatus.PAID_IN_FULL },
-  { id: 'CLM78904', serviceDate: '2024-05-05', provider: 'Quest Diagnostics', total: 85.50, patientOwes: 20.00, status: ClaimStatus.DENIED },
-  { id: 'CLM78905', serviceDate: '2024-08-01', provider: 'Dr. Jane Smith', total: 300.00, patientOwes: 50.00, status: ClaimStatus.SUBMITTED },
+const mockClaims: Claim[] = [
+  { 
+    id: 'CLM78901', 
+    serviceDate: '2024-07-15', 
+    provider: 'Dr. Jane Smith', 
+    totalClaimChargeAmount: 450.00, 
+    patientOwes: 50.00, 
+    status: ClaimStatus.PAID_IN_FULL,
+    insurancePaid: 400.00,
+    lineItems: [
+      { service: 'Office Visit, Established Patient', charge: 250.00 },
+      { service: 'EKG, Interpretation & Report', charge: 150.00 },
+      { service: 'Blood Draw', charge: 50.00 },
+    ]
+  },
+  { 
+    id: 'CLM78902', 
+    serviceDate: '2024-07-22', 
+    provider: 'Anytown General Hospital', 
+    totalClaimChargeAmount: 1250.00, 
+    patientOwes: 250.00, 
+    status: ClaimStatus.PROCESSING,
+    insurancePaid: 1000.00,
+    lineItems: [
+      { service: 'Emergency Room Visit', charge: 800.00 },
+      { service: 'X-Ray, Chest', charge: 250.00 },
+      { service: 'IV Administration', charge: 200.00 },
+    ]
+  },
+  { 
+    id: 'CLM78903', 
+    serviceDate: '2024-06-10', 
+    provider: 'Dr. David Chen', 
+    totalClaimChargeAmount: 180.00, 
+    patientOwes: 0.00, 
+    status: ClaimStatus.PAID_IN_FULL,
+    insurancePaid: 180.00,
+    lineItems: [
+      { service: 'Dermatology Follow-up', charge: 180.00 },
+    ]
+  },
+  { 
+    id: 'CLM78904', 
+    serviceDate: '2024-05-05', 
+    provider: 'Quest Diagnostics', 
+    totalClaimChargeAmount: 85.50, 
+    patientOwes: 20.00, 
+    status: ClaimStatus.DENIED,
+    insurancePaid: 65.50,
+    lineItems: [
+      { service: 'Comprehensive Metabolic Panel', charge: 85.50 },
+    ],
+    denialReason: 'Service not covered under current plan benefits.'
+  },
+  { 
+    id: 'CLM78905', 
+    serviceDate: '2024-08-01', 
+    provider: 'Dr. Jane Smith', 
+    totalClaimChargeAmount: 300.00, 
+    patientOwes: 50.00, 
+    status: ClaimStatus.SUBMITTED,
+    insurancePaid: 250.00,
+    lineItems: [
+      { service: 'Office Visit, Established Patient', charge: 250.00 },
+      { service: 'Flu Shot Administration', charge: 50.00 },
+    ]
+  },
 ];
 
 const getStatusColor = (status: ClaimStatus) => {
@@ -26,9 +89,76 @@ const getStatusColor = (status: ClaimStatus) => {
   }
 };
 
+const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> = ({ claim, onClose }) => {
+    if (!claim) return null;
+
+    return (
+        <Modal isOpen={!!claim} onClose={onClose} title={`Details for Claim #${claim.id}`} size="lg">
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm p-4 bg-gray-50 rounded-lg border">
+                    <div>
+                        <p className="font-medium text-gray-500">Provider</p>
+                        <p className="font-semibold text-gray-800">{claim.provider}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium text-gray-500">Service Date</p>
+                        <p className="font-semibold text-gray-800">{claim.serviceDate}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium text-gray-500">Status</p>
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
+                            {claim.status.replace(/_/g, ' ')}
+                        </span>
+                    </div>
+                </div>
+
+                {claim.status === ClaimStatus.DENIED && (
+                    <div className="p-3 bg-red-50 border-l-4 border-red-400 text-red-700">
+                        <h4 className="font-bold">Reason for Denial</h4>
+                        <p className="text-sm">{claim.denialReason || 'No specific reason provided.'}</p>
+                    </div>
+                )}
+                
+                <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">Financial Summary</h4>
+                    <div className="space-y-2 text-sm border-t border-b divide-y">
+                        <div className="flex justify-between py-2"><span className="text-gray-600">Total Billed Amount:</span><span className="font-medium text-gray-800">${claim.totalClaimChargeAmount.toFixed(2)}</span></div>
+                        <div className="flex justify-between py-2"><span className="text-gray-600">Paid by Insurance:</span><span className="font-medium text-gray-800">${claim.insurancePaid.toFixed(2)}</span></div>
+                        <div className="flex justify-between py-2 text-base"><span className="font-semibold text-gray-800">Your Responsibility:</span><span className="font-bold text-primary-600">${claim.patientOwes.toFixed(2)}</span></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">Services Provided</h4>
+                     <div className="overflow-x-auto border rounded-lg">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Charge</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {claim.lineItems.map((item, index) => (
+                                    <tr key={index}>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{item.service}</td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-right">${item.charge.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </Modal>
+    );
+};
+
 const Claims: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
 
   const filteredClaims = useMemo(() => {
     return mockClaims.filter(claim => {
@@ -102,11 +232,11 @@ const Claims: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredClaims.length > 0 ? (
                 filteredClaims.map((claim) => (
-                  <tr key={claim.id}>
+                  <tr key={claim.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{claim.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{claim.serviceDate}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{claim.provider}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${claim.total.toFixed(2)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${claim.totalClaimChargeAmount.toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${claim.patientOwes.toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
@@ -114,7 +244,7 @@ const Claims: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a href="#" className="text-primary-600 hover:text-primary-900">Details</a>
+                      <button onClick={() => setSelectedClaim(claim)} className="text-primary-600 hover:text-primary-900 font-medium">Details</button>
                     </td>
                   </tr>
                 ))
@@ -129,6 +259,7 @@ const Claims: React.FC = () => {
           </table>
         </div>
       </Card>
+      <ClaimDetailModal claim={selectedClaim} onClose={() => setSelectedClaim(null)} />
     </div>
   );
 };

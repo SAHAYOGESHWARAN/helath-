@@ -1,15 +1,14 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus, ClaimType } from '../../types';
 import { CurrencyDollarIcon } from '../../components/shared/Icons';
 
 const mockClaims: Claim[] = [
-  { id: 'C1001', patientId: 'p1', status: ClaimStatus.PAID_IN_FULL, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 250.00, createdAt: '2024-08-10' },
-  { id: 'C1002', patientId: 'p2', status: ClaimStatus.SUBMITTED, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 150.00, createdAt: '2024-08-12' },
-  { id: 'C1003', patientId: 'p4', status: ClaimStatus.DENIED, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 75.00, createdAt: '2024-08-05' },
-  { id: 'C1004', patientId: 'p5', status: ClaimStatus.PROCESSING, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 500.00, createdAt: '2024-08-14' },
-  { id: 'C1005', patientId: 'p1', status: ClaimStatus.DRAFT, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 120.00, createdAt: '2024-08-15' },
+  { id: 'C1001', patientId: 'p1', status: ClaimStatus.PAID_IN_FULL, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 250.00, createdAt: '2024-08-10', serviceDate: '2024-08-10', provider: 'Dr. Jane Smith', patientOwes: 0, insurancePaid: 250.00, lineItems: [{ service: 'Office Visit', charge: 250.00 }] },
+  { id: 'C1002', patientId: 'p2', status: ClaimStatus.SUBMITTED, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 150.00, createdAt: '2024-08-12', serviceDate: '2024-08-12', provider: 'Dr. Jane Smith', patientOwes: 20.00, insurancePaid: 130.00, lineItems: [{ service: 'Follow-up', charge: 150.00 }] },
+  { id: 'C1003', patientId: 'p4', status: ClaimStatus.DENIED, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 75.00, createdAt: '2024-08-05', serviceDate: '2024-08-05', provider: 'Dr. David Chen', patientOwes: 75.00, insurancePaid: 0.00, lineItems: [{ service: 'Lab Work', charge: 75.00 }], denialReason: "Not a covered service." },
+  { id: 'C1004', patientId: 'p5', status: ClaimStatus.PROCESSING, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 500.00, createdAt: '2024-08-14', serviceDate: '2024-08-14', provider: 'Anytown Hospital', patientOwes: 100.00, insurancePaid: 400.00, lineItems: [{ service: 'ER Visit', charge: 500.00 }] },
+  { id: 'C1005', patientId: 'p1', status: ClaimStatus.DRAFT, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 120.00, createdAt: '2024-08-15', serviceDate: '2024-08-15', provider: 'Dr. Jane Smith', patientOwes: 120.00, insurancePaid: 0.00, lineItems: [{ service: 'Consultation', charge: 120.00 }] },
 ];
 
 const getStatusColor = (status: ClaimStatus) => {
@@ -67,7 +66,7 @@ const Billing: React.FC = () => {
 
         <Card>
              <div className="mb-4">
-              <div className="flex space-x-2 border-b">
+              <div className="flex space-x-2 border-b overflow-x-auto">
                 {(['All', ...Object.values(ClaimStatus)] as const).map(status => (
                     <button 
                         key={status}

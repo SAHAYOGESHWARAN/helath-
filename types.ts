@@ -1,4 +1,3 @@
-
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -14,12 +13,14 @@ export interface User {
   phone?: string;
   address?: string;
   dob?: string;
+  specialty?: string; // For providers
 }
 
 export interface Appointment {
   id: string;
   patientName: string;
   providerName: string;
+  providerId?: string;
   date: string;
   time: string;
   reason: string;
@@ -27,6 +28,7 @@ export interface Appointment {
   status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
   checkInStatus?: 'Pending' | 'Checked-In' | 'Late';
   visitSummary?: string;
+  notes?: string;
 }
 
 export interface Medication {
@@ -35,12 +37,25 @@ export interface Medication {
   dosage: string;
   frequency: string;
   prescribedBy: string;
+  startDate: string;
+  status: 'Active' | 'Inactive';
+  adherence?: { date: string, taken: boolean }[];
 }
+
+export interface LabResult {
+    id: string;
+    testName: string;
+    date: string;
+    status: 'Pending' | 'Final';
+    components: { name: string; value: string; referenceRange: string; isAbnormal: boolean }[];
+}
+
 
 export interface Allergy {
   id: string;
   name: string;
   severity: 'Mild' | 'Moderate' | 'Severe';
+  reaction: string;
 }
 
 export interface HealthGoal {
@@ -49,6 +64,20 @@ export interface HealthGoal {
   target: number;
   current: number;
   unit: string;
+  deadline: string;
+}
+
+export interface Surgery {
+  id: string;
+  name: string;
+  date: string;
+}
+
+export interface Hospitalization {
+  id: string;
+  reason: string;
+  admissionDate: string;
+  dischargeDate: string;
 }
 
 export interface Patient {
@@ -60,6 +89,7 @@ export interface Patient {
     medications?: Medication[];
     allergies?: Allergy[];
     healthGoals?: HealthGoal[];
+    labResults?: LabResult[];
 }
 
 export enum ClaimStatus {
@@ -80,14 +110,26 @@ export enum ClaimType {
   INSTITUTIONAL = 'INSTITUTIONAL',
 }
 
+export interface ClaimLineItem {
+  service: string;
+  charge: number;
+}
+
 export interface Claim {
   id: string;
-  patientId: string;
+  patientId?: string;
   status: ClaimStatus;
-  claimType: ClaimType;
+  claimType?: ClaimType;
   totalClaimChargeAmount: number;
-  createdAt: string;
+  createdAt?: string; // Or serviceDate
+  serviceDate: string;
+  provider: string;
+  patientOwes: number;
+  insurancePaid: number;
+  lineItems: ClaimLineItem[];
+  denialReason?: string;
 }
+
 
 export interface ProgressNote {
   id: string;
@@ -122,4 +164,32 @@ export interface SubscriptionPlan {
     price: string;
     patientLimit: number;
     features: string[];
+    isPopular?: boolean;
+}
+
+export interface Notification {
+  id: string;
+  type: 'Message' | 'Appointment' | 'Lab Result' | 'Billing' | 'System';
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  link?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  text: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+export interface BillingInvoice {
+    id: string;
+    date: string;
+    amount: number;
+    status: 'Paid' | 'Due' | 'Overdue';
+    description: string;
 }

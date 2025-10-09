@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
@@ -36,7 +35,7 @@ const PatientRegister: React.FC = () => {
             initialValues={{ name: '', email: '', dob: '', password: '', confirmPassword: '' }}
             validationSchema={PatientRegisterSchema}
             onSubmit={(values, { setSubmitting }) => {
-              register({ name: values.name, email: values.email }, UserRole.PATIENT);
+              register({ name: values.name, email: values.email, dob: values.dob }, UserRole.PATIENT);
               setSubmitting(false);
               // Navigate to dashboard after registration
               navigate('/dashboard');
