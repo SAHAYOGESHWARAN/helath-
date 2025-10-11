@@ -1,7 +1,8 @@
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { TangerineIcon, LogoutIcon } from '../shared/Icons';
+import { NovoPathIcon, LogoutIcon } from '../shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 
 interface NavItem {
@@ -20,8 +21,8 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
     <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col z-10">
       <div className="h-20 flex items-center justify-center px-6 border-b border-gray-200">
          <div className="flex items-center space-x-3">
-          <TangerineIcon className="w-9 h-9 text-tangerine"/>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-wider">Tangerine</h1>
+          <NovoPathIcon className="w-9 h-9 text-accent"/>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-wider">NovoPath</h1>
         </div>
       </div>
       

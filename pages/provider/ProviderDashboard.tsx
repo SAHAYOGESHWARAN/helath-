@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -54,11 +55,11 @@ const ProviderDashboard: React.FC = () => {
       <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome back, {user?.name}!</h1>
       <p className="text-lg text-gray-500 mb-8">You have <span className="font-bold text-primary-600">{inboxItems.length} items</span> needing your attention.</p>
 
-       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 stagger-list">
+       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 stagger-list lg:items-stretch">
             {/* Main Column */}
             <div className="lg:col-span-3 flex flex-col gap-6">
-                 <Card title="Provider Inbox" className="h-full" style={{'--stagger-index': 1} as React.CSSProperties}>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                 <Card title="Provider Inbox" className="h-full flex flex-col" style={{'--stagger-index': 1} as React.CSSProperties}>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 flex-grow">
                         {inboxItems.map(item => (
                             <div key={item.id} className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer">
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
@@ -103,8 +104,8 @@ const ProviderDashboard: React.FC = () => {
             </div>
             {/* Side Column */}
             <div className="lg:col-span-2">
-                <Card title="Today's Schedule" style={{'--stagger-index': 2} as React.CSSProperties}>
-                     <div className="space-y-3 max-h-[670px] overflow-y-auto pr-2">
+                <Card title="Today's Schedule" style={{'--stagger-index': 2} as React.CSSProperties} className="h-full flex flex-col">
+                     <div className="space-y-3 max-h-[670px] overflow-y-auto pr-2 flex-grow">
                         {todaysSchedule.map(appt => (
                             <div key={appt.time} className="flex items-center p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
                                 <div className="w-20 text-sm font-semibold text-primary-600">{appt.time}</div>

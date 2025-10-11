@@ -13,6 +13,8 @@ const mockUsers: User[] = [
     { id: 'pat2', name: 'Alice Johnson', email: 'alice.j@email.com', role: UserRole.PATIENT, dob: '1992-11-12' },
     { id: 'pro2', name: 'Dr. David Chen', email: 'david.chen@email.com', role: UserRole.PROVIDER, specialty: 'Dermatology' },
     { id: 'pat3', name: 'Charlie Brown', email: 'charlie.b@email.com', role: UserRole.PATIENT, dob: '1998-09-30' },
+    { id: 'pro3', name: 'Dr. Emily White', email: 'emily.white@email.com', role: UserRole.PROVIDER, specialty: 'Pediatrics' },
+    { id: 'adm2', name: 'Maria Garcia', email: 'maria.g@email.com', role: UserRole.ADMIN },
 ];
 
 
@@ -164,7 +166,7 @@ const UserManagement: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                  user.role === UserRole.ADMIN ? 'bg-gray-200 text-gray-800' :
-                                 user.role === UserRole.PROVIDER ? 'bg-tangerine-light/60 text-tangerine-dark' :
+                                 user.role === UserRole.PROVIDER ? 'bg-accent-light text-accent-dark' :
                                  'bg-primary-100 text-primary-800'
                                }`}>{user.role}</span>
                             </td>

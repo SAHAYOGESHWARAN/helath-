@@ -132,7 +132,7 @@ const VideoConsults: React.FC = () => {
 
                         return (
                             <div key={consult.id} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex flex-col sm:flex-row justify-between sm:items-center">
-                                <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+                                <div className="flex items-center space-x-4 mb-4 sm:mb-0 flex-grow">
                                     <div className="bg-primary-100 p-3 rounded-full text-primary-600">
                                         <VideoCameraIcon />
                                     </div>
@@ -144,7 +144,7 @@ const VideoConsults: React.FC = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2 flex-shrink-0">
                                     {canManage && (
                                         <>
                                             <button 

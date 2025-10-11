@@ -76,9 +76,9 @@ const AdminDashboard: React.FC = () => {
       <h1 className="text-4xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
 
       {/* Key Metrics Section */}
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 stagger-list">
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 stagger-list items-stretch">
         <MetricCard icon={<UsersIcon />} title="Total Patients" value="820" style={{'--stagger-index': 1} as React.CSSProperties} iconBgColor="bg-blue-500" />
-        <MetricCard icon={<BriefcaseIcon />} title="Total Providers" value="75" style={{'--stagger-index': 2} as React.CSSProperties} iconBgColor="bg-tangerine" />
+        <MetricCard icon={<BriefcaseIcon />} title="Total Providers" value="75" style={{'--stagger-index': 2} as React.CSSProperties} iconBgColor="bg-accent" />
         <MetricCard icon={<SubscriptionIcon />} title="Active Subscriptions" value="68" style={{'--stagger-index': 3} as React.CSSProperties} iconBgColor="bg-emerald-500" />
         <MetricCard icon={<ShieldCheckIcon />} title="System Uptime" value="99.9%" style={{'--stagger-index': 4} as React.CSSProperties} iconBgColor="bg-slate-500" />
       </div>
@@ -94,7 +94,7 @@ const AdminDashboard: React.FC = () => {
                         <Tooltip cursor={{ stroke: 'hsl(210 10% 80%)', strokeWidth: 1, strokeDasharray: '3 3' }} content={<CustomTooltip />} />
                         <Legend />
                         <Line type="monotone" dataKey="Patients" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 8 }} />
-                        <Line type="monotone" dataKey="Providers" stroke="#f59e0b" strokeWidth={2} activeDot={{ r: 8 }} />
+                        <Line type="monotone" dataKey="Providers" stroke="#14b8a6" strokeWidth={2} activeDot={{ r: 8 }} />
                     </LineChart>
                 </ResponsiveContainer>
             </Card>

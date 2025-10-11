@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
+import { useApp } from '../../App';
 
 const initialInsuranceData = {
   provider: 'Blue Cross Blue Shield',
@@ -11,19 +12,31 @@ const initialInsuranceData = {
 
 const Insurance: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [insuranceData, setInsuranceData] = useState(initialInsuranceData);
   const [formData, setFormData] = useState(initialInsuranceData);
+  const { showToast } = useApp();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleEditClick = () => {
+    setFormData(insuranceData); // Load current saved data into the form
+    setIsEditing(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // API call to save data would go here
-    alert('Insurance information updated!');
+    setInsuranceData(formData); // Persist the changes
+    showToast('Insurance information updated successfully!', 'success');
     setIsEditing(false);
   };
+  
+  const handleCancel = () => {
+    // No need to reset data, just exit editing mode
+    setIsEditing(false);
+  }
 
   return (
     <div>
@@ -31,7 +44,7 @@ const Insurance: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-800">Insurance</h1>
         {!isEditing && (
           <button 
-            onClick={() => setIsEditing(true)}
+            onClick={handleEditClick}
             className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors"
           >
             Update Information
@@ -41,7 +54,7 @@ const Insurance: React.FC = () => {
 
       <Card>
         {isEditing ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
             <div>
               <label htmlFor="provider" className="block text-sm font-medium text-gray-700">Insurance Provider</label>
               <input type="text" name="provider" id="provider" value={formData.provider} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"/>
@@ -59,7 +72,7 @@ const Insurance: React.FC = () => {
               <input type="text" name="groupNumber" id="groupNumber" value={formData.groupNumber} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"/>
             </div>
              <div className="flex justify-end space-x-3 pt-4">
-               <button type="button" onClick={() => setIsEditing(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+               <button type="button" onClick={handleCancel} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
                <button type="submit" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">Save</button>
             </div>
           </form>
@@ -67,23 +80,23 @@ const Insurance: React.FC = () => {
           <div className="space-y-4">
             <div className="flex justify-between py-2 border-b">
               <span className="font-medium text-gray-600">Insurance Provider</span>
-              <span className="text-gray-800">{formData.provider}</span>
+              <span className="text-gray-800">{insuranceData.provider}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
               <span className="font-medium text-gray-600">Plan Name</span>
-              <span className="text-gray-800">{formData.planName}</span>
+              <span className="text-gray-800">{insuranceData.planName}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
               <span className="font-medium text-gray-600">Policy Number</span>
-              <span className="text-gray-800">{formData.policyNumber}</span>
+              <span className="text-gray-800">{insuranceData.policyNumber}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
               <span className="font-medium text-gray-600">Group Number</span>
-              <span className="text-gray-800">{formData.groupNumber}</span>
+              <span className="text-gray-800">{insuranceData.groupNumber}</span>
             </div>
             <div className="flex justify-between py-2">
               <span className="font-medium text-gray-600">Member ID</span>
-              <span className="text-gray-800">{formData.memberId}</span>
+              <span className="text-gray-800">{insuranceData.memberId}</span>
             </div>
           </div>
         )}

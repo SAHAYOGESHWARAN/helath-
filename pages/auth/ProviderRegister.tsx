@@ -1,11 +1,12 @@
 
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { TangerineIcon, ChevronLeftIcon } from '../../components/shared/Icons';
+import { NovoPathIcon, ChevronLeftIcon } from '../../components/shared/Icons';
 
 const ProviderRegisterSchema = Yup.object().shape({
   name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Full name is required'),
@@ -26,7 +27,7 @@ const ProviderRegister: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 px-4">
       <div className="max-w-md w-full mx-auto">
         <div className="flex justify-center items-center mb-6 space-x-3">
-          <TangerineIcon />
+          <NovoPathIcon />
           <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Provider Registration</h1>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
@@ -37,7 +38,7 @@ const ProviderRegister: React.FC = () => {
             initialValues={{ name: '', email: '', specialty: '', licenseNumber: '', password: '', confirmPassword: '' }}
             validationSchema={ProviderRegisterSchema}
             onSubmit={(values, { setSubmitting }) => {
-              register({ name: values.name, email: values.email }, UserRole.PROVIDER);
+              register({ name: values.name, email: values.email, dob: '' }, UserRole.PROVIDER);
               setSubmitting(false);
               navigate('/dashboard');
             }}
@@ -46,35 +47,35 @@ const ProviderRegister: React.FC = () => {
               <Form className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                  <Field type="text" name="name" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-tangerine focus:border-tangerine sm:text-sm ${errors.name && touched.name ? 'border-red-500' : 'border-gray-300'}`} />
+                  <Field type="text" name="name" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm ${errors.name && touched.name ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="name" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
                  <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">Work Email Address</label>
-                  <Field type="email" name="email" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-tangerine focus:border-tangerine sm:text-sm ${errors.email && touched.email ? 'border-red-500' : 'border-gray-300'}`} />
+                  <Field type="email" name="email" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm ${errors.email && touched.email ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="email" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
                 <div>
                   <label htmlFor="specialty" className="block text-sm font-medium text-gray-700">Medical Specialty</label>
-                  <Field type="text" name="specialty" placeholder="e.g., Cardiology" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-tangerine focus:border-tangerine sm:text-sm ${errors.specialty && touched.specialty ? 'border-red-500' : 'border-gray-300'}`} />
+                  <Field type="text" name="specialty" placeholder="e.g., Cardiology" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm ${errors.specialty && touched.specialty ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="specialty" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
                 <div>
                   <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700">Medical License Number</label>
-                  <Field type="text" name="licenseNumber" placeholder="e.g., G12345" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-tangerine focus:border-tangerine sm:text-sm ${errors.licenseNumber && touched.licenseNumber ? 'border-red-500' : 'border-gray-300'}`} />
+                  <Field type="text" name="licenseNumber" placeholder="e.g., G12345" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm ${errors.licenseNumber && touched.licenseNumber ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="licenseNumber" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
                  <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                  <Field type="password" name="password" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-tangerine focus:border-tangerine sm:text-sm ${errors.password && touched.password ? 'border-red-500' : 'border-gray-300'}`} />
+                  <Field type="password" name="password" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm ${errors.password && touched.password ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="password" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                  <Field type="password" name="confirmPassword" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-tangerine focus:border-tangerine sm:text-sm ${errors.confirmPassword && touched.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
+                  <Field type="password" name="confirmPassword" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm ${errors.confirmPassword && touched.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="confirmPassword" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
-                <button type="submit" disabled={isSubmitting} className="w-full mt-2 text-white bg-tangerine hover:bg-tangerine-dark focus:ring-4 focus:ring-tangerine-light font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors disabled:bg-gray-400">
+                <button type="submit" disabled={isSubmitting} className="w-full mt-2 text-white bg-accent hover:bg-accent-dark focus:ring-4 focus:ring-accent-light font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors disabled:bg-gray-400">
                   {isSubmitting ? 'Creating Account...' : 'Create Account'}
                 </button>
               </Form>

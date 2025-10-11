@@ -1,11 +1,12 @@
 
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { TangerineIcon, ChevronLeftIcon } from '../../components/shared/Icons';
+import { NovoPathIcon, ChevronLeftIcon } from '../../components/shared/Icons';
 
 const AdminRegisterSchema = Yup.object().shape({
   name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Full name is required'),
@@ -24,18 +25,18 @@ const AdminRegister: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 px-4">
       <div className="max-w-md w-full mx-auto">
         <div className="flex justify-center items-center mb-6 space-x-3">
-          <TangerineIcon />
+          <NovoPathIcon />
           <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Admin Registration</h1>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
           <h2 className="text-xl font-bold text-center text-gray-700 mb-2">Create an Administrator Account</h2>
-          <p className="text-center text-gray-500 mb-6">Manage the Tangerine Health platform.</p>
+          <p className="text-center text-gray-500 mb-6">Manage the NovoPath Medical platform.</p>
           
           <Formik
             initialValues={{ name: '', email: '', password: '', confirmPassword: '' }}
             validationSchema={AdminRegisterSchema}
             onSubmit={(values, { setSubmitting }) => {
-              register({ name: values.name, email: values.email }, UserRole.ADMIN);
+              register({ name: values.name, email: values.email, dob: '' }, UserRole.ADMIN);
               setSubmitting(false);
               navigate('/dashboard');
             }}

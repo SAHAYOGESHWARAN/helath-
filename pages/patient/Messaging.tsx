@@ -55,7 +55,8 @@ const Messaging: React.FC = () => {
         <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Messaging</h1>
             <Card className="p-0 flex h-[calc(100vh-12rem)]">
-                <div className="w-1/3 border-r border-gray-200 flex flex-col">
+                {/* Contact List Column */}
+                <div className="w-full md:w-[320px] lg:w-[360px] flex-shrink-0 border-r border-gray-200 flex flex-col">
                     <div className="p-4 border-b">
                          <div className="relative">
                             <input type="text" placeholder="Search contacts..." className="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:ring-2 focus:ring-primary-300" />
@@ -64,26 +65,27 @@ const Messaging: React.FC = () => {
                     </div>
                     <div className="flex-1 overflow-y-auto">
                         {mockProviders.map(provider => (
-                            <div key={provider.id} onClick={() => setSelectedProvider(provider)} className={`flex items-center p-4 cursor-pointer border-l-4 ${selectedProvider.id === provider.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
-                                <img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full" />
-                                <div className="ml-3">
-                                    <p className="font-semibold text-gray-800">{provider.name}</p>
-                                    <p className="text-sm text-gray-500">{provider.specialty}</p>
+                            <div key={provider.id} onClick={() => setSelectedProvider(provider)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedProvider.id === provider.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
+                                <img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full flex-shrink-0" />
+                                <div className="ml-3 flex-grow overflow-hidden">
+                                    <p className="font-semibold text-gray-800 truncate">{provider.name}</p>
+                                    <p className="text-sm text-gray-500 truncate">{provider.specialty}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-                <div className="w-2/3 flex flex-col">
-                    <div className="p-4 border-b flex items-center">
+                {/* Chat Area */}
+                <div className="flex-1 flex flex-col bg-gray-50">
+                    <div className="p-4 border-b flex items-center bg-white">
                          <img src={selectedProvider.avatarUrl} alt={selectedProvider.name} className="w-10 h-10 rounded-full" />
                          <p className="ml-3 font-semibold text-xl text-gray-800">{selectedProvider.name}</p>
                     </div>
-                    <div className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4">
+                    <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4">
                         {messages.map(msg => (
-                             <div key={msg.id} className={`flex ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary-600 text-white' : 'bg-white text-gray-800 shadow-sm'}`}>
-                                    {msg.text}
+                             <div key={msg.id} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-xl p-3 rounded-lg break-words ${msg.senderId === user?.id ? 'bg-primary-600 text-white' : 'bg-white text-gray-800 shadow-sm'}`}>
+                                    <p className="text-sm">{msg.text}</p>
                                 </div>
                             </div>
                         ))}

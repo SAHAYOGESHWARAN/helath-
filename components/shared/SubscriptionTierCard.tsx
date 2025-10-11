@@ -20,7 +20,7 @@ const SubscriptionTierCard: React.FC<SubscriptionTierCardProps> = ({ plan, curre
     const buttonClasses = `
         w-full text-center font-bold py-3 px-4 rounded-lg mt-6 transition-colors text-sm
         ${isCurrent ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 
-         isPopular ? 'bg-tangerine hover:bg-tangerine-dark text-white' : 
+         isPopular ? 'bg-accent hover:bg-accent-dark text-white' : 
          'bg-primary-600 hover:bg-primary-700 text-white'}
     `;
 
@@ -29,7 +29,7 @@ const SubscriptionTierCard: React.FC<SubscriptionTierCardProps> = ({ plan, curre
             <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
                 {isPopular && (
-                    <div className="flex items-center text-xs font-semibold bg-tangerine-light text-tangerine-dark px-3 py-1 rounded-full">
+                    <div className="flex items-center text-xs font-semibold bg-accent-light text-accent-dark px-3 py-1 rounded-full">
                         <StarIcon className="w-4 h-4 mr-1.5" />
                         POPULAR
                     </div>

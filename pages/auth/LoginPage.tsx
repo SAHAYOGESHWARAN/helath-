@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { TangerineIcon } from '../../components/shared/Icons';
+import { NovoPathIcon } from '../../components/shared/Icons';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -15,8 +15,8 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 p-4 animate-fade-in">
       <div className="max-w-md w-full mx-auto">
         <div className="flex justify-center items-center mb-6 space-x-4 animate-slide-in-up" style={{ animationDelay: '100ms' }}>
-          <TangerineIcon className="w-12 h-12" />
-          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Tangerine Health</h1>
+          <NovoPathIcon className="w-12 h-12" />
+          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">NovoPath Medical</h1>
         </div>
         <div 
           className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg animate-slide-in-up"
@@ -53,7 +53,7 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
         <p className="text-center text-gray-400 mt-8 text-xs animate-fade-in" style={{ animationDelay: '400ms' }}>
-          &copy; {new Date().getFullYear()} Tangerine Health. All rights reserved.
+          &copy; {new Date().getFullYear()} NovoPath Medical. All rights reserved.
         </p>
       </div>
     </div>

@@ -39,7 +39,8 @@ export interface Medication {
   prescribedBy: string;
   startDate: string;
   status: 'Active' | 'Inactive';
-  adherence?: { date: string, taken: boolean }[];
+  // FIX: Changed adherence from an array of objects to an optional number to match its usage as a percentage in the dashboard.
+  adherence?: number;
 }
 
 export interface LabResult {

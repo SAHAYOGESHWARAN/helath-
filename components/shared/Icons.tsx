@@ -24,11 +24,9 @@ export const ChartBarIcon: React.FC<{className?: string}> = ({className}) => <Ic
 export const CubeIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></IconWrapper>;
 export const CollectionIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></IconWrapper>;
 export const BriefcaseIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></IconWrapper>;
-export const TangerineIcon: React.FC<{ className?: string }> = ({ className }) => (
+export const NovoPathIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg className={className || "w-10 h-10 text-primary-600"} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"/>
-      <path d="M15.5 11.26L12 9.5V14.5L15.5 12.74C16.1 12.44 16.1 11.56 15.5 11.26Z"/>
-      <path d="M11 8.5V15.5L8.5 14.26C7.9 13.96 7.9 13.08 8.5 12.78L11 11.53V8.5Z"/>
+      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-5 9h2.5l1.5-3 1.5 6 1.5-3H17v2h-2.5l-1.5 3-1.5-6-1.5 3H7v-2z"/>
     </svg>
 );
 export const ClockIcon: React.FC<{className?: string}> = ({className}) => <IconWrapper className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></IconWrapper>;

@@ -21,8 +21,8 @@ const products = [
     name: 'Enterprise', 
     price: 'Custom', 
     features: ['Unlimited patients', 'All Pro features', 'Dedicated Support', 'HIPAA Compliance+', 'SSO Integration'],
-    color: 'bg-tangerine-light/30',
-    buttonColor: 'bg-tangerine'
+    color: 'bg-accent-light/30',
+    buttonColor: 'bg-accent'
   },
 ];
 

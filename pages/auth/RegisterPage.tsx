@@ -1,15 +1,16 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TangerineIcon, ProfileIcon, UsersIcon, BriefcaseIcon, ChevronLeftIcon } from '../../components/shared/Icons';
+import { NovoPathIcon, ProfileIcon, UsersIcon, BriefcaseIcon, ChevronLeftIcon } from '../../components/shared/Icons';
 
 const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
       <div className="max-w-md w-full mx-auto">
         <div className="flex justify-center items-center mb-6 space-x-3">
-          <TangerineIcon />
-          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Tangerine Health</h1>
+          <NovoPathIcon />
+          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">NovoPath Medical</h1>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
           <h2 className="text-2xl font-bold text-center text-gray-700 mb-2">Create Your Account</h2>
@@ -25,7 +26,7 @@ const RegisterPage: React.FC = () => {
             </Link>
             <Link
               to="/register/provider"
-              className="w-full flex items-center justify-center text-white bg-tangerine hover:bg-tangerine-dark focus:ring-4 focus:ring-tangerine-light font-medium rounded-lg text-lg px-5 py-3.5 text-center transition-transform transform hover:scale-105"
+              className="w-full flex items-center justify-center text-white bg-accent hover:bg-accent-dark focus:ring-4 focus:ring-accent-light font-medium rounded-lg text-lg px-5 py-3.5 text-center transition-transform transform hover:scale-105"
             >
               <UsersIcon />
               <span className="ml-3">I am a Provider</span>

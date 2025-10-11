@@ -27,15 +27,21 @@ const healthTrendData = [
     { name: 'Sun', systolic: 118, diastolic: 78, heartRate: 72 },
 ];
 
+const medications: (Medication & { adherence: number })[] = [
+    { id: 'med1', name: 'Lisinopril 10mg', dosage: '1 tablet', frequency: 'Once daily', prescribedBy: 'Dr. Smith', startDate: '2023-01-15', status: 'Active', adherence: 95 },
+    { id: 'med2', name: 'Atorvastatin 20mg', dosage: '1 tablet', frequency: 'Once daily at bedtime', prescribedBy: 'Dr. Smith', startDate: '2023-01-15', status: 'Active', adherence: 89 },
+];
+
+const activeMedications = medications.filter(m => m.status === 'Active');
+const overallAdherence = activeMedications.length > 0 
+  ? Math.round(activeMedications.reduce((sum, med) => sum + med.adherence, 0) / activeMedications.length) 
+  : 0;
+
 const medicationAdherence = {
-    percentage: 92,
-    data: [{ name: 'Adherence', value: 92 }]
+    percentage: overallAdherence,
+    data: [{ name: 'Adherence', value: overallAdherence }]
 };
 
-const medications: Medication[] = [
-    { id: 'med1', name: 'Lisinopril 10mg', dosage: '1 tablet', frequency: 'Once daily', prescribedBy: 'Dr. Smith', startDate: '2023-01-15', status: 'Active' },
-    { id: 'med2', name: 'Atorvastatin 20mg', dosage: '1 tablet', frequency: 'Once daily at bedtime', prescribedBy: 'Dr. Smith', startDate: '2023-01-15', status: 'Active' },
-];
 
 const recentLabResult: LabResult = {
     id: 'lab1', testName: 'Lipid Panel', date: '2024-08-10', status: 'Final',
@@ -83,6 +89,32 @@ const HealthGoalItem: React.FC<{ goal: HealthGoal }> = ({ goal }) => {
         </div>
     );
 };
+
+const MedicationAdherenceItem: React.FC<{ medication: Medication & { adherence: number } }> = ({ medication }) => {
+    const getAdherenceColor = (adherence: number) => {
+        if (adherence >= 90) return 'bg-emerald-500';
+        if (adherence >= 70) return 'bg-yellow-500';
+        return 'bg-red-500';
+    };
+     const getAdherenceTextColor = (adherence: number) => {
+        if (adherence >= 90) return 'text-emerald-500';
+        if (adherence >= 70) return 'text-yellow-500';
+        return 'text-red-500';
+    };
+
+    return (
+        <div>
+            <div className="flex justify-between items-baseline mb-1">
+                <span className="text-sm font-medium text-gray-700 truncate" title={medication.name}>{medication.name}</span>
+                <span className={`text-sm font-bold ${getAdherenceTextColor(medication.adherence)}`}>{medication.adherence}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className={`${getAdherenceColor(medication.adherence)} h-2 rounded-full`} style={{ width: `${medication.adherence}%` }}></div>
+            </div>
+        </div>
+    );
+};
+
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -136,10 +168,10 @@ const PatientDashboard: React.FC = () => {
       <h1 className="text-4xl font-bold text-gray-800 mb-2">Good Morning, {user?.name?.split(' ')[0]}!</h1>
       <p className="text-lg text-gray-500 mb-8">Here's your health summary for today.</p>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-list">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 stagger-list md:items-stretch">
         
         {/* Main Column */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="md:col-span-3 flex flex-col gap-6">
           <Card 
             title="Upcoming Appointment" 
             className="bg-primary-50 border-primary-200" 
@@ -164,8 +196,21 @@ const PatientDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             <Card title="Recent Lab Results" style={{'--stagger-index': 2} as React.CSSProperties}>
+          <Card title="Quick Actions" style={{'--stagger-index': 2} as React.CSSProperties}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
+                  {quickActions.map(action => (
+                      <a href={action.href} key={action.name} className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 transition-colors group">
+                          <div className="p-3 bg-gray-100 group-hover:bg-primary-100 rounded-full text-gray-600 group-hover:text-primary-600 transition-colors">
+                              {action.icon}
+                          </div>
+                          <p className="mt-2 text-sm font-semibold text-gray-700">{action.name}</p>
+                      </a>
+                  ))}
+              </div>
+          </Card>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+             <Card title="Recent Lab Results" style={{'--stagger-index': 3} as React.CSSProperties}>
                 <p className="font-semibold text-gray-800">{recentLabResult.testName}</p>
                 <p className="text-sm text-gray-500 mb-2">on {recentLabResult.date}</p>
                 <div className="bg-emerald-50 text-emerald-800 p-2 rounded-md text-sm text-center">
@@ -173,17 +218,17 @@ const PatientDashboard: React.FC = () => {
                 </div>
                 <a href="#/records" className="text-sm font-semibold text-primary-600 hover:underline mt-4 inline-block w-full text-center">View Full Report &rarr;</a>
              </Card>
-             <Card title="Unread Messages" style={{'--stagger-index': 3} as React.CSSProperties}>
+             <Card title="Unread Messages" style={{'--stagger-index': 4} as React.CSSProperties}>
                 <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-5xl font-bold text-tangerine">{unreadMessages}</p>
+                    <p className="text-5xl font-bold text-accent">{unreadMessages}</p>
                     <p className="text-gray-600 mt-1">messages from your provider</p>
-                    <a href="#/messaging" className="bg-tangerine hover:bg-tangerine-dark text-white font-bold py-2 px-4 rounded-lg mt-4 text-sm">
+                    <a href="#/messaging" className="bg-accent hover:bg-accent-dark text-white font-bold py-2 px-4 rounded-lg mt-4 text-sm">
                         Go to Inbox
                     </a>
                 </div>
              </Card>
-             <Card title="Medication Adherence" style={{'--stagger-index': 4} as React.CSSProperties}>
-                 <div className="relative h-32 w-full flex items-center justify-center">
+             <Card title="Medication Adherence" style={{'--stagger-index': 5} as React.CSSProperties}>
+                 <div className="relative h-28 w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" barSize={12} data={medicationAdherence.data} startAngle={90} endAngle={-270}>
                             <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
@@ -192,14 +237,20 @@ const PatientDashboard: React.FC = () => {
                     </ResponsiveContainer>
                     <div className="absolute flex flex-col items-center justify-center">
                         <span className="text-3xl font-bold text-gray-800">{medicationAdherence.percentage}%</span>
-                        <span className="text-xs text-gray-500">Last 30 days</span>
+                        <span className="text-xs text-gray-500">Overall</span>
                     </div>
                  </div>
-                 <a href="#/medications" className="text-sm font-semibold text-primary-600 hover:underline mt-2 inline-block w-full text-center">Manage Meds &rarr;</a>
+                 <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-600 mb-3 text-center">Adherence by Medication</h4>
+                    <div className="space-y-3">
+                        {activeMedications.map(med => <MedicationAdherenceItem key={med.id} medication={med} />)}
+                    </div>
+                 </div>
+                 <a href="#/medications" className="text-sm font-semibold text-primary-600 hover:underline mt-4 inline-block w-full text-center">Manage Meds &rarr;</a>
             </Card>
           </div>
           
-          <Card title="Health Trends (Last 7 Days)" style={{'--stagger-index': 5} as React.CSSProperties}>
+          <Card title="Health Trends (Last 7 Days)" style={{'--stagger-index': 6} as React.CSSProperties}>
              <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={healthTrendData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
@@ -210,7 +261,7 @@ const PatientDashboard: React.FC = () => {
                     <Legend wrapperStyle={{ paddingTop: '20px' }}/>
                     <Line yAxisId="left" type="monotone" dataKey="systolic" name="Systolic BP" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                     <Line yAxisId="left" type="monotone" dataKey="diastolic" name="Diastolic BP" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="heartRate" name="Heart Rate" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="heartRate" name="Heart Rate" stroke="#14b8a6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                 </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -218,20 +269,7 @@ const PatientDashboard: React.FC = () => {
         </div>
 
         {/* Side Column */}
-        <div className="lg:col-span-1 flex flex-col gap-6">
-            <Card title="Quick Actions" style={{'--stagger-index': 6} as React.CSSProperties}>
-              <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 text-center">
-                  {quickActions.map(action => (
-                      <a href={action.href} key={action.name} className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 transition-colors group">
-                          <div className="p-3 bg-gray-100 group-hover:bg-primary-100 rounded-full text-gray-600 group-hover:text-primary-600 transition-colors">
-                              {action.icon}
-                          </div>
-                          <p className="mt-2 text-sm font-semibold text-gray-700">{action.name}</p>
-                      </a>
-                  ))}
-              </div>
-            </Card>
-
+        <div className="md:col-span-2 flex flex-col gap-6">
             <Card title="Today's Medications" style={{ '--stagger-index': 7 } as React.CSSProperties}>
                 <div className="space-y-4">
                 {medications.map(med => (
@@ -285,7 +323,7 @@ const PatientDashboard: React.FC = () => {
                         <CollapsibleSection title="Hospitalizations" isOpen={openSections.hospitalizations} onToggle={() => toggleSection('hospitalizations')}>
                             <ul className="space-y-3 pt-2">
                                 {hospitalizations.map(hosp => (
-                                <li key={hosp.id} className="p-3 bg-gray-50 border-l-4 border-tangerine rounded-r-md">
+                                <li key={hosp.id} className="p-3 bg-gray-50 border-l-4 border-accent rounded-r-md">
                                     <p className="font-semibold text-gray-800 text-sm">{hosp.reason}</p>
                                     <p className="text-xs text-gray-500 mt-1 flex items-center">
                                     <CalendarIcon className="w-4 h-4 mr-1.5 text-gray-400" />

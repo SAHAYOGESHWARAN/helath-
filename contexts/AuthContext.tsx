@@ -13,10 +13,21 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_USERS: Record<UserRole, User> = {
-  [UserRole.PATIENT]: { id: 'pat1', name: 'John Doe', email: 'john.doe@email.com', role: UserRole.PATIENT, avatarUrl: 'https://picsum.photos/seed/patient/100', dob: '1985-05-20', phone: '555-123-4567', address: '123 Health St, Wellness City, USA' },
-  [UserRole.PROVIDER]: { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider/100', phone: '555-987-6543', specialty: 'Cardiology' },
-  [UserRole.ADMIN]: { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/admin/100', phone: '555-555-1212' },
+const MOCK_USERS: Record<UserRole, User[]> = {
+  [UserRole.PATIENT]: [
+    { id: 'pat1', name: 'John Doe', email: 'john.doe@email.com', role: UserRole.PATIENT, avatarUrl: 'https://picsum.photos/seed/patient1/100', dob: '1985-05-20', phone: '555-123-4567', address: '123 Health St, Wellness City, USA' },
+    { id: 'pat2', name: 'Alice Johnson', email: 'alice.j@email.com', role: UserRole.PATIENT, avatarUrl: 'https://picsum.photos/seed/patient2/100', dob: '1992-11-12', phone: '555-234-5678', address: '456 Oak Ave, Healing Town, USA' },
+    { id: 'pat3', name: 'Charlie Brown', email: 'charlie.b@email.com', role: UserRole.PATIENT, avatarUrl: 'https://picsum.photos/seed/patient3/100', dob: '1998-09-30', phone: '555-345-6789', address: '789 Pine Ln, Remedy Village, USA' },
+  ],
+  [UserRole.PROVIDER]: [
+    { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider1/100', phone: '555-987-6543', specialty: 'Cardiology' },
+    { id: 'pro2', name: 'Dr. David Chen', email: 'david.chen@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider2/100', phone: '555-876-5432', specialty: 'Dermatology' },
+    { id: 'pro3', name: 'Dr. Emily White', email: 'emily.white@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider3/100', phone: '555-765-4321', specialty: 'Pediatrics' },
+  ],
+  [UserRole.ADMIN]: [
+    { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/admin1/100', phone: '555-555-1212' },
+    { id: 'adm2', name: 'Maria Garcia', email: 'maria.g@email.com', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/admin2/100', phone: '555-555-2121' },
+  ],
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -26,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Simulate checking for a logged-in user in session storage
     try {
-      const storedUser = sessionStorage.getItem('tangerine-user');
+      const storedUser = sessionStorage.getItem('novopath-user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
@@ -40,9 +51,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = useCallback((role: UserRole) => {
     setLoading(true);
     setTimeout(() => {
-      const userToLogin = MOCK_USERS[role];
+      const userToLogin = MOCK_USERS[role][0];
       setUser(userToLogin);
-      sessionStorage.setItem('tangerine-user', JSON.stringify(userToLogin));
+      sessionStorage.setItem('novopath-user', JSON.stringify(userToLogin));
       setLoading(false);
     }, 500);
   }, []);
@@ -57,14 +68,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         avatarUrl: `https://picsum.photos/seed/${userData.name}/100`,
       };
       setUser(newUser);
-      sessionStorage.setItem('tangerine-user', JSON.stringify(newUser));
+      sessionStorage.setItem('novopath-user', JSON.stringify(newUser));
       setLoading(false);
     }, 500);
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
-    sessionStorage.removeItem('tangerine-user');
+    sessionStorage.removeItem('novopath-user');
   }, []);
 
   const updateUser = useCallback((updatedData: Partial<User>) => {
@@ -73,7 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return null;
       }
       const newUser = { ...prevUser, ...updatedData };
-      sessionStorage.setItem('tangerine-user', JSON.stringify(newUser));
+      sessionStorage.setItem('novopath-user', JSON.stringify(newUser));
       return newUser;
     });
   }, []);

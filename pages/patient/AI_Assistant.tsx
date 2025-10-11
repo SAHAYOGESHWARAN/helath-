@@ -64,7 +64,7 @@ const AI_Assistant: React.FC = () => {
     setLoading(true);
 
     try {
-      const systemInstruction = `You are Tangerine Health's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data or by searching the web. Current user: ${user?.name}. Today's date: ${new Date().toLocaleDateString()}.
+      const systemInstruction = `You are NovoPath Medical's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data or by searching the web. Current user: ${user?.name}. Today's date: ${new Date().toLocaleDateString()}.
       
       Available (mock) patient data:
       - Upcoming Appointment: Annual Check-up with Dr. Jane Smith in 3 days.
@@ -121,7 +121,7 @@ const AI_Assistant: React.FC = () => {
   return (
     <div>
       <div className="flex items-center mb-6">
-        <SparklesIcon className="w-8 h-8 text-tangerine mr-3"/>
+        <SparklesIcon className="w-8 h-8 text-accent mr-3"/>
         <h1 className="text-3xl font-bold text-gray-800">AI Health Assistant</h1>
       </div>
       <Card className="flex flex-col h-[calc(100vh-12rem)] p-0">

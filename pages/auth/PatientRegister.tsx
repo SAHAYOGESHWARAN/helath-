@@ -4,7 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { TangerineIcon, ChevronLeftIcon } from '../../components/shared/Icons';
+import { NovoPathIcon, ChevronLeftIcon } from '../../components/shared/Icons';
 
 const PatientRegisterSchema = Yup.object().shape({
   name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Full name is required'),
@@ -24,7 +24,7 @@ const PatientRegister: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 px-4">
       <div className="max-w-md w-full mx-auto">
         <div className="flex justify-center items-center mb-6 space-x-3">
-          <TangerineIcon />
+          <NovoPathIcon />
           <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Patient Registration</h1>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
