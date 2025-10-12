@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../../components/shared/Card';
 import { User, UserRole } from '../../types';
 import { useApp } from '../../App';
@@ -6,7 +6,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import Modal from '../../components/shared/Modal';
 import { SearchIcon, FilterIcon } from '../../components/shared/Icons';
 
-const mockUsers: User[] = [
+const initialMockUsers: User[] = [
     { id: 'pat1', name: 'John Doe', email: 'john.doe@email.com', role: UserRole.PATIENT, dob: '1985-05-20' },
     { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, specialty: 'Cardiology' },
     { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', role: UserRole.ADMIN },
@@ -17,18 +17,97 @@ const mockUsers: User[] = [
     { id: 'adm2', name: 'Maria Garcia', email: 'maria.g@email.com', role: UserRole.ADMIN },
 ];
 
+const EditUserModal: React.FC<{
+  user: User | null;
+  onClose: () => void;
+  onSave: (updatedUser: User) => void;
+}> = ({ user, onClose, onSave }) => {
+  const [formData, setFormData] = useState<User | null>(null);
+
+  useEffect(() => {
+    setFormData(user);
+  }, [user]);
+
+  if (!user || !formData) return null;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => prev ? { ...prev, [name]: value } : null);
+  };
+  
+  const handleSubmit = () => {
+      if(formData) {
+          onSave(formData);
+      }
+  };
+
+  return (
+    <Modal
+      isOpen={!!user}
+      onClose={onClose}
+      title={`Edit User: ${user.name}`}
+      footer={
+        <>
+          <button onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+          <button onClick={handleSubmit} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">Save Changes</button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Full Name</label>
+          <input
+            id="edit-name"
+            name="name"
+            type="text"
+            value={formData.name}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">Email Address</label>
+          <input
+            id="edit-email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="edit-role" className="block text-sm font-medium text-gray-700">Role</label>
+          <select
+            id="edit-role"
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          >
+            <option value={UserRole.PATIENT}>Patient</option>
+            <option value={UserRole.PROVIDER}>Provider</option>
+            <option value={UserRole.ADMIN}>Admin</option>
+          </select>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 
 const UserManagement: React.FC = () => {
+    const [users, setUsers] = useState<User[]>(initialMockUsers);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('All');
     const { showToast } = useApp();
-    const [modalState, setModalState] = useState<{ isOpen: boolean; user: User | null; action: 'Suspend' | 'Reset Password' | 'Edit' | null }>({ isOpen: false, user: null, action: null });
+    const [modalState, setModalState] = useState<{ isOpen: boolean; user: User | null; action: 'Suspend' | 'Reset Password' | null }>({ isOpen: false, user: null, action: null });
+    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
 
     const handleActionClick = (user: User, action: 'Suspend' | 'Reset Password' | 'Edit') => {
         if (action === 'Edit') {
-             showToast(`Editing user ${user.name}.`, 'info');
-             // In a real app, this would open an edit form/modal.
+             setEditingUser(user);
         } else {
             setModalState({ isOpen: true, user, action });
         }
@@ -37,17 +116,22 @@ const UserManagement: React.FC = () => {
     const handleModalClose = () => {
         setModalState({ isOpen: false, user: null, action: null });
     };
-
+    
     const handleConfirmAction = () => {
         if (modalState.user && modalState.action) {
             showToast(`${modalState.action} action confirmed for ${modalState.user.name}.`, 'success');
-            // In a real app, you'd dispatch the action here (e.g., API call).
         }
         handleModalClose();
     };
 
+    const handleSaveUser = (updatedUser: User) => {
+        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+        setEditingUser(null);
+        showToast(`User ${updatedUser.name} has been updated successfully.`, 'success');
+    };
+
     const filteredAndSortedUsers = useMemo(() => {
-        let filtered = mockUsers.filter(user => {
+        let filtered = users.filter(user => {
             const matchesRole = roleFilter === 'All' || user.role === roleFilter;
             const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesRole && matchesSearch;
@@ -69,7 +153,7 @@ const UserManagement: React.FC = () => {
         }
         
         return filtered;
-    }, [searchTerm, roleFilter, sortConfig]);
+    }, [users, searchTerm, roleFilter, sortConfig]);
 
     const requestSort = (key: keyof User) => {
         let direction: 'asc' | 'desc' = 'asc';
@@ -170,7 +254,7 @@ const UserManagement: React.FC = () => {
                                  'bg-primary-100 text-primary-800'
                                }`}>{user.role}</span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                                 <button onClick={() => handleActionClick(user, 'Edit')} className="text-primary-600 hover:text-primary-900">Edit</button>
                                 <button onClick={() => handleActionClick(user, 'Suspend')} className="text-yellow-600 hover:text-yellow-900">Suspend</button>
                                 <button onClick={() => handleActionClick(user, 'Reset Password')} className="text-red-600 hover:text-red-900">Reset Pass</button>
@@ -204,6 +288,12 @@ const UserManagement: React.FC = () => {
         {modalState.action === 'Reset Password' && <p className="text-sm text-gray-500 mt-2">This will send a password reset link to the user's email address.</p>}
         {modalState.action === 'Suspend' && <p className="text-sm text-gray-500 mt-2">This will temporarily prevent the user from logging in.</p>}
       </Modal>
+
+      <EditUserModal 
+        user={editingUser}
+        onClose={() => setEditingUser(null)}
+        onSave={handleSaveUser}
+      />
 
     </div>
   );

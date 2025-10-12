@@ -6,7 +6,7 @@ import {
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { HealthGoal, Medication, LabResult, Surgery, Hospitalization } from '../../types';
-import { CalendarIcon, ClipboardListIcon, CreditCardIcon, DocumentTextIcon, PillIcon, CheckCircleIcon, MessageSquareIcon, ChevronDownIcon } from '../../components/shared/Icons';
+import { CalendarIcon, ClipboardListIcon, CreditCardIcon, DocumentTextIcon, PillIcon, CheckCircleIcon, MessageSquareIcon, ChevronDownIcon, VideoCameraIcon } from '../../components/shared/Icons';
 
 // --- MOCK DATA ---
 const upcomingAppointment = {
@@ -48,8 +48,6 @@ const recentLabResult: LabResult = {
     components: [{ name: 'Total Cholesterol', value: '180 mg/dL', referenceRange: '<200 mg/dL', isAbnormal: false }]
 };
 
-const unreadMessages = 2;
-
 const healthGoals: HealthGoal[] = [
     { id: 'goal1', title: 'Daily Steps', target: 10000, current: 7500, unit: 'steps', deadline: '2024-12-31' },
     { id: 'goal2', title: 'Weekly Exercise', target: 150, current: 90, unit: 'minutes', deadline: '2024-12-31' },
@@ -57,6 +55,7 @@ const healthGoals: HealthGoal[] = [
 
 const quickActions = [
     { name: 'Schedule', icon: <CalendarIcon className="w-6 h-6"/>, href: '#/appointments' },
+    { name: 'Start Consult', icon: <VideoCameraIcon className="w-6 h-6"/>, href: '#/video-consults' },
     { name: 'View Records', icon: <DocumentTextIcon className="w-6 h-6"/>, href: '#/records' },
     { name: 'My Meds', icon: <PillIcon className="w-6 h-6"/>, href: '#/medications' },
     { name: 'Inbox', icon: <MessageSquareIcon className="w-6 h-6"/>, href: '#/messaging' },
@@ -197,7 +196,7 @@ const PatientDashboard: React.FC = () => {
           </Card>
 
           <Card title="Quick Actions" style={{'--stagger-index': 2} as React.CSSProperties}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-center">
                   {quickActions.map(action => (
                       <a href={action.href} key={action.name} className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 transition-colors group">
                           <div className="p-3 bg-gray-100 group-hover:bg-primary-100 rounded-full text-gray-600 group-hover:text-primary-600 transition-colors">
@@ -209,25 +208,24 @@ const PatientDashboard: React.FC = () => {
               </div>
           </Card>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-             <Card title="Recent Lab Results" style={{'--stagger-index': 3} as React.CSSProperties}>
-                <p className="font-semibold text-gray-800">{recentLabResult.testName}</p>
-                <p className="text-sm text-gray-500 mb-2">on {recentLabResult.date}</p>
-                <div className="bg-emerald-50 text-emerald-800 p-2 rounded-md text-sm text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+             <Card title="Recent Lab Result" style={{ '--stagger-index': 3 } as React.CSSProperties}>
+                <p className="font-semibold text-lg text-gray-800">{recentLabResult.testName}</p>
+                <p className="text-sm text-gray-500 mb-3">on {recentLabResult.date}</p>
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    {recentLabResult.components.map((c, i) => (
+                        <div key={i} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">{c.name}:</span>
+                            <span className="font-bold text-gray-800">{c.value}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-3 bg-emerald-50 text-emerald-800 p-2 rounded-md text-sm text-center font-medium">
                     All results within normal range.
                 </div>
                 <a href="#/records" className="text-sm font-semibold text-primary-600 hover:underline mt-4 inline-block w-full text-center">View Full Report &rarr;</a>
-             </Card>
-             <Card title="Unread Messages" style={{'--stagger-index': 4} as React.CSSProperties}>
-                <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-5xl font-bold text-accent">{unreadMessages}</p>
-                    <p className="text-gray-600 mt-1">messages from your provider</p>
-                    <a href="#/messaging" className="bg-accent hover:bg-accent-dark text-white font-bold py-2 px-4 rounded-lg mt-4 text-sm">
-                        Go to Inbox
-                    </a>
-                </div>
-             </Card>
-             <Card title="Medication Adherence" style={{'--stagger-index': 5} as React.CSSProperties}>
+            </Card>
+             <Card title="Medication Adherence" style={{'--stagger-index': 4} as React.CSSProperties}>
                  <div className="relative h-28 w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" barSize={12} data={medicationAdherence.data} startAngle={90} endAngle={-270}>
@@ -250,7 +248,7 @@ const PatientDashboard: React.FC = () => {
             </Card>
           </div>
           
-          <Card title="Health Trends (Last 7 Days)" style={{'--stagger-index': 6} as React.CSSProperties}>
+          <Card title="Health Trends (Last 7 Days)" style={{'--stagger-index': 5} as React.CSSProperties}>
              <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={healthTrendData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />

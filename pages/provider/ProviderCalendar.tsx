@@ -155,6 +155,13 @@ const MonthView: React.FC<{ currentDate: Date; appointments: Appointment[]; onAp
         for (let i = 1; i <= daysInMonth; i++) {
              dayCells.push({ key: `current-${i}`, date: new Date(year, month, i), isCurrentMonth: true });
         }
+        
+        const remainingCells = 7 - (dayCells.length % 7);
+        if (remainingCells < 7) {
+            for (let i = 0; i < remainingCells; i++) {
+                dayCells.push({ key: `next-${i}`, date: null, isCurrentMonth: false });
+            }
+        }
 
         return dayCells;
     }, [currentDate]);
@@ -168,17 +175,17 @@ const MonthView: React.FC<{ currentDate: Date; appointments: Appointment[]; onAp
                     <div key={day} className="py-2 text-center text-xs font-semibold text-gray-500 uppercase">{day}</div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 col-span-7 grid-rows-5 auto-rows-fr">
-                {days.map(({ key, date }) => {
+            <div className="grid grid-cols-7 col-span-7 auto-rows-fr">
+                {days.map(({ key, date }, index) => {
                     const isToday = date && date.toDateString() === today.toDateString();
                     const dayAppointments = date 
                         ? appointments.filter(a => a.start.toDateString() === date.toDateString())
                         : [];
 
                     return (
-                        <div key={key} className="p-2 border-t border-r border-gray-200 flex flex-col min-h-[120px]">
+                        <div key={key} className={`p-2 border-t border-gray-200 flex flex-col min-h-[120px] ${index % 7 !== 0 ? 'border-l' : ''} ${!date ? 'bg-gray-50' : ''}`}>
                             {date && (
-                                <span className={`self-start text-sm font-medium mb-1 w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-tangerine text-white' : 'text-gray-700'}`}>
+                                <span className={`self-start text-sm font-medium mb-1 w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary-600 text-white' : 'text-gray-700'}`}>
                                     {date.getDate()}
                                 </span>
                             )}
@@ -206,16 +213,17 @@ const TimeGridView: React.FC<{ dates: Date[]; appointments: Appointment[]; onApp
 
     const getPositionAndHeight = (start: Date, end: Date) => {
         const top = (start.getHours() * 60 + start.getMinutes()) / (24 * 60) * 100;
-        const height = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) * 100;
-        return { top: `${top}%`, height: `${height}%` };
+        const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+        const height = (durationMinutes / (24 * 60)) * 100;
+        return { top: `${top}%`, height: `${Math.max(height, 2)}%` }; // Min height for visibility
     };
 
     return (
         <div className="flex-1 flex overflow-auto">
-            <div className="w-16 border-r border-gray-200">
+            <div className="w-16 border-r border-gray-200 text-right">
                 {hours.map(hour => (
-                    <div key={hour} className="h-24 flex items-start justify-end pr-2 pt-1">
-                        <span className="text-xs text-gray-500">{hour === 0 ? '' : `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'AM' : 'PM'}`}</span>
+                    <div key={hour} className="h-24 -mt-3 pr-2 pt-1 relative">
+                        {hour > 0 && <span className="text-xs text-gray-500">{`${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'AM' : 'PM'}`}</span>}
                     </div>
                 ))}
             </div>
@@ -232,11 +240,11 @@ const TimeGridView: React.FC<{ dates: Date[]; appointments: Appointment[]; onApp
                                 return (
                                     <div
                                         key={appt.id}
-                                        className="absolute left-2 right-2 p-2 bg-primary-100 border-l-4 border-primary-500 rounded-r-md cursor-pointer hover:bg-primary-200 transition-colors"
+                                        className="absolute left-2 right-2 p-2 bg-primary-100 border-l-4 border-primary-500 rounded-r-md cursor-pointer hover:bg-primary-200 transition-colors flex flex-col overflow-hidden"
                                         style={{ top, height, minHeight: '24px' }}
                                         onClick={() => onAppointmentClick(appt)}
                                     >
-                                        <p className="text-xs font-semibold text-primary-800">{appt.title}</p>
+                                        <p className="text-xs font-semibold text-primary-800 truncate">{appt.title}</p>
                                         <p className="text-xs text-primary-600">
                                             {appt.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {appt.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>

@@ -16,9 +16,19 @@ const NotificationSettings = () => {
         promotions: false,
     });
 
+    const [reminderTimings, setReminderTimings] = useState({
+        twentyFourHours: true,
+        oneHour: true,
+    });
+
     const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNotifications({ ...notifications, [e.target.name]: e.target.checked });
     };
+
+    const handleReminderToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setReminderTimings({ ...reminderTimings, [e.target.name]: e.target.checked });
+    };
+
 
     return (
         <div className="space-y-4">
@@ -49,6 +59,35 @@ const NotificationSettings = () => {
                     <p className="text-sm text-gray-500">Receive updates about new services and offers.</p>
                 </div>
                 <ToggleSwitch name="promotions" checked={notifications.promotions} onChange={handleToggle} />
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="font-semibold text-gray-800">Reminder Timing</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                    Choose when to be reminded about upcoming appointments.
+                </p>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                            <p className="font-medium text-gray-800">24 hours before</p>
+                        </div>
+                        <ToggleSwitch 
+                            name="twentyFourHours" 
+                            checked={reminderTimings.twentyFourHours} 
+                            onChange={handleReminderToggle} 
+                        />
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                            <p className="font-medium text-gray-800">1 hour before</p>
+                        </div>
+                        <ToggleSwitch 
+                            name="oneHour" 
+                            checked={reminderTimings.oneHour} 
+                            onChange={handleReminderToggle} 
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     );

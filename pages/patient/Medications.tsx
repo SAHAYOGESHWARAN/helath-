@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
@@ -41,6 +40,7 @@ const MedicationCard: React.FC<{ med: Medication, onRequestRefill: (med: Medicat
 const Medications: React.FC = () => {
     const [filter, setFilter] = useState<'Active' | 'Inactive'>('Active');
     const [refillModal, setRefillModal] = useState<{ isOpen: boolean; med: Medication | null }>({isOpen: false, med: null});
+    const [takenMeds, setTakenMeds] = useState<Set<string>>(new Set());
     const { showToast } = useApp();
 
     const filteredMeds = useMemo(() => mockMedications.filter(m => m.status === filter), [filter]);
@@ -48,6 +48,11 @@ const Medications: React.FC = () => {
     const handleRefillRequest = () => {
         showToast(`Refill requested for ${refillModal.med?.name}!`, 'success');
         setRefillModal({ isOpen: false, med: null });
+    };
+
+    const handleMarkAsTaken = (medId: string, medName: string) => {
+        setTakenMeds(prev => new Set(prev).add(medId));
+        showToast(`${medName} logged as taken.`, 'success');
     };
 
     return (
@@ -84,18 +89,25 @@ const Medications: React.FC = () => {
                      </Card>
                      <Card title="Log Today's Doses">
                         <div className="space-y-4">
-                           {mockMedications.filter(m => m.status === 'Active').map(med => (
-                               <div key={med.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <div>
-                                        <p className="font-semibold">{med.name}</p>
-                                        <p className="text-sm text-gray-500">Take {med.frequency.toLowerCase()}</p>
-                                    </div>
-                                    <button className="flex items-center text-sm font-medium text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-full">
-                                        <CheckCircleIcon className="w-5 h-5 mr-1.5" />
-                                        Mark as Taken
-                                    </button>
-                               </div>
-                           ))}
+                           {mockMedications.filter(m => m.status === 'Active').map(med => {
+                               const isTaken = takenMeds.has(med.id);
+                               return (
+                                   <div key={med.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p className={`font-semibold ${isTaken ? 'text-gray-500 line-through' : ''}`}>{med.name}</p>
+                                            <p className="text-sm text-gray-500">Take {med.frequency.toLowerCase()}</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleMarkAsTaken(med.id, med.name)}
+                                            disabled={isTaken}
+                                            className="flex items-center text-sm font-medium text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-full disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <CheckCircleIcon className="w-5 h-5 mr-1.5" />
+                                            {isTaken ? 'Taken' : 'Mark as Taken'}
+                                        </button>
+                                   </div>
+                               );
+                           })}
                         </div>
                      </Card>
                 </div>

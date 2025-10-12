@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { ProgressNote } from '../../types';
 import { SearchIcon, PencilAltIcon } from '../../components/shared/Icons';
+import { useApp } from '../../App';
 
 const mockNotes: ProgressNote[] = [
     { id: 'note1', patientId: 'p1', patientName: 'John Doe', date: '2024-08-15', status: 'Signed', content: { subjective: 'Patient reports feeling well.', objective: 'BP 120/80, HR 72.', assessment: 'Stable.', plan: 'Continue current medications.' } },
@@ -82,6 +82,7 @@ const ProgressNotes: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'All' | 'Draft' | 'Pending Signature' | 'Signed'>('All');
     const [isEditing, setIsEditing] = useState(false);
+    const { showToast } = useApp();
 
     const filteredNotes = useMemo(() =>
         notes.filter(note => {
@@ -93,16 +94,42 @@ const ProgressNotes: React.FC = () => {
     );
 
     const handleSaveNote = (updatedNote: ProgressNote) => {
-        setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
+        const isNew = !notes.some(n => n.id === updatedNote.id);
+        if (isNew) {
+            setNotes(prev => [updatedNote, ...prev.filter(n => n.id !== updatedNote.id)]);
+        } else {
+            setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
+        }
         setSelectedNote(updatedNote);
         setIsEditing(false);
+        showToast(`Note for ${updatedNote.patientName} saved successfully.`, 'success');
+    };
+
+    const handleCreateNewNote = () => {
+        if (!selectedNote) {
+            showToast('Please select a patient from the list to create a new note.', 'info');
+            return;
+        }
+
+        const newNote: ProgressNote = {
+            id: `note_${Date.now()}`,
+            patientId: selectedNote.patientId,
+            patientName: selectedNote.patientName,
+            date: new Date().toISOString().split('T')[0],
+            status: 'Draft',
+            content: { subjective: '', objective: '', assessment: '', plan: '' },
+        };
+        
+        setNotes(prev => [newNote, ...prev]);
+        setSelectedNote(newNote); // Select the new note immediately
+        setIsEditing(true);
     };
     
   return (
     <div>
         <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800">Progress Notes</h1>
-             <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
+             <button onClick={handleCreateNewNote} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
                 <PencilAltIcon className="w-5 h-5"/>
                 <span>Create New Note</span>
             </button>

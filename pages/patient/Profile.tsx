@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { VideoCameraIcon } from '../../components/shared/Icons';
+import { useApp } from '../../App';
+import { VideoCameraIcon, MailIcon, DeviceMobileIcon, CalendarIcon, HomeIcon, ProfileIcon as UserIcon } from '../../components/shared/Icons';
 
 // Modal Component for updating profile picture
 const ProfilePictureModal: React.FC<{
@@ -120,7 +122,7 @@ const ProfilePictureModal: React.FC<{
                 Upload a Photo
               </button>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-              <button onClick={startCamera} className="w-full text-white bg-tangerine hover:bg-tangerine-dark font-medium rounded-lg text-lg px-5 py-3.5 text-center">
+              <button onClick={startCamera} className="w-full text-white bg-emerald-500 hover:bg-emerald-600 font-medium rounded-lg text-lg px-5 py-3.5 text-center">
                 Use Camera
               </button>
             </div>
@@ -146,20 +148,32 @@ const ProfilePictureModal: React.FC<{
 
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
+  const { showToast } = useApp();
+  const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
-    dob: '1985-05-20',
-    phone: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
+    dob: '',
+    phone: '',
+    address: '',
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
+  const resetFormData = useCallback(() => {
     if (user) {
-      setProfileData(prev => ({ ...prev, name: user.name, email: user.email }));
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        dob: user.dob || '',
+        phone: user.phone || '',
+        address: user.address || '',
+      });
     }
   }, [user]);
+
+  useEffect(() => {
+    resetFormData();
+  }, [resetFormData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -168,12 +182,20 @@ const Profile: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Profile updated successfully!');
+    updateUser(profileData);
+    showToast('Profile updated successfully!', 'success');
+    setIsEditing(false);
+  };
+  
+  const handleCancel = () => {
+    resetFormData();
+    setIsEditing(false);
   };
 
   const handleSavePicture = (imageDataUrl: string) => {
     if (user) {
       updateUser({ avatarUrl: imageDataUrl });
+      showToast('Profile picture updated!', 'success');
       setIsModalOpen(false);
     }
   };
@@ -181,6 +203,30 @@ const Profile: React.FC = () => {
   if (!user) {
     return null;
   }
+  
+  const InfoField: React.FC<{ icon: React.ReactNode; label: string; value?: string; }> = ({ icon, label, value }) => (
+    <div>
+        <label className="block text-sm font-medium text-gray-500">{label}</label>
+        <div className="mt-1 flex items-center space-x-3">
+            {icon}
+            <p className="text-gray-800">{value || 'Not set'}</p>
+        </div>
+    </div>
+  );
+
+  const EditField: React.FC<{ label: string; name: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string }> = ({ label, name, value, onChange, type = 'text' }) => (
+     <div>
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
+        <input
+            type={type}
+            name={name}
+            id={name}
+            value={value}
+            onChange={onChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+        />
+     </div>
+  );
 
   return (
     <div>
@@ -208,71 +254,35 @@ const Profile: React.FC = () => {
         </div>
         <div className="md:col-span-2">
           <Card title="Personal Information">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  value={profileData.name}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
+            {isEditing ? (
+              <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
+                <EditField label="Full Name" name="name" value={profileData.name} onChange={handleInputChange} />
+                <EditField label="Email Address" name="email" value={profileData.email} onChange={handleInputChange} type="email" />
+                <EditField label="Date of Birth" name="dob" value={profileData.dob} onChange={handleInputChange} type="date" />
+                <EditField label="Phone Number" name="phone" value={profileData.phone} onChange={handleInputChange} type="tel" />
+                <EditField label="Address" name="address" value={profileData.address} onChange={handleInputChange} />
+                <div className="text-right flex justify-end space-x-3">
+                  <button type="button" onClick={handleCancel} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                  <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-6">
+                <InfoField icon={<UserIcon className="w-5 h-5 text-gray-400" />} label="Full Name" value={profileData.name} />
+                <InfoField icon={<MailIcon className="w-5 h-5 text-gray-400" />} label="Email Address" value={profileData.email} />
+                <InfoField icon={<CalendarIcon className="w-5 h-5 text-gray-400" />} label="Date of Birth" value={profileData.dob} />
+                <InfoField icon={<DeviceMobileIcon className="w-5 h-5 text-gray-400" />} label="Phone Number" value={profileData.phone} />
+                <InfoField icon={<HomeIcon className="w-5 h-5 text-gray-400" />} label="Address" value={profileData.address} />
+                
+                <div className="text-right border-t pt-6 mt-6">
+                  <button onClick={() => setIsEditing(true)} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Edit Profile
+                  </button>
+                </div>
               </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  value={profileData.email}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="dob" className="block text-sm font-medium text-gray-700">Date of Birth</label>
-                <input
-                  type="date"
-                  name="dob"
-                  id="dob"
-                  value={profileData.dob}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  id="phone"
-                  value={profileData.phone}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  id="address"
-                  value={profileData.address}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-              </div>
-              <div className="text-right">
-                <button
-                  type="submit"
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+            )}
           </Card>
         </div>
       </div>

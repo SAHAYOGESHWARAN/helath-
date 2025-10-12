@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { 
-    HomeIcon, CalendarIcon, DocumentTextIcon, UsersIcon, CogIcon, ShieldCheckIcon, ProfileIcon,
+    HomeIcon, CalendarIcon, DocumentTextIcon, UsersIcon, CogIcon, ShieldCheckIcon, ProfileIcon as ProfileNavIcon,
     CreditCardIcon, SparklesIcon, VideoCameraIcon, ClipboardListIcon, PillIcon, ShareIcon,
     CurrencyDollarIcon, ChartBarIcon, CubeIcon, CollectionIcon, BriefcaseIcon, PencilAltIcon, MessageSquareIcon
 } from './components/shared/Icons';
@@ -20,7 +21,7 @@ export const PATIENT_NAV = [
   { name: 'Insurance', href: '/insurance', icon: <ShieldCheckIcon /> },
   { name: 'Subscription', href: '/subscription', icon: <SubscriptionIcon /> },
   { name: 'AI Assistant', href: '/ai-assistant', icon: <SparklesIcon /> },
-  { name: 'Profile', href: '/profile', icon: <ProfileIcon /> },
+  { name: 'Profile', href: '/profile', icon: <ProfileNavIcon /> },
   { name: 'Settings', href: '/settings', icon: <CogIcon /> },
 ];
 
@@ -37,7 +38,7 @@ export const PROVIDER_NAV = [
   { name: 'Billing', href: '/billing', icon: <CurrencyDollarIcon /> },
   { name: 'Subscription', href: '/subscription', icon: <SubscriptionIcon /> },
   { name: 'Reports', href: '/reports', icon: <ChartBarIcon /> },
-  { name: 'Profile', href: '/profile', icon: <ProfileIcon /> },
+  { name: 'Profile', href: '/profile', icon: <ProfileNavIcon /> },
   { name: 'Settings', href: '/settings', icon: <CogIcon /> },
 ];
 

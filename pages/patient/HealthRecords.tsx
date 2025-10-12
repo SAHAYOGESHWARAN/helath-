@@ -57,11 +57,14 @@ const HealthRecords: React.FC = () => {
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card title="Allergies">
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                     {mockAllergies.map(allergy => (
-                        <li key={allergy.id} className="flex justify-between p-2 rounded-md hover:bg-gray-50">
-                            <span>{allergy.name}</span>
-                            <span className="font-medium text-sm text-red-600">{allergy.severity}</span>
+                        <li key={allergy.id} className="p-3 rounded-md hover:bg-gray-50 border border-transparent hover:border-gray-200">
+                            <div className="flex justify-between items-center">
+                                <span className="font-semibold text-gray-800">{allergy.name}</span>
+                                <span className="font-medium text-sm text-red-600">{allergy.severity}</span>
+                            </div>
+                             <p className="text-sm text-gray-500 mt-1">Reaction: {allergy.reaction}</p>
                         </li>
                     ))}
                 </ul>

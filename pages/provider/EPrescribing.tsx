@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Prescription, Patient } from '../../types';
 import { PillIcon, SearchIcon, UsersIcon } from '../../components/shared/Icons';
+import { useApp } from '../../App';
 
 const mockPrescriptions: Prescription[] = [
     { id: 'rx1', patientId: 'p1', patientName: 'John Doe', drug: 'Lisinopril 10mg', dosage: '1 tablet', frequency: 'Once daily', quantity: 30, refills: 2, pharmacy: 'CVS Pharmacy, Anytown', datePrescribed: '2024-08-14', status: 'Sent' },
@@ -14,6 +14,10 @@ const mockPrescriptions: Prescription[] = [
 const mockPatients: Patient[] = [
     { id: 'p1', name: 'John Doe', dob: '1985-05-20', lastSeen: '2024-08-01', status: 'Active' },
     { id: 'p2', name: 'Alice Johnson', dob: '1992-11-12', lastSeen: '2024-07-15', status: 'Active' },
+];
+
+const mockRefillRequests = [
+    { id: 'refill1', patientName: 'John Doe', drug: 'Lisinopril 10mg' },
 ];
 
 const mockDrugs = ['Lisinopril 10mg', 'Amoxicillin 500mg', 'Atorvastatin 20mg', 'Metformin 500mg', 'Albuterol Inhaler'];
@@ -104,12 +108,27 @@ const CreatePrescriptionModal: React.FC<{onClose: () => void, onSave: (rx: Presc
 
 const EPrescribing: React.FC = () => {
     const [prescriptions, setPrescriptions] = useState(mockPrescriptions);
+    const [refillRequests, setRefillRequests] = useState(mockRefillRequests);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { showToast } = useApp();
 
     const handleSave = (newRx: Prescription) => {
         setPrescriptions(prev => [newRx, ...prev]);
         setIsModalOpen(false);
-    }
+        showToast(`Prescription for ${newRx.drug} created successfully.`, 'success');
+    };
+
+    const handleRefillAction = (requestId: string, action: 'Approve' | 'Deny') => {
+        const request = refillRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        setRefillRequests(prev => prev.filter(r => r.id !== requestId));
+        if (action === 'Approve') {
+            showToast(`Refill for ${request.drug} approved.`, 'success');
+        } else {
+            showToast(`Refill for ${request.drug} denied.`, 'info');
+        }
+    };
 
   return (
     <div>
@@ -124,14 +143,20 @@ const EPrescribing: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <Card title="Pending Refill Requests" className="lg:col-span-1">
                 <div className="space-y-3">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="font-semibold">John Doe</p>
-                        <p className="text-sm text-gray-600">Lisinopril 10mg</p>
-                        <div className="flex justify-end space-x-2 mt-1">
-                            <button className="text-xs font-bold text-red-600">Deny</button>
-                            <button className="text-xs font-bold text-emerald-600">Approve</button>
-                        </div>
-                    </div>
+                    {refillRequests.length > 0 ? (
+                        refillRequests.map(req => (
+                            <div key={req.id} className="p-3 bg-gray-50 rounded-lg">
+                                <p className="font-semibold">{req.patientName}</p>
+                                <p className="text-sm text-gray-600">{req.drug}</p>
+                                <div className="flex justify-end space-x-2 mt-1">
+                                    <button onClick={() => handleRefillAction(req.id, 'Deny')} className="text-xs font-bold text-red-600 hover:underline">Deny</button>
+                                    <button onClick={() => handleRefillAction(req.id, 'Approve')} className="text-xs font-bold text-emerald-600 hover:underline">Approve</button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">No pending requests.</p>
+                    )}
                 </div>
             </Card>
             <div className="lg:col-span-2">

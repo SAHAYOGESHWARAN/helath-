@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Patient } from '../../types';
+import { useApp } from '../../App';
 
 const mockPatients: (Patient & { vitals?: { bp: string; hr: number; bmi: number }})[] = [
     { id: 'p1', name: 'John Doe', dob: '1985-05-20', lastSeen: '2024-08-01', status: 'Active', vitals: { bp: '120/80', hr: 72, bmi: 24.5 } },
@@ -16,6 +17,13 @@ const getStatusColor = (status: 'Active' | 'Inactive') => {
 
 
 const PatientSnapshotModal: React.FC<{ patient: Patient & { vitals?: any }, onClose: () => void }> = ({ patient, onClose }) => {
+    const { showToast } = useApp();
+
+    const handleViewChart = () => {
+        showToast(`Navigating to full chart for ${patient.name}... (mock)`, 'info');
+        onClose();
+    };
+    
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in-up">
@@ -64,7 +72,7 @@ const PatientSnapshotModal: React.FC<{ patient: Patient & { vitals?: any }, onCl
                      </div>
                 </div>
                 <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end">
-                    <button onClick={onClose} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">
+                    <button onClick={handleViewChart} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">
                         View Full Chart
                     </button>
                 </div>
@@ -92,13 +100,20 @@ const PatientManagement: React.FC = () => {
 
         if (sortConfig !== null) {
             filtered.sort((a, b) => {
-                if (a[sortConfig.key] < b[sortConfig.key]) {
-                    return sortConfig.direction === 'asc' ? -1 : 1;
+                const aVal = a[sortConfig.key];
+                const bVal = b[sortConfig.key];
+
+                let comparison = 0;
+                if (sortConfig.key === 'lastSeen' || sortConfig.key === 'dob') {
+                    // Date comparison
+                    comparison = new Date(aVal).getTime() - new Date(bVal).getTime();
+                } else {
+                    // String/other comparison
+                    if (aVal < bVal) comparison = -1;
+                    if (aVal > bVal) comparison = 1;
                 }
-                if (a[sortConfig.key] > b[sortConfig.key]) {
-                    return sortConfig.direction === 'asc' ? 1 : -1;
-                }
-                return 0;
+                
+                return sortConfig.direction === 'asc' ? comparison : -comparison;
             });
         }
         return filtered;
