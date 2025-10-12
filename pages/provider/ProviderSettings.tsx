@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { useApp } from '../../App';
+import { SpinnerIcon } from '../../components/shared/Icons';
 
 const ProviderSettings: React.FC = () => {
     const { showToast } = useApp();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [notifications, setNotifications] = useState({
         newAppointments: true,
         appointmentCancellations: true,
@@ -20,7 +21,13 @@ const ProviderSettings: React.FC = () => {
     };
 
     const handleSave = () => {
-        showToast('Settings saved successfully!', 'success');
+        setIsSubmitting(true);
+        setTimeout(() => {
+            // In a real app, this would call a context function `updateProviderSettings(settings)`
+            console.log("Saving settings:", notifications);
+            showToast('Settings saved successfully!', 'success');
+            setIsSubmitting(false);
+        }, 1000);
     };
 
     return (
@@ -30,22 +37,10 @@ const ProviderSettings: React.FC = () => {
             <div className="space-y-8 max-w-3xl mx-auto">
                 <Card title="Notification Settings">
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">New appointment bookings</p>
-                            <ToggleSwitch name="newAppointments" checked={notifications.newAppointments} onChange={handleNotificationChange} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">Appointment cancellations</p>
-                            <ToggleSwitch name="appointmentCancellations" checked={notifications.appointmentCancellations} onChange={handleNotificationChange} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">New patient messages</p>
-                            <ToggleSwitch name="newMessages" checked={notifications.newMessages} onChange={handleNotificationChange} />
-                        </div>
-                         <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">Prescription refill requests</p>
-                            <ToggleSwitch name="refillRequests" checked={notifications.refillRequests} onChange={handleNotificationChange} />
-                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>New appointment bookings</p><ToggleSwitch name="newAppointments" checked={notifications.newAppointments} onChange={handleNotificationChange} /></div>
+                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>Appointment cancellations</p><ToggleSwitch name="appointmentCancellations" checked={notifications.appointmentCancellations} onChange={handleNotificationChange} /></div>
+                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>New patient messages</p><ToggleSwitch name="newMessages" checked={notifications.newMessages} onChange={handleNotificationChange} /></div>
+                         <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>Prescription refill requests</p><ToggleSwitch name="refillRequests" checked={notifications.refillRequests} onChange={handleNotificationChange} /></div>
                     </div>
                 </Card>
 
@@ -58,7 +53,9 @@ const ProviderSettings: React.FC = () => {
                 </Card>
 
                 <div className="flex justify-end">
-                    <button onClick={handleSave} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-lg">Save All Settings</button>
+                    <button onClick={handleSave} disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-lg w-48 flex justify-center items-center">
+                        {isSubmitting ? <SpinnerIcon/> : 'Save All Settings'}
+                    </button>
                 </div>
             </div>
         </div>

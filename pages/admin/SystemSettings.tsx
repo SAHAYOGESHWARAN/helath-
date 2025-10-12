@@ -1,25 +1,27 @@
-
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { useApp } from '../../App';
+import { useAuth } from '../../hooks/useAuth';
+import { SpinnerIcon } from '../../components/shared/Icons';
 
 const SystemSettings: React.FC = () => {
     const { showToast } = useApp();
-    const [settings, setSettings] = useState({
-        maintenanceMode: false,
-        newPatientRegistrations: true,
-        newProviderRegistrations: true,
-        apiStatus: 'Operational',
-    });
+    const { systemSettings, updateSystemSettings } = useAuth();
+    const [settings, setSettings] = useState(systemSettings);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSettings(s => ({ ...s, [e.target.name]: e.target.checked }));
     };
 
     const handleSave = () => {
-        showToast('System settings have been updated!', 'success');
+        setIsSubmitting(true);
+        updateSystemSettings(settings).then(() => {
+            showToast('System settings have been updated!', 'success');
+            setIsSubmitting(false);
+        });
     };
 
     return (
@@ -48,15 +50,11 @@ const SystemSettings: React.FC = () => {
                             </div>
                             <ToggleSwitch name="maintenanceMode" checked={settings.maintenanceMode} onChange={handleChange} />
                         </div>
-                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50">
-                            <p className="font-medium text-gray-700">API Status</p>
-                            <p className="font-bold text-emerald-600">{settings.apiStatus}</p>
-                        </div>
                     </div>
                 </Card>
                 <div className="flex justify-end">
-                    <button onClick={handleSave} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-lg">
-                        Save System Settings
+                    <button onClick={handleSave} disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-lg w-48 flex items-center justify-center">
+                        {isSubmitting ? <SpinnerIcon/> : 'Save System Settings'}
                     </button>
                 </div>
             </div>

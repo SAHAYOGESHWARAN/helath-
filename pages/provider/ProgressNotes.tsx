@@ -1,15 +1,11 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { ProgressNote } from '../../types';
 import Modal from '../../components/shared/Modal';
-
-const mockNotes: ProgressNote[] = [
-  { id: 'pn1', patientId: 'p1', patientName: 'John Doe', date: '2024-08-01', status: 'Signed', content: { subjective: 'Patient reports feeling well.', objective: 'Vitals stable.', assessment: 'Stable hypertension.', plan: 'Continue current medication.' } },
-  { id: 'pn2', patientId: 'p2', patientName: 'Alice Johnson', date: '2024-07-15', status: 'Pending Signature', content: { subjective: 'Follow-up visit.', objective: 'Blood pressure 110/70.', assessment: 'Condition improving.', plan: 'Follow up in 3 months.' } },
-  { id: 'pn3', patientId: 'p4', patientName: 'Charlie Brown', date: '2024-08-10', status: 'Draft', content: { subjective: 'Patient complains of cough.', objective: '', assessment: '', plan: '' } },
-];
+import { useAuth } from '../../hooks/useAuth';
+import { useApp } from '../../App';
+import { SpinnerIcon } from '../../components/shared/Icons';
 
 const getStatusPill = (status: ProgressNote['status']) => {
     switch (status) {
@@ -19,14 +15,17 @@ const getStatusPill = (status: ProgressNote['status']) => {
     }
 };
 
-const NoteEditorModal: React.FC<{ note: ProgressNote | null, onClose: () => void, onSave: (note: ProgressNote) => void }> = ({ note, onClose, onSave }) => {
+const NoteEditorModal: React.FC<{ note: Partial<ProgressNote> | null, onClose: () => void, onSave: (note: Partial<ProgressNote>) => void, isSubmitting: boolean }> = ({ note, onClose, onSave, isSubmitting }) => {
     const [content, setContent] = useState(note?.content || { subjective: '', objective: '', assessment: '', plan: '' });
+    
+    useEffect(() => {
+        setContent(note?.content || { subjective: '', objective: '', assessment: '', plan: '' });
+    }, [note]);
 
     if (!note) return null;
 
     const handleSave = () => {
         onSave({ ...note, content });
-        onClose();
     };
 
     return (
@@ -35,33 +34,48 @@ const NoteEditorModal: React.FC<{ note: ProgressNote | null, onClose: () => void
                 {Object.keys(content).map((key) => (
                     <div key={key}>
                         <label className="block text-sm font-medium text-gray-700 capitalize">{key}</label>
-                        <textarea
-                            rows={4}
-                            value={content[key as keyof typeof content]}
-                            onChange={(e) => setContent(c => ({ ...c, [key]: e.target.value }))}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                        />
+                        <textarea rows={4} value={content[key as keyof typeof content]} onChange={(e) => setContent(c => ({ ...c, [key]: e.target.value }))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"/>
                     </div>
                 ))}
             </div>
-            <div className="flex justify-end space-x-2 mt-4">
-                <button onClick={handleSave} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">Save & Sign</button>
+            <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
+                 <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                <button onClick={handleSave} disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-32 flex justify-center items-center">
+                    {isSubmitting ? <SpinnerIcon/> : (note.id ? 'Save & Sign' : 'Save Draft')}
+                </button>
             </div>
         </Modal>
     );
 };
 
 const ProgressNotes: React.FC = () => {
-    const [notes, setNotes] = useState(mockNotes);
-    const [selectedNote, setSelectedNote] = useState<ProgressNote | null>(null);
+    const { progressNotes, addNote, updateNote } = useAuth();
+    const { showToast } = useApp();
+    const [selectedNote, setSelectedNote] = useState<Partial<ProgressNote> | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSaveNote = (updatedNote: ProgressNote) => {
-        setNotes(notes.map(n => n.id === updatedNote.id ? { ...updatedNote, status: 'Pending Signature' } : n));
+    const handleSaveNote = (noteData: Partial<ProgressNote>) => {
+        setIsSubmitting(true);
+        setTimeout(() => {
+            if (noteData.id) {
+                updateNote({ ...noteData, status: 'Pending Signature' } as ProgressNote);
+                showToast('Note updated and is pending signature.', 'success');
+            } else {
+                addNote(noteData as Omit<ProgressNote, 'id' | 'status'>);
+                showToast('Draft saved successfully.', 'success');
+            }
+            setIsSubmitting(false);
+            setSelectedNote(null);
+        }, 1000);
+    };
+
+    const handleNewNote = () => {
+        setSelectedNote({ patientName: '', date: new Date().toISOString().split('T')[0], content: { subjective: '', objective: '', assessment: '', plan: '' } });
     };
 
     return (
         <div>
-            <PageHeader title="Progress Notes" buttonText="New Note" onButtonClick={() => { /* Logic to create a new note */ }} />
+            <PageHeader title="Progress Notes" buttonText="New Note" onButtonClick={handleNewNote} />
             <Card>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -74,13 +88,11 @@ const ProgressNotes: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {notes.map(note => (
+                            {progressNotes.map(note => (
                                 <tr key={note.id}>
                                     <td className="px-6 py-4 whitespace-nowrap font-medium">{note.patientName}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{note.date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusPill(note.status)}`}>{note.status}</span>
-                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusPill(note.status)}`}>{note.status}</span></td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button onClick={() => setSelectedNote(note)} className="text-primary-600 hover:underline">
                                             {note.status === 'Draft' || note.status === 'Pending Signature' ? 'Edit & Sign' : 'View'}
@@ -92,7 +104,7 @@ const ProgressNotes: React.FC = () => {
                     </table>
                 </div>
             </Card>
-            <NoteEditorModal note={selectedNote} onClose={() => setSelectedNote(null)} onSave={handleSaveNote} />
+            <NoteEditorModal note={selectedNote} onClose={() => setSelectedNote(null)} onSave={handleSaveNote} isSubmitting={isSubmitting} />
         </div>
     );
 };

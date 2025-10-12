@@ -1,13 +1,39 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { UserRole } from '../../types';
+import { User, UserRole } from '../../types';
 import PageHeader from '../../components/shared/PageHeader';
+import Modal from '../../components/shared/Modal';
+import { useApp } from '../../App';
+import { SpinnerIcon } from '../../components/shared/Icons';
 
 const SubscriptionManagement: React.FC = () => {
     const { users, providerSubscriptionPlans, updateUserSubscription } = useAuth();
+    const { showToast } = useApp();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
+    const [selectedPlanId, setSelectedPlanId] = useState('');
+
     const providers = users.filter(u => u.role === UserRole.PROVIDER);
+
+    const handleManageClick = (provider: User) => {
+        setSelectedProvider(provider);
+        setSelectedPlanId(provider.subscription?.planId || '');
+        setIsModalOpen(true);
+    };
+
+    const handleSaveChanges = () => {
+        if (!selectedProvider || !selectedPlanId) return;
+        setIsSubmitting(true);
+        setTimeout(() => {
+            updateUserSubscription(selectedProvider.id, selectedPlanId);
+            showToast(`${selectedProvider.name}'s subscription updated!`, 'success');
+            setIsSubmitting(false);
+            setIsModalOpen(false);
+            setSelectedProvider(null);
+        }, 1000);
+    };
 
     return (
         <div>
@@ -21,7 +47,7 @@ const SubscriptionManagement: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Plan</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Renewal Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change Plan</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -32,16 +58,7 @@ const SubscriptionManagement: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.subscription?.status || 'N/A'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.subscription?.renewalDate || 'N/A'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <select
-                                            value={provider.subscription?.planId || ''}
-                                            onChange={e => updateUserSubscription(provider.id, e.target.value)}
-                                            className="border border-gray-300 rounded-md p-1"
-                                        >
-                                            <option value="" disabled>Select a plan</option>
-                                            {providerSubscriptionPlans.map(plan => (
-                                                <option key={plan.id} value={plan.id}>{plan.name} ({plan.price})</option>
-                                            ))}
-                                        </select>
+                                        <button onClick={() => handleManageClick(provider)} className="text-primary-600 hover:underline font-medium text-sm">Manage</button>
                                     </td>
                                 </tr>
                             ))}
@@ -49,6 +66,30 @@ const SubscriptionManagement: React.FC = () => {
                     </table>
                 </div>
             </Card>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Subscription for ${selectedProvider?.name}`}>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Change Plan</label>
+                        <select
+                            value={selectedPlanId}
+                            onChange={e => setSelectedPlanId(e.target.value)}
+                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-white"
+                        >
+                            <option value="" disabled>Select a new plan</option>
+                            {providerSubscriptionPlans.map(plan => (
+                                <option key={plan.id} value={plan.id}>{plan.name} ({plan.price})</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                 <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                    <button onClick={() => setIsModalOpen(false)} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button onClick={handleSaveChanges} disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-36 flex justify-center items-center">
+                        {isSubmitting ? <SpinnerIcon/> : 'Save Changes'}
+                    </button>
+                </div>
+            </Modal>
         </div>
     );
 };
