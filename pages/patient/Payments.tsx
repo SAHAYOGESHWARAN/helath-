@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';
-import { SpinnerIcon } from '../../components/shared/Icons';
+import { SpinnerIcon, DownloadIcon } from '../../components/shared/Icons';
+import { BillingInvoice } from '../../types';
+import Modal from '../../components/shared/Modal';
 
 const PaymentSchema = Yup.object().shape({
   nameOnCard: Yup.string()
@@ -32,17 +34,73 @@ const PaymentSchema = Yup.object().shape({
     .required('Amount is required'),
 });
 
+const ReceiptModal: React.FC<{ invoice: BillingInvoice | null; onClose: () => void }> = ({ invoice, onClose }) => {
+    if (!invoice) return null;
+
+    return (
+        <Modal 
+            isOpen={!!invoice} 
+            onClose={onClose} 
+            title={`Receipt for Invoice #${invoice.id}`}
+            footer={
+                <>
+                    <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Close</button>
+                    <button onClick={() => window.print()} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                        <DownloadIcon className="w-4 h-4 mr-2" />
+                        Print / Download
+                    </button>
+                </>
+            }
+        >
+            <div className="space-y-4 text-sm">
+                <div className="text-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-800">NovoPath Medical</h2>
+                    <p className="text-gray-500">Payment Receipt</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="font-medium text-gray-500">Invoice ID</p>
+                            <p className="font-semibold text-gray-800">{invoice.id}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-gray-500">Date Processed</p>
+                            <p className="font-semibold text-gray-800">{invoice.date}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-gray-500">Description</p>
+                            <p className="font-semibold text-gray-800">{invoice.description}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-gray-500">Payment Method</p>
+                            <p className="font-semibold text-gray-800">Visa **** 4242</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="border-t pt-4 mt-4">
+                     <div className="flex justify-between items-center">
+                        <span className="font-semibold text-gray-800 text-lg">Total Paid</span>
+                        <span className="font-bold text-primary-600 text-xl">${invoice.totalAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+                 <p className="text-xs text-center text-gray-500 pt-4">Thank you for your payment!</p>
+            </div>
+        </Modal>
+    );
+};
+
 
 const Payments: React.FC = () => {
     const { user, invoices, makePayment } = useAuth();
     const { showToast } = useApp();
+    const [selectedReceipt, setSelectedReceipt] = useState<BillingInvoice | null>(null);
 
     const { dueInvoices, paidInvoices, currentBalance } = useMemo(() => {
         if (!user) return { dueInvoices: [], paidInvoices: [], currentBalance: 0 };
         const userInvoices = invoices.filter(inv => inv.patientId === user.id);
         const due = userInvoices.filter(inv => inv.status === 'Due' || inv.status === 'Overdue');
         const paid = userInvoices.filter(inv => inv.status === 'Paid');
-        const balance = due.reduce((sum, inv) => sum + inv.amount, 0);
+        const balance = due.reduce((sum, inv) => sum + inv.amountDue, 0);
         return { dueInvoices: due, paidInvoices: paid, currentBalance: balance };
     }, [invoices, user]);
 
@@ -67,7 +125,7 @@ const Payments: React.FC = () => {
                     <tr key={inv.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.description}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.dueDate}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.amount.toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.amountDue.toFixed(2)}</td>
                     </tr>
                   )) : (
                     <tr><td colSpan={3} className="text-center py-4 text-gray-500">No outstanding invoices.</td></tr>
@@ -92,9 +150,9 @@ const Payments: React.FC = () => {
                     <tr key={inv.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.date}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.amount.toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.totalAmount.toFixed(2)}</td>
                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" className="text-primary-600 hover:text-primary-900">Receipt</a>
+                        <button onClick={() => setSelectedReceipt(inv)} className="text-primary-600 hover:text-primary-900 font-medium">Receipt</button>
                       </td>
                     </tr>
                   ))}
@@ -129,7 +187,7 @@ const Payments: React.FC = () => {
                     
                     for(const inv of sortedDueInvoices) {
                         if (amountToApply <= 0) break;
-                        const paymentForThisInvoice = Math.min(amountToApply, inv.amount);
+                        const paymentForThisInvoice = Math.min(amountToApply, inv.amountDue);
                         makePayment(inv.id, paymentForThisInvoice);
                         amountToApply -= paymentForThisInvoice;
                     }
@@ -213,6 +271,7 @@ const Payments: React.FC = () => {
           </Card>
         </div>
       </div>
+      <ReceiptModal invoice={selectedReceipt} onClose={() => setSelectedReceipt(null)} />
     </div>
   );
 };

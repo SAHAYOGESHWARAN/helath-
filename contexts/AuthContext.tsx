@@ -48,6 +48,7 @@ interface AuthContextType {
   appointments: Appointment[];
   addAppointment: (appointment: Omit<Appointment, 'id' | 'status' | 'patientName'>) => void;
   cancelAppointment: (appointmentId: string) => void;
+  confirmAppointment: (appointmentId: string) => void;
   submitAppointmentFeedback: (appointmentId: string, summary: string) => void;
    // Insurance
   insurance: InsuranceInfo | null;
@@ -98,14 +99,16 @@ const MOCK_INITIAL_USERS: Record<UserRole, User[]> = {
   ],
 };
 const MOCK_INVOICES: BillingInvoice[] = [
-    { id: 'inv1', patientId: 'pat1', date: '2024-08-01', dueDate: '2024-08-31', amount: 50.00, status: 'Due', description: 'Co-pay: Dr. Smith (July 15)' },
-    { id: 'inv2', patientId: 'pat1', date: '2024-08-05', dueDate: '2024-09-04', amount: 200.00, status: 'Due', description: 'ER Visit Co-insurance' },
-    { id: 'inv3', patientId: 'pat1', date: '2024-07-10', dueDate: '2024-08-10', amount: 20.00, status: 'Paid', description: 'Lab Work (Quest)' },
+    { id: 'inv1', patientId: 'pat1', date: '2024-08-01', dueDate: '2024-08-31', totalAmount: 50.00, amountDue: 50.00, status: 'Due', description: 'Co-pay: Dr. Smith (July 15)' },
+    { id: 'inv2', patientId: 'pat1', date: '2024-08-05', dueDate: '2024-09-04', totalAmount: 200.00, amountDue: 200.00, status: 'Due', description: 'ER Visit Co-insurance' },
+    { id: 'inv3', patientId: 'pat1', date: '2024-07-10', dueDate: '2024-08-10', totalAmount: 20.00, amountDue: 0.00, status: 'Paid', description: 'Lab Work (Quest)' },
 ];
 const MOCK_APPOINTMENTS: Appointment[] = [
-  { id: 'appt1', patientName: 'John Doe', providerName: 'Dr. Jane Smith', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30 AM', reason: 'Annual Check-up', type: 'In-Person', status: 'Confirmed' },
-  { id: 'appt2', patientName: 'John Doe', providerName: 'Dr. David Chen', date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '02:00 PM', reason: 'Dermatology Follow-up', type: 'Virtual', status: 'Confirmed' },
-  { id: 'appt3', patientName: 'John Doe', providerName: 'Dr. Emily White', date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '11:00 AM', reason: 'Pediatric Consultation', type: 'In-Person', status: 'Completed', visitSummary: 'Routine check-up, all vitals normal.' },
+  { id: 'appt1', patientName: 'John Doe', providerName: 'Dr. Jane Smith', providerId: 'pro1', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30 AM', reason: 'Annual Check-up', type: 'In-Person', status: 'Confirmed' },
+  { id: 'appt2', patientName: 'John Doe', providerName: 'Dr. David Chen', providerId: 'pro2', date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '02:00 PM', reason: 'Dermatology Follow-up', type: 'Virtual', status: 'Confirmed' },
+  { id: 'appt3', patientName: 'John Doe', providerName: 'Dr. Emily White', providerId: 'pro3', date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '11:00 AM', reason: 'Pediatric Consultation', type: 'In-Person', status: 'Completed', visitSummary: 'Routine check-up, all vitals normal.' },
+  { id: 'appt4', patientName: 'Alice Johnson', providerName: 'Dr. Jane Smith', providerId: 'pro1', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '09:00 AM', reason: 'Consultation', type: 'In-Person', status: 'Pending' },
+  { id: 'appt5', patientName: 'Charlie Brown', providerName: 'Dr. Jane Smith', providerId: 'pro1', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '02:00 PM', reason: 'Sick Visit', type: 'Virtual', status: 'Completed', visitSummary: 'Prescribed antibiotics for sinus infection.' },
 ];
 const MOCK_PRESCRIPTIONS: Prescription[] = [
   { id: 'rx1', patientId: 'p1', patientName: 'John Doe', drug: 'Lisinopril 10mg', dosage: '1 tablet', frequency: 'Once daily', quantity: 30, refills: 2, pharmacy: 'CVS Pharmacy', datePrescribed: '2024-08-01', status: 'Sent' },
@@ -248,8 +251,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   // --- BILLING & PAYMENTS ---
   const makePayment = useCallback((invoiceId: string, paymentAmount: number) => {
-    setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, amount: inv.amount - paymentAmount, status: (inv.amount - paymentAmount) <= 0 ? 'Paid' : 'Due' } : inv ));
-  }, []);
+    setInvoices(prev => prev.map(inv => {
+        if (inv.id === invoiceId) {
+            const newAmountDue = inv.amountDue - paymentAmount;
+            return {
+                ...inv,
+                amountDue: Math.max(0, newAmountDue),
+                status: newAmountDue <= 0 ? 'Paid' : 'Due'
+            };
+        }
+        return inv;
+    }));
+}, []);
 
   // --- APPOINTMENTS ---
   const addAppointment = useCallback((appointment: Omit<Appointment, 'id' | 'status' | 'patientName'>) => {
@@ -258,6 +271,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
   const cancelAppointment = useCallback((appointmentId: string) => {
     setAppointments(prev => prev.map(a => a.id === appointmentId ? {...a, status: 'Cancelled'} : a));
+  }, []);
+   const confirmAppointment = useCallback((appointmentId: string) => {
+    setAppointments(prev => prev.map(a => a.id === appointmentId ? {...a, status: 'Confirmed'} : a));
   }, []);
   const submitAppointmentFeedback = useCallback((appointmentId: string, summary: string) => {
     setAppointments(prev => prev.map(a => a.id === appointmentId ? {...a, visitSummary: summary} : a));
@@ -320,7 +336,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user, users, loading, isSubmitting, login, logout, updateUser, register, addUser, editUser, deleteUser,
         invoices, makePayment,
         patientSubscriptionPlans: MOCK_PATIENT_PLANS, providerSubscriptionPlans, currentSubscription, changeSubscription, updateProviderPlans, updateUserSubscription,
-        appointments, addAppointment, cancelAppointment, submitAppointmentFeedback,
+        appointments, addAppointment, cancelAppointment, confirmAppointment, submitAppointmentFeedback,
         insurance, updateInsurance,
         prescriptions, addPrescription,
         progressNotes, addNote, updateNote,

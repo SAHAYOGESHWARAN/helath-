@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
@@ -6,17 +5,94 @@ import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
+import { DownloadIcon } from '../../components/shared/Icons';
 
-const billingHistory = [
-    { id: 'inv_1', date: '2024-08-01', amount: 99.00, status: 'Paid' },
-    { id: 'inv_2', date: '2024-07-01', amount: 99.00, status: 'Paid' },
-    { id: 'inv_3', date: '2024-06-01', amount: 99.00, status: 'Paid' },
+interface BillingHistoryItem {
+    id: string;
+    date: string;
+    amount: number;
+    status: 'Paid';
+}
+
+const billingHistory: BillingHistoryItem[] = [
+    { id: 'inv_pro_1', date: '2024-08-01', amount: 99.00, status: 'Paid' },
+    { id: 'inv_pro_2', date: '2024-07-01', amount: 99.00, status: 'Paid' },
+    { id: 'inv_pro_3', date: '2024-06-01', amount: 99.00, status: 'Paid' },
 ];
+
+const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: string; onClose: () => void }> = ({ invoice, planName, onClose }) => {
+    if (!invoice) return null;
+
+     const handlePrint = () => {
+        const printContents = document.getElementById('invoice-to-print')?.innerHTML;
+        const originalContents = document.body.innerHTML;
+        if (printContents) {
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload(); 
+        }
+    };
+
+    return (
+        <Modal 
+            isOpen={!!invoice} 
+            onClose={onClose} 
+            title={`Invoice #${invoice.id}`}
+            footer={
+                <>
+                    <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Close</button>
+                    <button onClick={handlePrint} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                        <DownloadIcon className="w-4 h-4 mr-2" />
+                        Print / Save as PDF
+                    </button>
+                </>
+            }
+        >
+            <div id="invoice-to-print">
+                <div className="printable-invoice space-y-4 text-sm">
+                    <div className="text-center mb-6">
+                        <h2 className="text-xl font-bold text-gray-800">NovoPath Medical</h2>
+                        <p className="text-gray-500">Provider Subscription Invoice</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg border">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="font-medium text-gray-500">Invoice ID</p>
+                                <p className="font-semibold text-gray-800">{invoice.id}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-500">Date Paid</p>
+                                <p className="font-semibold text-gray-800">{invoice.date}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-500">Description</p>
+                                <p className="font-semibold text-gray-800">{planName} Subscription</p>
+                            </div>
+                             <div>
+                                <p className="font-medium text-gray-500">Payment Method</p>
+                                <p className="font-semibold text-gray-800">Visa ending in 1234</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="border-t pt-4 mt-4">
+                         <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-800 text-lg">Total Paid</span>
+                            <span className="font-bold text-primary-600 text-xl">${invoice.amount.toFixed(2)}</span>
+                        </div>
+                    </div>
+                     <p className="text-xs text-center text-gray-500 pt-4">Thank you for your business!</p>
+                </div>
+            </div>
+        </Modal>
+    );
+};
 
 const Subscription: React.FC = () => {
     const { currentSubscription, changeSubscription, providerSubscriptionPlans } = useAuth();
     const { showToast } = useApp();
     const [modalState, setModalState] = useState<{ isOpen: boolean; plan: SubscriptionPlan | null }>({ isOpen: false, plan: null });
+    const [selectedInvoice, setSelectedInvoice] = useState<BillingHistoryItem | null>(null);
 
     const currentPatientCount = 85;
     
@@ -112,7 +188,7 @@ const Subscription: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" className="text-primary-600 hover:text-primary-900">Download Invoice</a>
+                                    <button onClick={() => setSelectedInvoice(item)} className="text-primary-600 hover:text-primary-900">Download Invoice</button>
                                 </td>
                             </tr>
                         ))}
@@ -133,6 +209,12 @@ const Subscription: React.FC = () => {
       >
         <p>Are you sure you want to change your plan to <strong>{modalState.plan?.name}</strong> for <strong>{modalState.plan?.price}</strong>?</p>
       </Modal>
+
+       <InvoiceModal 
+        invoice={selectedInvoice}
+        planName={currentSubscription.name}
+        onClose={() => setSelectedInvoice(null)}
+      />
     </div>
   );
 };

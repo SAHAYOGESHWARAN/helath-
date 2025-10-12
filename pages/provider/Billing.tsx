@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus, ClaimType } from '../../types';
 import { CurrencyDollarIcon } from '../../components/shared/Icons';
+import Modal from '../../components/shared/Modal';
 
 const mockClaims: Claim[] = [
   { id: 'C1001', patientId: 'p1', status: ClaimStatus.PAID_IN_FULL, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 250.00, createdAt: '2024-08-10', serviceDate: '2024-08-10', provider: 'Dr. Jane Smith', patientOwes: 0, insurancePaid: 250.00, lineItems: [{ service: 'Office Visit', charge: 250.00 }] },
@@ -25,9 +26,45 @@ const getStatusColor = (status: ClaimStatus) => {
   }
 };
 
+const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> = ({ claim, onClose }) => {
+    if (!claim) return null;
+
+    return (
+        <Modal isOpen={!!claim} onClose={onClose} title={`Details for Claim #${claim.id}`} size="lg">
+            <div className="space-y-4">
+                {claim.status === ClaimStatus.DENIED && (
+                    <div className="p-3 bg-red-50 border-l-4 border-red-400 text-red-700">
+                        <h4 className="font-bold">Denial Reason</h4>
+                        <p className="text-sm">{claim.denialReason || 'No specific reason provided.'}</p>
+                    </div>
+                )}
+                <div className="space-y-2">
+                    <div className="flex justify-between"><span className="font-medium text-gray-600">Patient ID:</span><span className="font-semibold text-gray-800">{claim.patientId}</span></div>
+                    <div className="flex justify-between"><span className="font-medium text-gray-600">Service Date:</span><span className="font-semibold text-gray-800">{claim.serviceDate}</span></div>
+                    <div className="flex justify-between"><span className="font-medium text-gray-600">Total Billed:</span><span className="font-semibold text-gray-800">${claim.totalClaimChargeAmount.toFixed(2)}</span></div>
+                     <div className="flex justify-between"><span className="font-medium text-gray-600">Insurance Paid:</span><span className="font-semibold text-gray-800">${claim.insurancePaid.toFixed(2)}</span></div>
+                     <div className="flex justify-between"><span className="font-medium text-gray-600">Patient Owes:</span><span className="font-semibold text-gray-800">${claim.patientOwes.toFixed(2)}</span></div>
+                </div>
+                <div>
+                    <h4 className="font-semibold text-gray-800 mb-2 mt-4">Line Items</h4>
+                    <ul className="space-y-1 border-t pt-2">
+                        {claim.lineItems.map((item, index) => (
+                            <li key={index} className="flex justify-between text-sm">
+                                <span>{item.service}</span>
+                                <span>${item.charge.toFixed(2)}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const Billing: React.FC = () => {
     const [claims, setClaims] = useState(mockClaims);
     const [filter, setFilter] = useState<ClaimStatus | 'All'>('All');
+    const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
 
     const filteredClaims = useMemo(() => {
         if (filter === 'All') return claims;
@@ -98,13 +135,14 @@ const Billing: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">{claim.createdAt}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">${claim.totalClaimChargeAmount.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(claim.status)}`}>{claim.status.replace(/_/g, ' ')}</span></td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm"><a href="#" className="text-primary-600 hover:underline">View</a></td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm"><button onClick={() => setSelectedClaim(claim)} className="text-primary-600 hover:underline">View</button></td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
         </Card>
+        <ClaimDetailModal claim={selectedClaim} onClose={() => setSelectedClaim(null)} />
     </div>
   );
 };

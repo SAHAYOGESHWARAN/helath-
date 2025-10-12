@@ -215,7 +215,8 @@ export interface BillingInvoice {
     patientId: string;
     date: string;
     dueDate: string;
-    amount: number;
+    totalAmount: number;
+    amountDue: number;
     status: 'Paid' | 'Due' | 'Overdue';
     description: string;
 }

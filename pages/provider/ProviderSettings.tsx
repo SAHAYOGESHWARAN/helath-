@@ -30,6 +30,13 @@ const ProviderSettings: React.FC = () => {
         }, 1000);
     };
 
+    const handleCalendarConnect = (calendar: 'Google' | 'Outlook') => {
+        showToast(`Connecting to ${calendar} Calendar... (mock)`, 'info');
+        setTimeout(() => {
+            showToast(`Successfully connected to ${calendar} Calendar!`, 'success');
+        }, 1500);
+    }
+
     return (
         <div>
             <PageHeader title="Settings" subtitle="Manage your practice and account preferences." />
@@ -47,8 +54,8 @@ const ProviderSettings: React.FC = () => {
                  <Card title="Calendar Integration">
                     <p className="text-sm text-gray-600 mb-4">Sync your NovoPath calendar with your external calendar application.</p>
                     <div className="flex space-x-4">
-                        <button className="bg-gray-800 text-white font-bold py-2 px-4 rounded-lg text-sm">Connect Google Calendar</button>
-                        <button className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Connect Outlook Calendar</button>
+                        <button onClick={() => handleCalendarConnect('Google')} className="bg-gray-800 text-white font-bold py-2 px-4 rounded-lg text-sm">Connect Google Calendar</button>
+                        <button onClick={() => handleCalendarConnect('Outlook')} className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Connect Outlook Calendar</button>
                     </div>
                 </Card>
 
