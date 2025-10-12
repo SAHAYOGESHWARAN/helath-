@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { NovoPathIcon, CalendarIcon, DocumentTextIcon, VideoCameraIcon, SparklesIcon, CheckCircleIcon } from '../components/shared/Icons';
 
@@ -13,22 +13,22 @@ const HeroAnimation = () => (
       </defs>
       {/* Lines */}
       <path d="M50 50 L 150 150 L 250 50" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '0s' }} />
-      <path d="M50 350 L 150 250 L 50 150" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '1s' }} />
-      <path d="M350 50 L 250 150 L 350 250" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '2s' }} />
-      <path d="M150 150 L 250 250 L 150 350" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '3s' }} />
+      <path d="M50 350 L 150 250 L 50 150" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '0.1s' }} />
+      <path d="M350 50 L 250 150 L 350 250" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '0.2s' }} />
+      <path d="M150 150 L 250 250 L 150 350" fill="none" stroke="url(#lineGradient)" strokeWidth="1.5" className="hero-anim-line" style={{ animationDelay: '0.3s' }} />
 
       {/* Nodes */}
       <circle cx="50" cy="50" r="8" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '0.2s' }} />
-      <circle cx="250" cy="50" r="6" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '0.4s' }} />
-      <circle cx="350" cy="50" r="7" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '0.6s' }} />
-      <circle cx="50" cy="150" r="5" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '0.8s' }} />
-      <circle cx="150" cy="150" r="10" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '1s' }} />
-      <circle cx="250" cy="150" r="6" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '1.2s' }} />
-      <circle cx="150" cy="250" r="8" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '1.4s' }} />
-      <circle cx="250" cy="250" r="5" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '1.6s' }} />
-      <circle cx="350" cy="250" r="7" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '1.8s' }} />
-      <circle cx="50" cy="350" r="6" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '2s' }} />
-      <circle cx="150" cy="350" r="8" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '2.2s' }} />
+      <circle cx="250" cy="50" r="6" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '0.3s' }} />
+      <circle cx="350" cy="50" r="7" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '0.4s' }} />
+      <circle cx="50" cy="150" r="5" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '0.5s' }} />
+      <circle cx="150" cy="150" r="10" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '0.6s' }} />
+      <circle cx="250" cy="150" r="6" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '0.7s' }} />
+      <circle cx="150" cy="250" r="8" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '0.8s' }} />
+      <circle cx="250" cy="250" r="5" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '0.9s' }} />
+      <circle cx="350" cy="250" r="7" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '1.0s' }} />
+      <circle cx="50" cy="350" r="6" fill="#3b82f6" className="hero-anim-node" style={{ animationDelay: '1.1s' }} />
+      <circle cx="150" cy="350" r="8" fill="#14b8a6" className="hero-anim-node" style={{ animationDelay: '1.2s' }} />
     </svg>
   </div>
 );
@@ -73,6 +73,28 @@ const TestimonialCard: React.FC<{ quote: string; name: string; role: string; ava
 );
 
 const WelcomePage: React.FC = () => {
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            {
+                threshold: 0.1,
+            }
+        );
+
+        const elements = document.querySelectorAll('.scroll-animate');
+        elements.forEach((el) => observer.observe(el));
+
+        return () => {
+            elements.forEach((el) => observer.unobserve(el));
+        };
+    }, []);
   return (
     <div className="bg-slate-50 text-gray-800 font-sans overflow-x-hidden">
       {/* Header */}

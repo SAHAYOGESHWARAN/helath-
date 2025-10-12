@@ -1,13 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import Card from '../../components/shared/Card';
-
-const transactions = [
-  { id: 'txn_1', date: '2024-07-20', description: 'Co-pay: Dr. Smith', amount: 50.00, status: 'Paid' },
-  { id: 'txn_2', date: '2024-06-15', description: 'Lab Services Bill', amount: 85.50, status: 'Paid' },
-  { id: 'txn_3', date: '2024-05-10', description: 'Outstanding Balance', amount: 120.00, status: 'Paid' },
-];
+import { useAuth } from '../../hooks/useAuth';
+import { useApp } from '../../App';
+import { SpinnerIcon } from '../../components/shared/Icons';
 
 const PaymentSchema = Yup.object().shape({
   nameOnCard: Yup.string()
@@ -37,36 +34,66 @@ const PaymentSchema = Yup.object().shape({
 
 
 const Payments: React.FC = () => {
+    const { user, invoices, makePayment } = useAuth();
+    const { showToast } = useApp();
+
+    const { dueInvoices, paidInvoices, currentBalance } = useMemo(() => {
+        if (!user) return { dueInvoices: [], paidInvoices: [], currentBalance: 0 };
+        const userInvoices = invoices.filter(inv => inv.patientId === user.id);
+        const due = userInvoices.filter(inv => inv.status === 'Due' || inv.status === 'Overdue');
+        const paid = userInvoices.filter(inv => inv.status === 'Paid');
+        const balance = due.reduce((sum, inv) => sum + inv.amount, 0);
+        return { dueInvoices: due, paidInvoices: paid, currentBalance: balance };
+    }, [invoices, user]);
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Payments & Billing</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-8">
+          <Card title="Outstanding Invoices">
+             <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount Due</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {dueInvoices.length > 0 ? dueInvoices.map((inv) => (
+                    <tr key={inv.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.description}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.dueDate}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.amount.toFixed(2)}</td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan={3} className="text-center py-4 text-gray-500">No outstanding invoices.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
           <Card title="Transaction History">
              <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date Paid</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th scope="col" className="relative px-6 py-3"><span className="sr-only">Receipt</span></th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.map((txn) => (
-                    <tr key={txn.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{txn.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{txn.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${txn.amount.toFixed(2)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {txn.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {paidInvoices.map((inv) => (
+                    <tr key={inv.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.date}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.description}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.amount.toFixed(2)}</td>
+                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <a href="#" className="text-primary-600 hover:text-primary-900">Receipt</a>
                       </td>
                     </tr>
@@ -81,7 +108,7 @@ const Payments: React.FC = () => {
           <Card title="Make a Payment" className="bg-primary-50">
             <div className="mb-4">
               <p className="text-lg font-semibold text-gray-700">Current Balance</p>
-              <p className="text-3xl font-bold text-primary-600">$250.00</p>
+              <p className="text-3xl font-bold text-primary-600">${currentBalance.toFixed(2)}</p>
             </div>
             <Formik
               initialValues={{
@@ -89,18 +116,31 @@ const Payments: React.FC = () => {
                 cardNumber: '',
                 expiryDate: '',
                 cvc: '',
-                amount: '250.00',
+                amount: currentBalance > 0 ? currentBalance.toFixed(2) : '0.00',
               }}
+              enableReinitialize
               validationSchema={PaymentSchema}
               onSubmit={(values, { setSubmitting, resetForm }) => {
-                setTimeout(() => {
-                  alert(`Payment of $${values.amount} submitted successfully! (mock)`);
-                  setSubmitting(false);
-                  resetForm();
-                }, 500);
+                setTimeout(() => { // Simulate network request
+                    const paymentAmount = parseFloat(values.amount);
+                    let amountToApply = paymentAmount;
+                    
+                    const sortedDueInvoices = [...dueInvoices].sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+                    
+                    for(const inv of sortedDueInvoices) {
+                        if (amountToApply <= 0) break;
+                        const paymentForThisInvoice = Math.min(amountToApply, inv.amount);
+                        makePayment(inv.id, paymentForThisInvoice);
+                        amountToApply -= paymentForThisInvoice;
+                    }
+                    
+                    showToast(`Payment of $${paymentAmount.toFixed(2)} submitted successfully!`, 'success');
+                    setSubmitting(false);
+                    resetForm({ values: { ...values, amount: amountToApply > 0 ? amountToApply.toFixed(2) : '0.00' }});
+                }, 1000);
               }}
             >
-              {({ errors, touched, isValid, isSubmitting }) => (
+              {({ errors, touched, isValid, isSubmitting, values }) => (
                 <Form className="space-y-4">
                    <div>
                     <label htmlFor="nameOnCard" className="block text-sm font-medium text-gray-700">Name on Card</label>
@@ -160,10 +200,12 @@ const Payments: React.FC = () => {
                   </div>
                   <button 
                     type="submit" 
-                    disabled={!isValid || isSubmitting}
-                    className="w-full bg-primary-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors enabled:hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={!isValid || isSubmitting || parseFloat(values.amount) <= 0}
+                    className="w-full flex justify-center items-center bg-primary-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors enabled:hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? 'Processing...' : 'Pay Now'}
+                    {isSubmitting 
+                        ? <><SpinnerIcon className="w-5 h-5 mr-2" /> Processing...</> 
+                        : `Pay $${parseFloat(values.amount || '0').toFixed(2)}`}
                   </button>
                 </Form>
               )}

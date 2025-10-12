@@ -2,14 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { NovoPathIcon } from '../../components/shared/Icons';
+import { NovoPathIcon, SpinnerIcon } from '../../components/shared/Icons';
 
 const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, isSubmitting } = useAuth();
 
   const handleLogin = (role: UserRole) => {
     login(role);
   };
+  
+  const buttonBaseClasses = "w-full flex items-center justify-center font-medium rounded-lg text-lg px-5 py-3.5 text-center transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed";
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 p-4 animate-fade-in">
@@ -28,21 +30,24 @@ const LoginPage: React.FC = () => {
           <div className="space-y-4">
             <button
               onClick={() => handleLogin(UserRole.PATIENT)}
-              className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-lg px-5 py-3.5 text-center transition-all duration-300 transform hover:scale-105"
+              disabled={isSubmitting}
+              className={`${buttonBaseClasses} text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 disabled:bg-primary-400`}
             >
-              Sign in as Patient
+              {isSubmitting ? <SpinnerIcon /> : 'Sign in as Patient'}
             </button>
             <button
               onClick={() => handleLogin(UserRole.PROVIDER)}
-              className="w-full text-white bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-300 font-medium rounded-lg text-lg px-5 py-3.5 text-center transition-all duration-300 transform hover:scale-105"
+              disabled={isSubmitting}
+              className={`${buttonBaseClasses} text-white bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-300 disabled:bg-emerald-400`}
             >
-              Sign in as Provider
+              {isSubmitting ? <SpinnerIcon /> : 'Sign in as Provider'}
             </button>
             <button
               onClick={() => handleLogin(UserRole.ADMIN)}
-              className="w-full text-gray-700 bg-gray-200 border border-gray-300 hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-lg px-5 py-3.5 text-center transition-all duration-300 transform hover:scale-105"
+              disabled={isSubmitting}
+              className={`${buttonBaseClasses} text-gray-700 bg-gray-200 border border-gray-300 hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 disabled:bg-gray-300`}
             >
-              Sign in as Administrator
+              {isSubmitting ? <SpinnerIcon className="text-gray-600"/> : 'Sign in as Administrator'}
             </button>
           </div>
            <p className="text-center text-gray-500 mt-8 text-sm">

@@ -4,7 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { NovoPathIcon, ChevronLeftIcon } from '../../components/shared/Icons';
+import { NovoPathIcon, ChevronLeftIcon, SpinnerIcon } from '../../components/shared/Icons';
 
 const PatientRegisterSchema = Yup.object().shape({
   name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Full name is required'),
@@ -34,11 +34,9 @@ const PatientRegister: React.FC = () => {
           <Formik
             initialValues={{ name: '', email: '', dob: '', password: '', confirmPassword: '' }}
             validationSchema={PatientRegisterSchema}
-            onSubmit={(values, { setSubmitting }) => {
+            onSubmit={(values) => {
               register({ name: values.name, email: values.email, dob: values.dob }, UserRole.PATIENT);
-              setSubmitting(false);
-              // Navigate to dashboard after registration
-              navigate('/dashboard');
+              // Navigation will be handled by the main App router when user state changes
             }}
           >
             {({ isSubmitting, errors, touched }) => (
@@ -68,8 +66,8 @@ const PatientRegister: React.FC = () => {
                   <Field type="password" name="confirmPassword" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.confirmPassword && touched.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
                   <ErrorMessage name="confirmPassword" component="p" className="text-red-500 text-xs mt-1" />
                 </div>
-                <button type="submit" disabled={isSubmitting} className="w-full mt-2 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors disabled:bg-gray-400">
-                  {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                <button type="submit" disabled={isSubmitting} className="w-full mt-2 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors disabled:bg-primary-400 flex items-center justify-center">
+                  {isSubmitting ? <SpinnerIcon /> : 'Create Account'}
                 </button>
               </Form>
             )}

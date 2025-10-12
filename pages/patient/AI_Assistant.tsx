@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import Card from '../../components/shared/Card';
-import Spinner from '../../components/shared/Spinner';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
+import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 
 interface GroundingChunk {
   web: {
@@ -85,29 +85,48 @@ const AI_Assistant: React.FC = () => {
         }
       });
 
-      let currentResponseText = '';
+      let isFirstChunk = true;
       let finalGroundingChunks: GroundingChunk[] = [];
-      setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }], groundingChunks: [] }]);
+      let fullResponseText = ""; // To handle empty stream case
 
       for await (const chunk of responseStream) {
-        currentResponseText += chunk.text;
-         if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+        const chunkText = chunk.text;
+        fullResponseText += chunkText;
+        if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
           finalGroundingChunks = chunk.candidates[0].groundingMetadata.groundingChunks;
         }
 
-        setHistory(prev => {
-          const newHistory = [...prev];
-          const lastMessage = newHistory[newHistory.length - 1];
-          if (lastMessage) {
-            lastMessage.parts[0].text = currentResponseText;
-            lastMessage.groundingChunks = finalGroundingChunks;
-          }
-          return newHistory;
-        });
+        if (isFirstChunk && chunkText) {
+          setHistory(prev => [...prev, { role: 'model', parts: [{ text: chunkText }], groundingChunks: finalGroundingChunks }]);
+          isFirstChunk = false;
+        } else if (chunkText) {
+          setHistory(prev => {
+            const newHistory = [...prev];
+            const lastMessage = newHistory[newHistory.length - 1];
+            if (lastMessage && lastMessage.role === 'model') {
+              lastMessage.parts[0].text += chunkText;
+              if (finalGroundingChunks.length > 0) {
+                lastMessage.groundingChunks = finalGroundingChunks;
+              }
+            }
+            return newHistory;
+          });
+        }
       }
+      
+      if (isFirstChunk && fullResponseText.trim() === "") { // Stream was empty or only whitespace
+          setHistory(prev => [...prev, { role: 'model', parts: [{ text: "I'm not sure how to respond to that. Could you try rephrasing?" }] }]);
+      }
+
     } catch (error) {
       console.error("Error generating content:", error);
-      setHistory(prev => [...prev, { role: 'model', parts: [{ text: "I'm sorry, I encountered an error. Please try again." }] }]);
+      // Ensure a model message is added so the skeleton disappears on error
+      setHistory(prev => {
+          if (prev.length > 0 && prev[prev.length - 1]?.role === 'user') {
+              return [...prev, { role: 'model', parts: [{ text: "I'm sorry, I encountered an error. Please try again." }] }];
+          }
+          return prev;
+      });
     } finally {
       setLoading(false);
     }
@@ -178,15 +197,8 @@ const AI_Assistant: React.FC = () => {
               )}
             </div>
           ))}
-          {loading && history[history.length - 1]?.role !== 'model' && (
-            <div className="flex items-start gap-3 justify-start">
-               <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                <SparklesIcon className="w-5 h-5 text-white" stroke="white" fill="white"/>
-              </div>
-              <div className="p-3 rounded-lg bg-gray-100 text-gray-800">
-                <Spinner />
-              </div>
-            </div>
+          {loading && history[history.length - 1]?.role === 'user' && (
+            <SkeletonChatBubble />
           )}
           <div ref={messagesEndRef} />
         </div>

@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Medication } from '../../types';
-import { PillIcon, CheckCircleIcon, CalendarIcon } from '../../components/shared/Icons';
+import { PillIcon, CheckCircleIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
@@ -94,7 +95,7 @@ const Medications: React.FC = () => {
                                return (
                                    <div key={med.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                         <div>
-                                            <p className={`font-semibold ${isTaken ? 'text-gray-500 line-through' : ''}`}>{med.name}</p>
+                                            <p className={`font-semibold ${isTaken ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{med.name}</p>
                                             <p className="text-sm text-gray-500">Take {med.frequency.toLowerCase()}</p>
                                         </div>
                                         <button 

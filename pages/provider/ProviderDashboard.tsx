@@ -1,10 +1,10 @@
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { DocumentTextIcon, BellIcon, PillIcon, ShareIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 
 const todaysSchedule = [
     { time: '09:00 AM', patient: 'John Doe', reason: 'Annual Check-up', status: 'Checked-In' },
@@ -50,6 +50,33 @@ const getStatusPill = (status: string) => {
 
 const ProviderDashboard: React.FC = () => {
     const { user } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+          setIsLoading(false);
+      }, 350);
+      return () => clearTimeout(timer);
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div>
+                <div className="h-10 w-3/5 rounded-lg shimmer-bg mb-2"></div>
+                <div className="h-6 w-2/5 rounded-lg shimmer-bg mb-8"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div className="lg:col-span-3 flex flex-col gap-6">
+                        <SkeletonCard className="h-full" />
+                        <SkeletonCard />
+                    </div>
+                    <div className="lg:col-span-2">
+                        <SkeletonCard className="h-full" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
   return (
     <div>
       <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome back, {user?.name}!</h1>

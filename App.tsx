@@ -8,12 +8,13 @@ import LoginPage from './pages/auth/LoginPage';
 import PatientLayout from './components/layout/PatientLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
 import AdminLayout from './components/layout/AdminLayout';
-import Spinner from './components/shared/Spinner';
+import UniqueLoader from './components/shared/UniqueLoader';
 import RegisterPage from './pages/auth/RegisterPage';
 import PatientRegister from './pages/auth/PatientRegister';
 import ProviderRegister from './pages/auth/ProviderRegister';
 import AdminRegister from './pages/auth/AdminRegister';
 import { NotificationProvider } from './contexts/NotificationContext';
+import WelcomePage from './pages/WelcomePage';
 
 // --- Global App Context for Toasts/Modals ---
 interface Toast {
@@ -86,7 +87,7 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-50">
-        <Spinner />
+        <UniqueLoader />
       </div>
     );
   }
@@ -94,14 +95,19 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
+        <Route path="/" element={<WelcomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/patient" element={<PatientRegister />} />
         <Route path="/register/provider" element={<ProviderRegister />} />
         <Route path="/register/admin" element={<AdminRegister />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
+  }
+  
+  if (!user.role) {
+      return <Navigate to="/" replace />;
   }
 
   switch (user.role) {
@@ -112,7 +118,7 @@ function AppRoutes() {
     case UserRole.ADMIN:
       return <AdminLayout />;
     default:
-      return <Navigate to="/login" replace />;
+      return <Navigate to="/" replace />;
   }
 }
 

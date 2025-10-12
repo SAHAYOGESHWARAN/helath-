@@ -1,3 +1,4 @@
+
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -14,6 +15,14 @@ export interface User {
   address?: string;
   dob?: string;
   specialty?: string; // For providers
+  status?: 'Active' | 'Suspended';
+  licenseNumber?: string;
+  subscription?: {
+    planId: string;
+    planName: string;
+    status: 'Active' | 'Cancelled' | 'Trialing';
+    renewalDate: string;
+  };
 }
 
 export interface Appointment {
@@ -161,6 +170,7 @@ export interface Prescription {
 }
 
 export interface SubscriptionPlan {
+    id: string;
     name: string;
     price: string;
     patientLimit: number;
@@ -189,7 +199,9 @@ export interface ChatMessage {
 
 export interface BillingInvoice {
     id: string;
+    patientId: string;
     date: string;
+    dueDate: string;
     amount: number;
     status: 'Paid' | 'Due' | 'Overdue';
     description: string;

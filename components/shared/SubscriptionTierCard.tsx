@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SubscriptionPlan } from '../../types';
 import { CheckCircleIcon, StarIcon } from './Icons';
@@ -5,9 +6,10 @@ import { CheckCircleIcon, StarIcon } from './Icons';
 interface SubscriptionTierCardProps {
     plan: SubscriptionPlan & { isPopular?: boolean };
     currentPlanName: string;
+    onChoosePlan: (planId: string) => void;
 }
 
-const SubscriptionTierCard: React.FC<SubscriptionTierCardProps> = ({ plan, currentPlanName }) => {
+const SubscriptionTierCard: React.FC<SubscriptionTierCardProps> = ({ plan, currentPlanName, onChoosePlan }) => {
     const isCurrent = plan.name === currentPlanName;
     const isPopular = plan.isPopular;
 
@@ -49,7 +51,11 @@ const SubscriptionTierCard: React.FC<SubscriptionTierCardProps> = ({ plan, curre
                 </ul>
             </div>
 
-            <button className={buttonClasses} disabled={isCurrent}>
+            <button 
+                className={buttonClasses} 
+                disabled={isCurrent}
+                onClick={() => onChoosePlan(plan.id)}
+            >
                 {isCurrent ? 'Current Plan' : 'Choose Plan'}
             </button>
         </div>

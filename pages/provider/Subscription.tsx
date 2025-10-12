@@ -1,60 +1,11 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
-import { CheckCircleIcon } from '../../components/shared/Icons';
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
-
-const currentPlan: SubscriptionPlan = {
-  name: 'Pro Tier',
-  price: '$99/month',
-  patientLimit: 200,
-  features: [
-    'Up to 200 active patients',
-    'Full EHR & E-Prescribing',
-    'Integrated Telehealth',
-    'Advanced Reporting & Analytics',
-    'Priority Email Support'
-  ]
-};
-
-const allPlans: (SubscriptionPlan & {isPopular?: boolean})[] = [
-    {
-        name: 'Basic Tier',
-        price: '$49/month',
-        patientLimit: 50,
-        features: [
-            'Up to 50 active patients',
-            'Basic EHR Features',
-            'Appointment Scheduling',
-            'Standard Email Support',
-        ],
-    },
-    {
-        name: 'Pro Tier',
-        price: '$99/month',
-        patientLimit: 200,
-        isPopular: true,
-        features: [
-            'Up to 200 active patients',
-            'Full EHR & E-Prescribing',
-            'Integrated Telehealth',
-            'Advanced Reporting & Analytics',
-            'Priority Email Support',
-        ],
-    },
-    {
-        name: 'Enterprise',
-        price: 'Contact Us',
-        patientLimit: 0, // Unlimited
-        features: [
-            'Unlimited patients & providers',
-            'All Pro features included',
-            'Dedicated Account Manager',
-            'Single Sign-On (SSO)',
-            'Custom Integrations',
-        ],
-    }
-];
+import { useAuth } from '../../hooks/useAuth';
+import Modal from '../../components/shared/Modal';
+import { useApp } from '../../App';
 
 const billingHistory = [
     { id: 'inv_1', date: '2024-08-01', amount: 99.00, status: 'Paid' },
@@ -63,8 +14,35 @@ const billingHistory = [
 ];
 
 const Subscription: React.FC = () => {
+    const { currentSubscription, changeSubscription, providerSubscriptionPlans } = useAuth();
+    const { showToast } = useApp();
+    const [modalState, setModalState] = useState<{ isOpen: boolean; plan: SubscriptionPlan | null }>({ isOpen: false, plan: null });
+
     const currentPatientCount = 85;
-    const usagePercentage = (currentPatientCount / currentPlan.patientLimit) * 100;
+    
+    if (!currentSubscription) {
+        return <div>Loading subscription details...</div>;
+    }
+    
+    const usagePercentage = currentSubscription.patientLimit > 0 
+        ? (currentPatientCount / currentSubscription.patientLimit) * 100 
+        : 0;
+
+    const handleChoosePlan = (planId: string) => {
+        const plan = providerSubscriptionPlans.find(p => p.id === planId);
+        if (plan) {
+            setModalState({ isOpen: true, plan });
+        }
+    };
+
+    const handleConfirmChange = () => {
+        if (modalState.plan) {
+            changeSubscription(modalState.plan.id);
+            showToast(`Successfully subscribed to ${modalState.plan.name}!`, 'success');
+            setModalState({ isOpen: false, plan: null });
+        }
+    };
+
 
   return (
     <div>
@@ -73,21 +51,23 @@ const Subscription: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
             <p className="text-sm text-gray-500 font-medium">Current Plan</p>
-            <p className="text-2xl font-bold text-primary-600 mt-1">{currentPlan.name}</p>
+            <p className="text-2xl font-bold text-primary-600 mt-1">{currentSubscription.name}</p>
         </Card>
         <Card>
             <p className="text-sm text-gray-500 font-medium">Active Patients</p>
             <div className="flex items-baseline space-x-2 mt-1">
                 <p className="text-2xl font-bold text-gray-800">{currentPatientCount}</p>
-                <p className="text-gray-500 text-sm">/ {currentPlan.patientLimit}</p>
+                {currentSubscription.patientLimit > 0 && <p className="text-gray-500 text-sm">/ {currentSubscription.patientLimit}</p>}
             </div>
-             <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                <div className="bg-primary-600 h-1.5 rounded-full" style={{ width: `${usagePercentage}%` }}></div>
-            </div>
+            {currentSubscription.patientLimit > 0 && 
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                    <div className="bg-primary-600 h-1.5 rounded-full" style={{ width: `${usagePercentage}%` }}></div>
+                </div>
+            }
         </Card>
         <Card>
             <p className="text-sm text-gray-500 font-medium">Monthly Cost</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{currentPlan.price.replace('/month', '')}</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{currentSubscription.price.replace('/mo', '')}</p>
         </Card>
         <Card>
             <p className="text-sm text-gray-500 font-medium">Next Renewal</p>
@@ -98,11 +78,12 @@ const Subscription: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Compare & Upgrade Plans</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-            {allPlans.map(plan => (
+            {providerSubscriptionPlans.map(plan => (
                 <SubscriptionTierCard 
-                    key={plan.name}
+                    key={plan.id}
                     plan={plan}
-                    currentPlanName={currentPlan.name}
+                    currentPlanName={currentSubscription.name}
+                    onChoosePlan={handleChoosePlan}
                 />
             ))}
         </div>
@@ -140,6 +121,18 @@ const Subscription: React.FC = () => {
             </div>
         </Card>
       </div>
+
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({isOpen: false, plan: null})}
+        title="Confirm Subscription Change"
+        footer={<>
+            <button onClick={() => setModalState({isOpen: false, plan: null})} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+            <button onClick={handleConfirmChange} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">Confirm</button>
+        </>}
+      >
+        <p>Are you sure you want to change your plan to <strong>{modalState.plan?.name}</strong> for <strong>{modalState.plan?.price}</strong>?</p>
+      </Modal>
     </div>
   );
 };

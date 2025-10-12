@@ -1,302 +1,189 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import Card from '../../components/shared/Card';
+
+import React, { useState, useMemo } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
-import { useApp } from '../../App';
+import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import Modal from '../../components/shared/Modal';
-import { SearchIcon, FilterIcon } from '../../components/shared/Icons';
+import ToggleSwitch from '../../components/shared/ToggleSwitch';
+import { useApp } from '../../App';
 
-const initialMockUsers: User[] = [
-    { id: 'pat1', name: 'John Doe', email: 'john.doe@email.com', role: UserRole.PATIENT, dob: '1985-05-20' },
-    { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, specialty: 'Cardiology' },
-    { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', role: UserRole.ADMIN },
-    { id: 'pat2', name: 'Alice Johnson', email: 'alice.j@email.com', role: UserRole.PATIENT, dob: '1992-11-12' },
-    { id: 'pro2', name: 'Dr. David Chen', email: 'david.chen@email.com', role: UserRole.PROVIDER, specialty: 'Dermatology' },
-    { id: 'pat3', name: 'Charlie Brown', email: 'charlie.b@email.com', role: UserRole.PATIENT, dob: '1998-09-30' },
-    { id: 'pro3', name: 'Dr. Emily White', email: 'emily.white@email.com', role: UserRole.PROVIDER, specialty: 'Pediatrics' },
-    { id: 'adm2', name: 'Maria Garcia', email: 'maria.g@email.com', role: UserRole.ADMIN },
-];
+// A form component for adding/editing a user inside the modal
+const UserForm: React.FC<{ user: Partial<User> | null; onSave: (user: Partial<User>) => void; onCancel: () => void; }> = ({ user, onSave, onCancel }) => {
+    const [formData, setFormData] = useState({
+        id: user?.id || undefined,
+        name: user?.name || '',
+        email: user?.email || '',
+        role: user?.role || UserRole.PATIENT,
+        status: user?.status || 'Active',
+    });
 
-const EditUserModal: React.FC<{
-  user: User | null;
-  onClose: () => void;
-  onSave: (updatedUser: User) => void;
-}> = ({ user, onClose, onSave }) => {
-  const [formData, setFormData] = useState<User | null>(null);
-
-  useEffect(() => {
-    setFormData(user);
-  }, [user]);
-
-  if (!user || !formData) return null;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => prev ? { ...prev, [name]: value } : null);
-  };
-  
-  const handleSubmit = () => {
-      if(formData) {
-          onSave(formData);
-      }
-  };
-
-  return (
-    <Modal
-      isOpen={!!user}
-      onClose={onClose}
-      title={`Edit User: ${user.name}`}
-      footer={
-        <>
-          <button onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
-          <button onClick={handleSubmit} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">Save Changes</button>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Full Name</label>
-          <input
-            id="edit-name"
-            name="name"
-            type="text"
-            value={formData.name}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">Email Address</label>
-          <input
-            id="edit-email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label htmlFor="edit-role" className="block text-sm font-medium text-gray-700">Role</label>
-          <select
-            id="edit-role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-          >
-            <option value={UserRole.PATIENT}>Patient</option>
-            <option value={UserRole.PROVIDER}>Provider</option>
-            <option value={UserRole.ADMIN}>Admin</option>
-          </select>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
-
-const UserManagement: React.FC = () => {
-    const [users, setUsers] = useState<User[]>(initialMockUsers);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('All');
-    const { showToast } = useApp();
-    const [modalState, setModalState] = useState<{ isOpen: boolean; user: User | null; action: 'Suspend' | 'Reset Password' | null }>({ isOpen: false, user: null, action: null });
-    const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
-
-    const handleActionClick = (user: User, action: 'Suspend' | 'Reset Password' | 'Edit') => {
-        if (action === 'Edit') {
-             setEditingUser(user);
-        } else {
-            setModalState({ isOpen: true, user, action });
-        }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleModalClose = () => {
-        setModalState({ isOpen: false, user: null, action: null });
+    const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({ ...prev, status: e.target.checked ? 'Active' : 'Suspended' }));
     };
     
-    const handleConfirmAction = () => {
-        if (modalState.user && modalState.action) {
-            showToast(`${modalState.action} action confirmed for ${modalState.user.name}.`, 'success');
-        }
-        handleModalClose();
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(formData);
     };
 
-    const handleSaveUser = (updatedUser: User) => {
-        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        setEditingUser(null);
-        showToast(`User ${updatedUser.name} has been updated successfully.`, 'success');
-    };
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" name="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" name="email" value={formData.email} onChange={handleChange} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <select name="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-white">
+                    {Object.values(UserRole).map(role => (
+                        <option key={role} value={role}>{role}</option>
+                    ))}
+                </select>
+            </div>
+             <div className="flex items-center justify-between p-3 rounded-md bg-gray-50">
+                <p className="font-medium text-gray-700">Account Status</p>
+                <div className="flex items-center space-x-2">
+                    <span className={`text-sm ${formData.status === 'Active' ? 'text-gray-500' : 'font-semibold text-gray-800'}`}>Suspended</span>
+                    <ToggleSwitch name="status" checked={formData.status === 'Active'} onChange={handleToggleChange} />
+                    <span className={`text-sm ${formData.status === 'Active' ? 'font-semibold text-gray-800' : 'text-gray-500'}`}>Active</span>
+                </div>
+            </div>
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+                <button type="button" onClick={onCancel} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                <button type="submit" className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">{user?.id ? 'Save Changes' : 'Add User'}</button>
+            </div>
+        </form>
+    );
+};
 
-    const filteredAndSortedUsers = useMemo(() => {
-        let filtered = users.filter(user => {
-            const matchesRole = roleFilter === 'All' || user.role === roleFilter;
-            const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
+// Main component
+const UserManagement: React.FC = () => {
+    const { users, addUser, editUser, deleteUser } = useAuth();
+    const { showToast } = useApp();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('All');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+
+    const filteredUsers = useMemo(() => {
+        return users.filter(u => {
+            const matchesRole = roleFilter === 'All' || u.role === roleFilter;
+            const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                  u.email.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesRole && matchesSearch;
         });
+    }, [users, roleFilter, searchTerm]);
 
-        if (sortConfig !== null) {
-            filtered.sort((a, b) => {
-                const valA = a[sortConfig.key] ?? '';
-                const valB = b[sortConfig.key] ?? '';
-
-                if (valA < valB) {
-                    return sortConfig.direction === 'asc' ? -1 : 1;
-                }
-                if (valA > valB) {
-                    return sortConfig.direction === 'asc' ? 1 : -1;
-                }
-                return 0;
-            });
-        }
-        
-        return filtered;
-    }, [users, searchTerm, roleFilter, sortConfig]);
-
-    const requestSort = (key: keyof User) => {
-        let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc';
-        }
-        setSortConfig({ key, direction });
+    const handleAddUser = () => {
+        setEditingUser(null);
+        setIsModalOpen(true);
     };
 
-  return (
-    <div>
-      <PageHeader title="User Management" buttonText="Invite New User" onButtonClick={() => showToast('Invite user flow started!', 'info')}/>
-      
-      <Card>
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-            <div className="relative w-full sm:max-w-sm">
-                <input
-                    type="text"
-                    placeholder="Search by name or email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-                <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-            <div className="relative w-full sm:w-auto">
-                <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 appearance-none"
-                >
-                    <option value="All">All Roles</option>
-                    <option value={UserRole.PATIENT}>Patient</option>
-                    <option value={UserRole.PROVIDER}>Provider</option>
-                    <option value={UserRole.ADMIN}>Admin</option>
-                </select>
-                <FilterIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-        </div>
-        <div className="overflow-x-auto mt-4">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th 
-                            onClick={() => requestSort('name')} 
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 group"
-                        >
-                            <div className="flex items-center">
-                                Name 
-                                <span className="ml-1.5 text-gray-400">
-                                    {sortConfig?.key === 'name' 
-                                        ? (sortConfig.direction === 'asc' ? '▲' : '▼')
-                                        : <span className="opacity-0 group-hover:opacity-100 transition-opacity">↕</span>
-                                    }
-                                </span>
-                            </div>
-                        </th>
-                        <th 
-                            onClick={() => requestSort('email')} 
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 group"
-                        >
-                             <div className="flex items-center">
-                                Email 
-                                <span className="ml-1.5 text-gray-400">
-                                    {sortConfig?.key === 'email' 
-                                        ? (sortConfig.direction === 'asc' ? '▲' : '▼')
-                                        : <span className="opacity-0 group-hover:opacity-100 transition-opacity">↕</span>
-                                    }
-                                </span>
-                            </div>
-                        </th>
-                        <th 
-                            onClick={() => requestSort('role')} 
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 group"
-                        >
-                            <div className="flex items-center">
-                                Role 
-                                <span className="ml-1.5 text-gray-400">
-                                    {sortConfig?.key === 'role' 
-                                        ? (sortConfig.direction === 'asc' ? '▲' : '▼')
-                                        : <span className="opacity-0 group-hover:opacity-100 transition-opacity">↕</span>
-                                    }
-                                </span>
-                            </div>
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredAndSortedUsers.map(user => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                 user.role === UserRole.ADMIN ? 'bg-gray-200 text-gray-800' :
-                                 user.role === UserRole.PROVIDER ? 'bg-accent-light text-accent-dark' :
-                                 'bg-primary-100 text-primary-800'
-                               }`}>{user.role}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
-                                <button onClick={() => handleActionClick(user, 'Edit')} className="text-primary-600 hover:text-primary-900">Edit</button>
-                                <button onClick={() => handleActionClick(user, 'Suspend')} className="text-yellow-600 hover:text-yellow-900">Suspend</button>
-                                <button onClick={() => handleActionClick(user, 'Reset Password')} className="text-red-600 hover:text-red-900">Reset Pass</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-      </Card>
-      
-      <Modal
-        isOpen={modalState.isOpen}
-        onClose={handleModalClose}
-        title={`Confirm ${modalState.action}`}
-        footer={
-            <>
-                <button onClick={handleModalClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">
-                    Cancel
-                </button>
-                <button 
-                    onClick={handleConfirmAction} 
-                    className={`font-bold py-2 px-4 rounded-lg text-white ${modalState.action === 'Suspend' ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-red-500 hover:bg-red-600'}`}
-                >
-                    Confirm {modalState.action}
-                </button>
-            </>
+    const handleEditUser = (user: User) => {
+        setEditingUser(user);
+        setIsModalOpen(true);
+    };
+
+    const handleSaveUser = (userData: Partial<User>) => {
+        if (userData.id) {
+            editUser(userData as User);
+            showToast('User updated successfully!', 'success');
+        } else {
+            // The id is added in the addUser function in AuthContext
+            addUser(userData as Omit<User, 'id'>);
+            showToast('User added successfully!', 'success');
         }
-      >
-        <p>Are you sure you want to {modalState.action?.toLowerCase()} the account for <strong className="text-gray-800">{modalState.user?.name}</strong>?</p>
-        {modalState.action === 'Reset Password' && <p className="text-sm text-gray-500 mt-2">This will send a password reset link to the user's email address.</p>}
-        {modalState.action === 'Suspend' && <p className="text-sm text-gray-500 mt-2">This will temporarily prevent the user from logging in.</p>}
-      </Modal>
+        setIsModalOpen(false);
+    };
 
-      <EditUserModal 
-        user={editingUser}
-        onClose={() => setEditingUser(null)}
-        onSave={handleSaveUser}
-      />
+    const getStatusPill = (status?: string) => {
+        switch (status) {
+            case 'Active': return 'bg-emerald-100 text-emerald-800';
+            case 'Suspended': return 'bg-amber-100 text-amber-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
 
-    </div>
-  );
+    return (
+        <div>
+            <PageHeader title="User Management" buttonText="Add New User" onButtonClick={handleAddUser} />
+            <Card>
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                    <input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full md:max-w-xs px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg">
+                        {(['All', ...Object.values(UserRole)] as const).map(role => (
+                            <button
+                                key={role}
+                                onClick={() => setRoleFilter(role)}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${roleFilter === role ? 'bg-white text-primary-600 shadow-sm' : 'bg-transparent text-gray-600 hover:bg-white/50'}`}
+                            >
+                                {role}s
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {filteredUsers.map(user => (
+                                <tr key={user.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-800">{user.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusPill(user.status)}`}>
+                                            {user.status || 'N/A'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
+                                        <button onClick={() => handleEditUser(user)} className="text-primary-600 hover:underline">Edit</button>
+                                        <button onClick={() => { if(window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) { deleteUser(user.id); showToast('User deleted.', 'success'); } }} className="text-red-600 hover:underline">Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+            
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={editingUser ? 'Edit User' : 'Add New User'}
+            >
+                <UserForm
+                    user={editingUser}
+                    onSave={handleSaveUser}
+                    onCancel={() => setIsModalOpen(false)}
+                />
+            </Modal>
+        </div>
+    );
 };
 
 export default UserManagement;

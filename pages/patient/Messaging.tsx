@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { User, ChatMessage, UserRole } from '../../types';
 import Card from '../../components/shared/Card';
-import { SearchIcon } from '../../components/shared/Icons';
+import { SearchIcon, SparklesIcon } from '../../components/shared/Icons';
 
 const mockProviders: User[] = [
     { id: 'pro1', name: 'Dr. Jane Smith', email: 'jane.smith@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://picsum.photos/seed/provider/100', specialty: 'Cardiology' },
@@ -19,20 +19,44 @@ const mockMessages: { [key: string]: ChatMessage[] } = {
     ]
 };
 
+const ChatSkeletonLoader = () => (
+    <div className="flex-1 px-6 py-4 space-y-6 animate-pulse">
+        <div className="flex items-end gap-2 justify-start">
+            <div className="w-8 h-8 rounded-full shimmer-bg"></div>
+            <div className="w-2/5 h-12 rounded-lg shimmer-bg"></div>
+        </div>
+        <div className="flex items-end gap-2 justify-end">
+            <div className="w-3/5 h-16 rounded-lg shimmer-bg"></div>
+            <div className="w-8 h-8 rounded-full shimmer-bg"></div>
+        </div>
+        <div className="flex items-end gap-2 justify-start">
+            <div className="w-8 h-8 rounded-full shimmer-bg"></div>
+            <div className="w-1/2 h-10 rounded-lg shimmer-bg"></div>
+        </div>
+    </div>
+);
+
+
 const Messaging: React.FC = () => {
     const { user } = useAuth();
     const [selectedProvider, setSelectedProvider] = useState<User>(mockProviders[0]);
-    const [messages, setMessages] = useState<ChatMessage[]>(mockMessages[selectedProvider.id]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setMessages(mockMessages[selectedProvider.id] || []);
+        setIsLoading(true);
+        // Simulate fetching messages
+        setTimeout(() => {
+            setMessages(mockMessages[selectedProvider.id] || []);
+            setIsLoading(false);
+        }, 300);
     }, [selectedProvider]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isLoading]);
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
@@ -81,16 +105,18 @@ const Messaging: React.FC = () => {
                          <img src={selectedProvider.avatarUrl} alt={selectedProvider.name} className="w-10 h-10 rounded-full" />
                          <p className="ml-3 font-semibold text-xl text-gray-800">{selectedProvider.name}</p>
                     </div>
-                    <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4">
-                        {messages.map(msg => (
-                             <div key={msg.id} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-xl p-3 rounded-lg break-words ${msg.senderId === user?.id ? 'bg-primary-600 text-white' : 'bg-white text-gray-800 shadow-sm'}`}>
-                                    <p className="text-sm">{msg.text}</p>
+                    {isLoading ? <ChatSkeletonLoader /> : (
+                        <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4">
+                            {messages.map(msg => (
+                                <div key={msg.id} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-xl p-3 rounded-lg break-words ${msg.senderId === user?.id ? 'bg-primary-600 text-white' : 'bg-white text-gray-800 shadow-sm'}`}>
+                                        <p className="text-sm">{msg.text}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                        <div ref={messagesEndRef} />
-                    </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
+                    )}
                      <div className="p-4 border-t bg-white">
                         <form onSubmit={handleSendMessage} className="flex space-x-3">
                             <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type your message..." className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500" />

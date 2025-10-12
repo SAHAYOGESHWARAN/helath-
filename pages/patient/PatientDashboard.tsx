@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   RadialBarChart, RadialBar, PolarAngleAxis
@@ -7,6 +8,8 @@ import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { HealthGoal, Medication, LabResult, Surgery, Hospitalization } from '../../types';
 import { CalendarIcon, ClipboardListIcon, CreditCardIcon, DocumentTextIcon, PillIcon, CheckCircleIcon, MessageSquareIcon, ChevronDownIcon, VideoCameraIcon } from '../../components/shared/Icons';
+import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
+
 
 // --- MOCK DATA ---
 const upcomingAppointment = {
@@ -157,11 +160,44 @@ const PatientDashboard: React.FC = () => {
     surgeries: true,
     hospitalizations: true,
   });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+      const timer = setTimeout(() => {
+          setIsLoading(false);
+      }, 350);
+      return () => clearTimeout(timer);
+  }, []);
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
   
+  if(isLoading) {
+    return (
+      <div>
+        <div className="h-10 w-3/5 rounded-lg shimmer-bg mb-2"></div>
+        <div className="h-6 w-2/5 rounded-lg shimmer-bg mb-8"></div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="md:col-span-3 flex flex-col gap-6">
+                <SkeletonCard />
+                <SkeletonCard />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <SkeletonCard />
+                    <SkeletonCard />
+                </div>
+                <SkeletonCard />
+            </div>
+            <div className="md:col-span-2 flex flex-col gap-6">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+            </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="text-4xl font-bold text-gray-800 mb-2">Good Morning, {user?.name?.split(' ')[0]}!</h1>
