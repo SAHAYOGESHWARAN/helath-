@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User, UserRole, BillingInvoice, SubscriptionPlan, Appointment, Prescription, ProgressNote } from '../types';
+import { User, UserRole, BillingInvoice, SubscriptionPlan, Appointment, Prescription, ProgressNote, EnterpriseSettingsConfig } from '../types';
 
 interface InsuranceInfo {
   provider: string;
@@ -64,6 +64,8 @@ interface AuthContextType {
   changePassword: (current: string, newPass: string) => Promise<boolean>;
   systemSettings: SystemSettingsConfig;
   updateSystemSettings: (settings: SystemSettingsConfig) => Promise<void>;
+  enterpriseSettings: EnterpriseSettingsConfig;
+  updateEnterpriseSettings: (settings: EnterpriseSettingsConfig) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,6 +118,7 @@ const MOCK_NOTES: ProgressNote[] = [
 const MOCK_INSURANCE: InsuranceInfo = { provider: 'Blue Cross Blue Shield', planName: 'PPO Gold', memberId: 'X123456789', groupId: 'G98765' };
 const MOCK_NOTIF_SETTINGS: NotificationSettings = { emailAppointments: true, emailBilling: true, emailMessages: true, pushAll: false };
 const MOCK_SYSTEM_SETTINGS: SystemSettingsConfig = { maintenanceMode: false, newPatientRegistrations: true, newProviderRegistrations: true };
+const MOCK_ENTERPRISE_SETTINGS: EnterpriseSettingsConfig = { ssoProvider: 'Okta', ssoEntityId: 'urn:example:saml:sp', primaryColor: '#3b82f6', enforceMfa: true, customLogoUrl: '' };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // --- STATE MANAGEMENT ---
@@ -132,6 +135,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [insurance, setInsurance] = useState<InsuranceInfo | null>(MOCK_INSURANCE);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(MOCK_NOTIF_SETTINGS);
   const [systemSettings, setSystemSettings] = useState<SystemSettingsConfig>(MOCK_SYSTEM_SETTINGS);
+  const [enterpriseSettings, setEnterpriseSettings] = useState<EnterpriseSettingsConfig>(MOCK_ENTERPRISE_SETTINGS);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -302,6 +306,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }, 800);
     });
   }, []);
+  const updateEnterpriseSettings = useCallback((settings: EnterpriseSettingsConfig) => {
+    return new Promise<void>((resolve) => {
+       setTimeout(() => {
+           setEnterpriseSettings(settings);
+           resolve();
+       }, 800);
+   });
+ }, []);
 
   return (
     <AuthContext.Provider value={{ 
@@ -313,7 +325,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         prescriptions, addPrescription,
         progressNotes, addNote, updateNote,
         notificationSettings, updateNotificationSettings, changePassword,
-        systemSettings, updateSystemSettings
+        systemSettings, updateSystemSettings,
+        enterpriseSettings, updateEnterpriseSettings
     }}>
       {children}
     </AuthContext.Provider>

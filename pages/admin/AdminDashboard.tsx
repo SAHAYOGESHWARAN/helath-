@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { UsersIcon, BriefcaseIcon, ShieldCheckIcon, CollectionIcon as SubscriptionIcon, HomeIcon, ChartBarIcon, CurrencyDollarIcon, ShieldExclamationIcon } from '../../components/shared/Icons';
+import { UsersIcon, BriefcaseIcon, ShieldCheckIcon, CollectionIcon as SubscriptionIcon, HomeIcon, ChartBarIcon, CurrencyDollarIcon, ShieldExclamationIcon, BellIcon } from '../../components/shared/Icons';
 import Tabs from '../../components/shared/Tabs';
 
 // --- MOCK DATA ---
@@ -29,6 +29,13 @@ const recentSystemActivity = [
   { timestamp: '09:45', user: 'A. Johnson', action: 'Update Settings', details: 'Updated feature flags' },
   { timestamp: '09:10', user: 'J. Doe', action: 'Payment Submitted', details: '$50.00' },
 ];
+
+const initialSystemAlerts = [
+  { id: 'alert1', severity: 'critical' as const, text: 'Multiple failed login attempts for user: admin_support', timestamp: '2m ago' },
+  { id: 'alert2', severity: 'warning' as const, text: 'API P99 latency has breached the 280ms threshold.', timestamp: '15m ago' },
+  { id: 'alert3', severity: 'info' as const, text: 'System backup completed successfully.', timestamp: '1h ago' },
+];
+
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -63,17 +70,37 @@ const MetricCard: React.FC<{ icon: React.ReactNode; title: string; value: string
     </Card>
 );
 
-const ActionableAlert: React.FC<{ icon: React.ReactNode; text: string; link: string; color: string; }> = ({ icon, text, link, color }) => (
-    <div className={`p-3 rounded-lg flex items-center justify-between border-l-4 ${color}`}>
-        <div className="flex items-center">
-            {icon}
-            <p className="ml-3 text-sm font-medium text-gray-800">{text}</p>
-        </div>
-        <a href={link} className="text-sm font-semibold text-primary-600 hover:underline">View</a>
-    </div>
-);
+const SystemAlertItem: React.FC<{ alert: { id: string, severity: 'critical' | 'warning' | 'info', text: string, timestamp: string }, onDismiss: (id: string) => void }> = ({ alert, onDismiss }) => {
+  const severityConfig = {
+    critical: { icon: <ShieldExclamationIcon className="w-5 h-5 text-red-600"/>, color: 'border-red-500 bg-red-50' },
+    warning: { icon: <ShieldExclamationIcon className="w-5 h-5 text-amber-600"/>, color: 'border-amber-500 bg-amber-50' },
+    info: { icon: <BellIcon className="w-5 h-5 text-blue-600"/>, color: 'border-blue-500 bg-blue-50' }
+  };
+  const config = severityConfig[alert.severity];
 
-const OverviewTab = () => (
+  return (
+    <div className={`p-3 rounded-lg flex items-center justify-between border-l-4 ${config.color}`}>
+      <div className="flex items-center">
+        {config.icon}
+        <div className="ml-3">
+          <p className="text-sm font-medium text-gray-800">{alert.text}</p>
+          <p className="text-xs text-gray-500">{alert.timestamp}</p>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+        <button className="text-xs font-semibold text-primary-600 hover:underline">Details</button>
+        <button onClick={() => onDismiss(alert.id)} className="text-xs text-gray-500 hover:underline">Dismiss</button>
+      </div>
+    </div>
+  );
+};
+
+
+const OverviewTab = () => {
+    const [alerts, setAlerts] = useState(initialSystemAlerts);
+    const handleDismiss = (id: string) => setAlerts(prev => prev.filter(a => a.id !== id));
+
+    return (
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard icon={<UsersIcon />} title="Total Patients" value="820" iconBgColor="bg-blue-500" />
@@ -82,20 +109,15 @@ const OverviewTab = () => (
             <MetricCard icon={<CurrencyDollarIcon />} title="MRR" value="$18,075" iconBgColor="bg-amber-500" />
         </div>
 
-        <Card title="Actionable Alerts">
+        <Card title="System Alerts">
             <div className="space-y-3">
-                 <ActionableAlert 
-                    icon={<UsersIcon className="w-5 h-5 text-blue-600"/>} 
-                    text="3 New provider applications are pending review."
-                    link="#/users"
-                    color="border-blue-500 bg-blue-50"
-                />
-                <ActionableAlert 
-                    icon={<ShieldExclamationIcon className="w-5 h-5 text-amber-600"/>} 
-                    text="System performance degraded: API P99 latency is high."
-                    link="#/admin/dashboard" // Link to system health tab
-                    color="border-amber-500 bg-amber-50"
-                />
+                 {alerts.length > 0 ? (
+                    alerts.map(alert => (
+                        <SystemAlertItem key={alert.id} alert={alert} onDismiss={handleDismiss} />
+                    ))
+                 ) : (
+                    <p className="text-center text-gray-500 py-4">No active system alerts.</p>
+                 )}
             </div>
         </Card>
 
@@ -126,7 +148,7 @@ const OverviewTab = () => (
             </Card>
         </div>
     </div>
-);
+)};
 
 const UserAnalyticsTab = () => (
     <div className="space-y-6">

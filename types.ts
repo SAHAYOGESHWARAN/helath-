@@ -1,4 +1,3 @@
-
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -195,6 +194,20 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   isRead: boolean;
+}
+
+export interface SystemSettingsConfig {
+    maintenanceMode: boolean;
+    newPatientRegistrations: boolean;
+    newProviderRegistrations: boolean;
+}
+
+export interface EnterpriseSettingsConfig {
+  ssoProvider: 'Okta' | 'Azure AD' | 'Google Workspace';
+  ssoEntityId: string;
+  primaryColor: string;
+  enforceMfa: boolean;
+  customLogoUrl?: string;
 }
 
 export interface BillingInvoice {

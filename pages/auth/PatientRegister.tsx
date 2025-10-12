@@ -10,7 +10,13 @@ const PatientRegisterSchema = Yup.object().shape({
   name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Full name is required'),
   email: Yup.string().email('Invalid email').required('Email is required'),
   dob: Yup.date().max(new Date(), "You can't be born in the future!").required('Date of birth is required'),
-  password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+  password: Yup.string()
+    .min(8, 'Password must be at least 8 characters')
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])/,
+      'Must contain at least one uppercase, lowercase, number, and special character'
+    )
+    .required('Password is required'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref('password'), undefined], 'Passwords must match')
     .required('Confirming your password is required'),
