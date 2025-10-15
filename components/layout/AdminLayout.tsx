@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -11,10 +13,11 @@ import AdminReports from '../../pages/admin/AdminReports';
 import SystemSettings from '../../pages/admin/SystemSettings';
 import EnterpriseSettings from '../../pages/admin/EnterpriseSettings';
 import Compliance from '../../pages/admin/Compliance';
+import AdminBilling from '../../pages/admin/Billing';
 
 const AdminLayout: React.FC = () => {
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-white font-sans">
       <Sidebar navItems={ADMIN_NAV} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
@@ -25,6 +28,7 @@ const AdminLayout: React.FC = () => {
             <Route path="/users" element={<UserManagement />} />
             <Route path="/subscriptions" element={<SubscriptionManagement />} />
             <Route path="/products" element={<ProductManagement />} />
+            <Route path="/billing" element={<AdminBilling />} />
             <Route path="/reports" element={<AdminReports />} />
             <Route path="/settings" element={<SystemSettings />} />
             <Route path="/enterprise" element={<EnterpriseSettings />} />

@@ -39,7 +39,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
                 </div>
 
                 {footer && (
-                    <div className="flex justify-end space-x-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+                    <div className="flex justify-end space-x-3 p-4 bg-white border-t border-gray-200 rounded-b-lg">
                         {footer}
                     </div>
                 )}

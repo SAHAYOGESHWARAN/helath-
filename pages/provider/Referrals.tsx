@@ -47,7 +47,7 @@ const Referrals: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-white">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred To/From</th>
@@ -99,9 +99,9 @@ const Referrals: React.FC = () => {
           >
             {({ isSubmitting }) => (
                 <Form className="space-y-4">
-                    <Field name="patient" placeholder="Patient Name" className="w-full p-2 border rounded"/>
-                    <Field name="specialist" placeholder="Specialist Name & Department" className="w-full p-2 border rounded"/>
-                    <Field as="textarea" name="reason" placeholder="Reason for referral" className="w-full p-2 border rounded"/>
+                    <Field name="patient" placeholder="Patient Name" className="w-full p-2 border bg-white rounded"/>
+                    <Field name="specialist" placeholder="Specialist Name & Department" className="w-full p-2 border bg-white rounded"/>
+                    <Field as="textarea" name="reason" placeholder="Reason for referral" className="w-full p-2 border bg-white rounded"/>
                     <div className="flex justify-end pt-4 border-t">
                         <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-36 flex justify-center items-center">
                             {isSubmitting ? <SpinnerIcon/> : "Submit Referral"}

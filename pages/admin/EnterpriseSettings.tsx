@@ -113,7 +113,7 @@ const EnterpriseSettings: React.FC = () => {
 
         <Card title="Advanced Security">
            <form className="space-y-4" onSubmit={handleSecuritySave}>
-            <div className="flex items-center justify-between p-3 rounded-md bg-gray-50">
+            <div className="flex items-center justify-between p-3 rounded-md bg-white border">
               <p className="text-sm font-medium text-gray-900">Enforce Multi-Factor Authentication (MFA)</p>
                <ToggleSwitch 
                 name="enforceMfa"
@@ -121,7 +121,7 @@ const EnterpriseSettings: React.FC = () => {
                 onChange={e => setSecurityConfig({ enforceMfa: e.target.checked })}
                />
             </div>
-             <div className="flex items-center justify-between p-3 rounded-md bg-gray-50">
+             <div className="flex items-center justify-between p-3 rounded-md bg-white border">
               <p className="text-sm font-medium text-gray-900">Strict Password Policy</p>
                <ToggleSwitch 
                 name="strictPolicy"

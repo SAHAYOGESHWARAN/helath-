@@ -1,6 +1,7 @@
 import React from 'react';
 import Card from '../../components/shared/Card';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import PageHeader from '../../components/shared/PageHeader';
 
 const revenueData = [
   { name: 'Jan', MRR: 2400 }, { name: 'Feb', MRR: 2800 }, { name: 'Mar', MRR: 3500 },
@@ -18,7 +19,7 @@ const engagementData = [
 const AdminReports: React.FC = () => {
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Analytics & Reports</h1>
+      <PageHeader title="Analytics & Reports" />
       
       <div className="space-y-8">
         <Card title="Monthly Recurring Revenue (MRR)">

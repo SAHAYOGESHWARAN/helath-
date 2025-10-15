@@ -1,7 +1,45 @@
+// FIX: Removed self-import of `UserRole` which was causing a declaration conflict.
+
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
   ADMIN = 'ADMIN',
+}
+
+export interface FamilyHistoryEntry {
+  id: string;
+  relation: 'Mother' | 'Father' | 'Sibling' | 'Grandparent' | 'Other';
+  condition: string;
+}
+
+export interface ImmunizationRecord {
+  id: string;
+  vaccine: string;
+  date: string;
+}
+
+export interface VitalsRecord {
+  id: string;
+  date: string;
+  bloodPressure: string; // e.g., "120/80"
+  heartRate: number;
+  weight: number; // in lbs
+  bloodGlucose?: number; // in mg/dL
+}
+
+export interface LifestyleInfo {
+  diet: string;
+  exercise: string;
+  smokingStatus: 'Never' | 'Former' | 'Current';
+  alcoholConsumption: 'None' | 'Occasional' | 'Regular';
+}
+
+export interface NotificationSettings {
+  emailAppointments: boolean;
+  emailBilling: boolean;
+  emailMessages: boolean;
+  smsMessages: boolean; // For SMS alerts on new messages
+  pushAll: boolean;
 }
 
 export interface User {
@@ -13,15 +51,26 @@ export interface User {
   phone?: string;
   address?: string;
   dob?: string;
-  specialty?: string; // For providers
-  status?: 'Active' | 'Suspended';
+  state?: string; 
+  specialty?: string; 
   licenseNumber?: string;
+  isVerified?: boolean; 
+  status?: 'Active' | 'Suspended';
   subscription?: {
     planId: string;
     planName: string;
     status: 'Active' | 'Cancelled' | 'Trialing';
     renewalDate: string;
   };
+  conditions?: { id: string, name: string }[];
+  allergies?: Allergy[];
+  surgeries?: Surgery[];
+  medications?: Medication[];
+  familyHistory?: FamilyHistoryEntry[];
+  immunizations?: ImmunizationRecord[];
+  vitals?: VitalsRecord[];
+  lifestyle?: LifestyleInfo;
+  notificationSettings?: NotificationSettings; // User-specific notification settings
 }
 
 export interface Appointment {
@@ -31,6 +80,7 @@ export interface Appointment {
   providerId?: string;
   date: string;
   time: string;
+  duration: 15 | 30 | 60;
   reason: string;
   type: 'In-Person' | 'Virtual';
   status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
@@ -44,10 +94,9 @@ export interface Medication {
   name: string;
   dosage: string;
   frequency: string;
-  prescribedBy: string;
-  startDate: string;
+  prescribedBy?: string;
+  startDate?: string;
   status: 'Active' | 'Inactive';
-  // FIX: Changed adherence from an array of objects to an optional number to match its usage as a percentage in the dashboard.
   adherence?: number;
 }
 
@@ -87,6 +136,13 @@ export interface Hospitalization {
   reason: string;
   admissionDate: string;
   dischargeDate: string;
+}
+
+export interface InsuranceInfo {
+  provider: string;
+  planName: string;
+  memberId: string;
+  groupId: string;
 }
 
 export interface Patient {

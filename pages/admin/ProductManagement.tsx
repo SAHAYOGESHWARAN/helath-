@@ -23,10 +23,10 @@ const PlanForm: React.FC<{ plan: Partial<SubscriptionPlan> | null; onSave: (plan
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <input type="text" placeholder="Plan Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-2 border rounded" />
-            <input type="text" placeholder="Price (e.g., $99/mo)" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} className="w-full p-2 border rounded" />
-            <input type="number" placeholder="Patient Limit" value={formData.patientLimit} onChange={e => setFormData({ ...formData, patientLimit: Number(e.target.value) })} className="w-full p-2 border rounded" />
-            <textarea placeholder="Features (comma-separated)" value={formData.features} onChange={e => setFormData({ ...formData, features: e.target.value })} className="w-full p-2 border rounded" />
+            <input type="text" placeholder="Plan Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-2 border bg-white rounded" />
+            <input type="text" placeholder="Price (e.g., $99/mo)" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} className="w-full p-2 border bg-white rounded" />
+            <input type="number" placeholder="Patient Limit" value={formData.patientLimit} onChange={e => setFormData({ ...formData, patientLimit: Number(e.target.value) })} className="w-full p-2 border bg-white rounded" />
+            <textarea placeholder="Features (comma-separated)" value={formData.features} onChange={e => setFormData({ ...formData, features: e.target.value })} className="w-full p-2 border bg-white rounded" />
             <div className="flex justify-end space-x-2 pt-4 border-t">
                 <button type="button" onClick={onCancel} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
                 <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-28 flex justify-center items-center">

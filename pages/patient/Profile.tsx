@@ -5,6 +5,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { useApp } from '../../App';
 import { CameraIcon, MailIcon, DeviceMobileIcon, UploadIcon, SpinnerIcon } from '../../components/shared/Icons';
 import Modal from '../../components/shared/Modal';
+import ToggleSwitch from '../../components/shared/ToggleSwitch';
 
 const Profile: React.FC = () => {
     const { user, updateUser } = useAuth();
@@ -21,6 +22,16 @@ const Profile: React.FC = () => {
         address: user?.address || '',
     });
 
+    const [notificationSettings, setNotificationSettings] = useState(user?.notificationSettings || {
+        emailAppointments: true,
+        emailBilling: true,
+        emailMessages: true,
+        smsMessages: false,
+        pushAll: false,
+    });
+    const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -28,7 +39,7 @@ const Profile: React.FC = () => {
 
     const handleSave = () => {
         setIsSubmitting(true);
-        updateUser(formData).then(() => {
+        updateUser(currentUser => ({ ...currentUser, ...formData })).then(() => {
             showToast('Profile updated successfully!', 'success');
             setEditMode(false);
             setIsSubmitting(false);
@@ -42,11 +53,27 @@ const Profile: React.FC = () => {
     };
     
     const handleAvatarSave = (newAvatar: string) => {
-        updateUser({ avatarUrl: newAvatar }).then(() => {
+        updateUser(currentUser => ({...currentUser, avatarUrl: newAvatar })).then(() => {
              showToast('Profile picture updated!', 'success');
              setIsAvatarModalOpen(false);
         });
     };
+
+    const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, checked } = e.target;
+        setNotificationSettings(prev => ({ ...prev!, [name]: checked }));
+    };
+
+    const handleSaveNotifications = () => {
+        setIsSavingNotifications(true);
+        updateUser(currentUser => ({...currentUser, notificationSettings})).then(() => {
+            showToast('Notification settings updated!', 'success');
+            setIsSavingNotifications(false);
+        });
+    };
+
+    const hasPhoneForSms = formData.phone && formData.phone.trim() !== '';
+
 
     if (!user) return <div>Loading profile...</div>;
 
@@ -70,12 +97,12 @@ const Profile: React.FC = () => {
                     </Card>
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 space-y-8">
                     <Card title="Personal Information">
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-500">Full Name</label>
-                                {editMode ? <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" /> : <p className="text-lg text-gray-800">{formData.name}</p>}
+                                {editMode ? <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border bg-white border-gray-300 rounded-md" /> : <p className="text-lg text-gray-800">{formData.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-500">Email Address</label>
@@ -83,11 +110,11 @@ const Profile: React.FC = () => {
                             </div>
                              <div>
                                 <label className="block text-sm font-medium text-gray-500">Phone Number</label>
-                                {editMode ? <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" /> : <p className="text-lg text-gray-800 flex items-center"><DeviceMobileIcon className="w-5 h-5 mr-2 text-gray-400"/>{formData.phone || 'Not provided'}</p>}
+                                {editMode ? <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border bg-white border-gray-300 rounded-md" /> : <p className="text-lg text-gray-800 flex items-center"><DeviceMobileIcon className="w-5 h-5 mr-2 text-gray-400"/>{formData.phone || 'Not provided'}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-500">Address</label>
-                                {editMode ? <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" /> : <p className="text-lg text-gray-800">{formData.address || 'Not provided'}</p>}
+                                {editMode ? <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border bg-white border-gray-300 rounded-md" /> : <p className="text-lg text-gray-800">{formData.address || 'Not provided'}</p>}
                             </div>
                         </div>
                          <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
@@ -101,6 +128,33 @@ const Profile: React.FC = () => {
                             ) : (
                                 <button onClick={() => setEditMode(true)} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">Edit Profile</button>
                             )}
+                        </div>
+                    </Card>
+                    <Card title="Notification Settings">
+                        <div className="space-y-4 divide-y">
+                            <div className="pt-4 first:pt-0">
+                                <h3 className="font-semibold text-gray-800 mb-2">Email Notifications</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between"><p className="text-sm text-gray-600">Appointment reminders & updates</p><ToggleSwitch name="emailAppointments" checked={notificationSettings.emailAppointments} onChange={handleNotificationChange} /></div>
+                                    <div className="flex items-center justify-between"><p className="text-sm text-gray-600">Billing alerts & invoices</p><ToggleSwitch name="emailBilling" checked={notificationSettings.emailBilling} onChange={handleNotificationChange} /></div>
+                                    <div className="flex items-center justify-between"><p className="text-sm text-gray-600">New secure messages</p><ToggleSwitch name="emailMessages" checked={notificationSettings.emailMessages} onChange={handleNotificationChange} /></div>
+                                </div>
+                            </div>
+                            <div className="pt-4">
+                                <h3 className="font-semibold text-gray-800 mb-2">SMS Notifications</h3>
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <p className={`text-sm ${!hasPhoneForSms ? 'text-gray-400' : 'text-gray-600'}`}>Alerts for new messages</p>
+                                        <ToggleSwitch name="smsMessages" checked={notificationSettings.smsMessages && hasPhoneForSms} onChange={handleNotificationChange} disabled={!hasPhoneForSms}/>
+                                    </div>
+                                    {!hasPhoneForSms && <p className="text-xs text-gray-500 mt-2">Please add a phone number in your personal information above to enable SMS notifications.</p>}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-right mt-6 border-t pt-4">
+                            <button onClick={handleSaveNotifications} disabled={isSavingNotifications} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-36 flex justify-center items-center">
+                                {isSavingNotifications ? <SpinnerIcon/> : 'Save Settings'}
+                            </button>
                         </div>
                     </Card>
                 </div>

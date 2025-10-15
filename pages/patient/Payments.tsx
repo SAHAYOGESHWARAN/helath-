@@ -1,12 +1,14 @@
+
 import React, { useMemo, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';
-import { SpinnerIcon, DownloadIcon } from '../../components/shared/Icons';
+import { SpinnerIcon, DownloadIcon, CreditCardIcon, PhonePeIcon } from '../../components/shared/Icons';
 import { BillingInvoice } from '../../types';
 import Modal from '../../components/shared/Modal';
+import PageHeader from '../../components/shared/PageHeader';
 
 const PaymentSchema = Yup.object().shape({
   nameOnCard: Yup.string()
@@ -94,6 +96,7 @@ const Payments: React.FC = () => {
     const { user, invoices, makePayment } = useAuth();
     const { showToast } = useApp();
     const [selectedReceipt, setSelectedReceipt] = useState<BillingInvoice | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState('card');
 
     const { dueInvoices, paidInvoices, currentBalance } = useMemo(() => {
         if (!user) return { dueInvoices: [], paidInvoices: [], currentBalance: 0 };
@@ -104,16 +107,28 @@ const Payments: React.FC = () => {
         return { dueInvoices: due, paidInvoices: paid, currentBalance: balance };
     }, [invoices, user]);
 
+    const handleSimulatedPayment = (amount: number) => {
+        let amountToApply = amount;
+        const sortedDueInvoices = [...dueInvoices].sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        for(const inv of sortedDueInvoices) {
+            if (amountToApply <= 0) break;
+            const paymentForThisInvoice = Math.min(amountToApply, inv.amountDue);
+            makePayment(inv.id, paymentForThisInvoice);
+            amountToApply -= paymentForThisInvoice;
+        }
+        showToast(`Payment of $${amount.toFixed(2)} submitted successfully!`, 'success');
+    }
+
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Payments & Billing</h1>
+      <PageHeader title="Payments & Billing" />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <Card title="Outstanding Invoices">
              <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-white">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
@@ -137,7 +152,7 @@ const Payments: React.FC = () => {
           <Card title="Transaction History">
              <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-white">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date Paid</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
@@ -163,111 +178,65 @@ const Payments: React.FC = () => {
         </div>
         
         <div className="lg:col-span-1">
-          <Card title="Make a Payment" className="bg-primary-50">
+          <Card title="Make a Payment">
             <div className="mb-4">
               <p className="text-lg font-semibold text-gray-700">Current Balance</p>
               <p className="text-3xl font-bold text-primary-600">${currentBalance.toFixed(2)}</p>
             </div>
-            <Formik
-              initialValues={{
-                nameOnCard: '',
-                cardNumber: '',
-                expiryDate: '',
-                cvc: '',
-                amount: currentBalance > 0 ? currentBalance.toFixed(2) : '0.00',
-              }}
-              enableReinitialize
-              validationSchema={PaymentSchema}
-              onSubmit={(values, { setSubmitting, resetForm }) => {
-                setTimeout(() => { // Simulate network request
-                    const paymentAmount = parseFloat(values.amount);
-                    let amountToApply = paymentAmount;
-                    
-                    const sortedDueInvoices = [...dueInvoices].sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-                    
-                    for(const inv of sortedDueInvoices) {
-                        if (amountToApply <= 0) break;
-                        const paymentForThisInvoice = Math.min(amountToApply, inv.amountDue);
-                        makePayment(inv.id, paymentForThisInvoice);
-                        amountToApply -= paymentForThisInvoice;
-                    }
-                    
-                    showToast(`Payment of $${paymentAmount.toFixed(2)} submitted successfully!`, 'success');
-                    setSubmitting(false);
-                    resetForm({ values: { ...values, amount: amountToApply > 0 ? amountToApply.toFixed(2) : '0.00' }});
-                }, 1000);
-              }}
-            >
-              {({ errors, touched, isValid, isSubmitting, values }) => (
-                <Form className="space-y-4">
-                   <div>
-                    <label htmlFor="nameOnCard" className="block text-sm font-medium text-gray-700">Name on Card</label>
-                    <Field 
-                        type="text" 
-                        id="nameOnCard"
-                        name="nameOnCard" 
-                        placeholder="JOHN M DOE" 
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.nameOnCard && touched.nameOnCard ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    <ErrorMessage name="nameOnCard" component="p" className="text-red-500 text-xs mt-1" />
-                  </div>
-                  <div>
-                    <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">Card Number</label>
-                    <Field 
-                        type="text" 
-                        id="cardNumber"
-                        name="cardNumber" 
-                        placeholder="•••• •••• •••• ••••" 
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.cardNumber && touched.cardNumber ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    <ErrorMessage name="cardNumber" component="p" className="text-red-500 text-xs mt-1" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">Expiry</label>
-                      <Field 
-                        type="text" 
-                        id="expiryDate"
-                        name="expiryDate"
-                        placeholder="MM / YY" 
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.expiryDate && touched.expiryDate ? 'border-red-500' : 'border-gray-300'}`}
-                      />
-                      <ErrorMessage name="expiryDate" component="p" className="text-red-500 text-xs mt-1" />
+            
+            {/* Payment Method Selector */}
+            <div className="grid grid-cols-4 gap-2 mb-4">
+                <button onClick={() => setPaymentMethod('card')} className={`p-2 border rounded-lg flex justify-center ${paymentMethod === 'card' ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><CreditCardIcon className="w-6 h-6"/></button>
+                <button onClick={() => setPaymentMethod('gpay')} className={`p-2 border rounded-lg flex justify-center ${paymentMethod === 'gpay' ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}>GPay</button>
+                <button onClick={() => setPaymentMethod('phonepe')} className={`p-2 border rounded-lg flex justify-center ${paymentMethod === 'phonepe' ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><PhonePeIcon className="w-6 h-6"/></button>
+                <button onClick={() => setPaymentMethod('qr')} className={`p-2 border rounded-lg flex justify-center ${paymentMethod === 'qr' ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}>QR</button>
+            </div>
+
+            {paymentMethod === 'card' && (
+                <Formik
+                  initialValues={{ nameOnCard: '', cardNumber: '', expiryDate: '', cvc: '', amount: currentBalance > 0 ? currentBalance.toFixed(2) : '0.00' }}
+                  enableReinitialize validationSchema={PaymentSchema}
+                  onSubmit={(values, { setSubmitting, resetForm }) => {
+                    setTimeout(() => { 
+                        handleSimulatedPayment(parseFloat(values.amount));
+                        setSubmitting(false);
+                        resetForm();
+                    }, 1000);
+                  }}
+                >
+                {({ errors, touched, isValid, isSubmitting, values }) => ( <Form className="space-y-4">
+                    <Field name="nameOnCard" placeholder="Name on Card" className={`w-full p-2 border rounded ${errors.nameOnCard && touched.nameOnCard ? 'border-red-500' : 'border-gray-300'}`} />
+                    <Field name="cardNumber" placeholder="Card Number" className={`w-full p-2 border rounded ${errors.cardNumber && touched.cardNumber ? 'border-red-500' : 'border-gray-300'}`} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Field name="expiryDate" placeholder="MM / YY" className={`w-full p-2 border rounded ${errors.expiryDate && touched.expiryDate ? 'border-red-500' : 'border-gray-300'}`} />
+                            <ErrorMessage name="expiryDate" component="p" className="text-red-500 text-xs mt-1" />
+                        </div>
+                        <div>
+                            <Field name="cvc" placeholder="CVC" className={`w-full p-2 border rounded ${errors.cvc && touched.cvc ? 'border-red-500' : 'border-gray-300'}`} />
+                            <ErrorMessage name="cvc" component="p" className="text-red-500 text-xs mt-1" />
+                        </div>
                     </div>
-                    <div>
-                      <label htmlFor="cvc" className="block text-sm font-medium text-gray-700">CVC</label>
-                      <Field 
-                        type="text" 
-                        id="cvc"
-                        name="cvc"
-                        placeholder="•••" 
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.cvc && touched.cvc ? 'border-red-500' : 'border-gray-300'}`}
-                        />
-                      <ErrorMessage name="cvc" component="p" className="text-red-500 text-xs mt-1" />
-                    </div>
-                  </div>
-                   <div>
-                    <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount</label>
-                    <Field 
-                        type="number" 
-                        id="amount"
-                        name="amount"
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.amount && touched.amount ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                     <ErrorMessage name="amount" component="p" className="text-red-500 text-xs mt-1" />
-                  </div>
-                  <button 
-                    type="submit" 
-                    disabled={!isValid || isSubmitting || parseFloat(values.amount) <= 0}
-                    className="w-full flex justify-center items-center bg-primary-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors enabled:hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting 
-                        ? <><SpinnerIcon className="w-5 h-5 mr-2" /> Processing...</> 
-                        : `Pay $${parseFloat(values.amount || '0').toFixed(2)}`}
-                  </button>
-                </Form>
-              )}
-            </Formik>
+                    <Field type="number" name="amount" className={`w-full p-2 border rounded ${errors.amount && touched.amount ? 'border-red-500' : 'border-gray-300'}`} />
+                    <button type="submit" disabled={!isValid || isSubmitting || parseFloat(values.amount) <= 0} className="w-full flex justify-center items-center bg-primary-600 text-white font-bold py-2 px-4 rounded-lg enabled:hover:bg-primary-700 disabled:bg-gray-400">
+                        {isSubmitting ? <SpinnerIcon /> : `Pay $${parseFloat(values.amount || '0').toFixed(2)}`}
+                    </button>
+                </Form>)}
+                </Formik>
+            )}
+
+            {(paymentMethod === 'gpay' || paymentMethod === 'phonepe') && (
+                <button onClick={() => handleSimulatedPayment(currentBalance)} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg">{`Pay with ${paymentMethod.toUpperCase()}`}</button>
+            )}
+             {paymentMethod === 'qr' && (
+                <div className="text-center">
+                    <p className="font-semibold mb-2">Scan to Pay</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=novopath@upi" alt="QR Code" className="mx-auto border-4 rounded-lg"/>
+                    <p className="text-xs text-gray-500 mt-2">Use any UPI app to scan and pay the total balance of ${currentBalance.toFixed(2)}.</p>
+                </div>
+            )}
+
+
           </Card>
         </div>
       </div>

@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/shared/Card';
 import { ClockIcon, UsersIcon } from '../../components/shared/Icons';
+import PageHeader from '../../components/shared/PageHeader';
 
 const initialPatients = [
   { id: 1, name: 'Alice Johnson', reason: 'Follow-up', checkInTime: new Date(Date.now() - 5 * 60000) }, // 5 minutes ago
   { id: 2, name: 'Charlie Brown', reason: 'Sick Visit', checkInTime: new Date(Date.now() - 2 * 60000) }, // 2 minutes ago
 ];
+
+const getInitials = (name: string) => {
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length > 1) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.length > 0 ? name[0].toUpperCase() : '?';
+};
 
 const WaitingRoom: React.FC = () => {
   const [patients, setPatients] = useState(initialPatients);
@@ -25,7 +34,7 @@ const WaitingRoom: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Virtual Waiting Room</h1>
+      <PageHeader title="Virtual Waiting Room" />
       <Card>
         <div className="flex items-center text-lg font-semibold text-gray-700 mb-4">
           <UsersIcon />
@@ -35,11 +44,9 @@ const WaitingRoom: React.FC = () => {
           {patients.map((patient) => (
             <div key={patient.id} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <img
-                  src={`https://picsum.photos/seed/${patient.id}/100`}
-                  alt="Patient Avatar"
-                  className="w-12 h-12 rounded-full"
-                />
+                <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xl flex-shrink-0">
+                  {getInitials(patient.name)}
+                </div>
                 <div>
                   <p className="font-bold text-lg text-gray-800">{patient.name}</p>
                   <p className="text-sm text-gray-600">{patient.reason}</p>

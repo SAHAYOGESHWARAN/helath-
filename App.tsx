@@ -86,7 +86,7 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
+      <div className="flex items-center justify-center h-screen bg-white">
         <UniqueLoader />
       </div>
     );
@@ -97,6 +97,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin/login" element={<LoginPage isAdminLogin />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/patient" element={<PatientRegister />} />
         <Route path="/register/provider" element={<ProviderRegister />} />

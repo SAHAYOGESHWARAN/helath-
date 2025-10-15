@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { ChevronLeftIcon } from '../../components/shared/Icons';
+import PageHeader from '../../components/shared/PageHeader';
 
 // Interface for appointment data for type safety
 interface Appointment {
@@ -293,8 +294,8 @@ const ProviderCalendar: React.FC = () => {
     
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">My Calendar</h1>
-            <Card className="p-0 flex flex-col h-[calc(100vh-12rem)]">
+            <PageHeader title="My Calendar" />
+            <Card className="p-0 flex flex-col h-[calc(100vh-14rem)]">
                 <CalendarHeader 
                     currentDate={currentDate}
                     view={view}

@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -19,10 +18,50 @@ import Subscription from '../../pages/provider/Subscription';
 import Messaging from '../../pages/provider/Messaging';
 import ProviderProfile from '../../pages/provider/ProviderProfile';
 import ProviderSettings from '../../pages/provider/ProviderSettings';
+import { useAuth } from '../../hooks/useAuth';
+import { ShieldExclamationIcon } from '../shared/Icons';
+import PatientChart from '../../pages/provider/PatientChart';
+
+const UnverifiedProviderView: React.FC = () => (
+    <div className="flex-1 flex items-center justify-center p-8 animate-fade-in">
+        <div className="text-center bg-white p-10 rounded-lg border border-amber-300 shadow-md max-w-lg">
+            <ShieldExclamationIcon className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Account Pending Verification</h2>
+            <p className="text-gray-600">
+                Thank you for registering with NovoPath Medical. Your credentials are currently under review by our administration team.
+            </p>
+            <p className="text-gray-600 mt-2">
+                You will be notified via email once your account has been verified and activated. You will then gain full access to the provider dashboard.
+            </p>
+        </div>
+    </div>
+);
 
 const ProviderLayout: React.FC = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If the provider is not verified, show a pending screen instead of the dashboard.
+  if (!user.isVerified) {
+    return (
+      <div className="flex h-screen bg-white font-sans">
+        <Sidebar navItems={PROVIDER_NAV} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto p-6 md:p-8">
+            <UnverifiedProviderView />
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Render the full dashboard for verified providers.
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-white font-sans">
       <Sidebar navItems={PROVIDER_NAV} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
@@ -33,6 +72,7 @@ const ProviderLayout: React.FC = () => {
             <Route path="/calendar" element={<ProviderCalendar />} />
             <Route path="/appointments" element={<ProviderAppointments />} />
             <Route path="/patients" element={<PatientManagement />} />
+            <Route path="/patients/:patientId" element={<PatientChart />} />
             <Route path="/messaging" element={<Messaging />} />
             <Route path="/progress-notes" element={<ProgressNotes />} />
             <Route path="/e-prescribing" element={<EPrescribing />} />

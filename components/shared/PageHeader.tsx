@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PlusIcon } from './Icons';
 
@@ -18,16 +17,18 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, buttonText, on
                 {subtitle && <p className="mt-1 text-lg text-gray-500">{subtitle}</p>}
             </div>
             <div className="mt-4 md:mt-0 flex-shrink-0">
-                {children}
-                {buttonText && onButtonClick && (
-                    <button
-                        onClick={onButtonClick}
-                        className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-105 flex items-center"
-                    >
-                       <PlusIcon className="w-5 h-5 mr-2" />
-                       <span>{buttonText}</span>
-                    </button>
-                )}
+                <div className="flex items-center space-x-3">
+                    {children}
+                    {buttonText && onButtonClick && (
+                        <button
+                            onClick={onButtonClick}
+                            className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-105 flex items-center"
+                        >
+                        <PlusIcon className="w-5 h-5 mr-2" />
+                        <span>{buttonText}</span>
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

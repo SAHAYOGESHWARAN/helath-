@@ -1,6 +1,7 @@
 import React from 'react';
 import Card from '../../components/shared/Card';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import PageHeader from '../../components/shared/PageHeader';
 
 const appointmentData = [
   { name: 'Mon', count: 12 }, { name: 'Tue', count: 15 }, { name: 'Wed', count: 18 },
@@ -15,7 +16,7 @@ const COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444'];
 const ProviderReports: React.FC = () => {
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Practice Reports</h1>
+      <PageHeader title="Practice Reports" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="text-center"><p className="text-3xl font-bold text-primary-600">69</p><p className="text-gray-500">Appointments This Week</p></Card>
         <Card className="text-center"><p className="text-3xl font-bold text-tangerine">820</p><p className="text-gray-500">Active Patients</p></Card>

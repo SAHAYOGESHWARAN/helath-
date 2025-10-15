@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { Appointment } from '../../types';
+import { Appointment, UserRole } from '../../types';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
 import { CalendarIcon, ClockIcon, VideoCameraIcon, SpinnerIcon } from '../../components/shared/Icons';
@@ -21,20 +21,30 @@ const getStatusPill = (status: Appointment['status']) => {
 
 const AppointmentRequestSchema = Yup.object().shape({
   providerName: Yup.string().required('Provider is required'),
-  date: Yup.date().min(new Date(), 'Cannot schedule in the past').required('Date is required'),
+  date: Yup.date().min(new Date(new Date().setDate(new Date().getDate() - 1)), 'Cannot schedule in the past').required('Date is required'),
   time: Yup.string().required('Time is required'),
+  duration: Yup.number().oneOf([15, 30, 60]).required('Duration is required'),
   reason: Yup.string().min(5, 'Too short').required('Reason is required'),
   type: Yup.string().required('Type is required'),
 });
 
 
 const PatientAppointments: React.FC = () => {
-    const { appointments, addAppointment, cancelAppointment, submitAppointmentFeedback } = useAuth();
+    const { user: patientUser, users, appointments, addAppointment, cancelAppointment, submitAppointmentFeedback } = useAuth();
     const { showToast } = useApp();
 
     const [modal, setModal] = useState<'request' | 'details' | 'cancel' | 'feedback' | null>(null);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const availableProviders = useMemo(() => {
+        if (!patientUser?.state) return [];
+        return users.filter(u => 
+            u.role === UserRole.PROVIDER && 
+            u.isVerified && 
+            u.state === patientUser.state
+        );
+    }, [users, patientUser]);
 
     const sortedAppointments = useMemo(() => {
         const now = new Date();
@@ -91,7 +101,7 @@ const PatientAppointments: React.FC = () => {
                                              <p className="font-bold text-lg text-gray-800">{appt.reason}</p>
                                              <p className="text-sm text-gray-600">with {appt.providerName}</p>
                                              <div className="flex items-center text-sm text-gray-500 mt-1">
-                                                 <ClockIcon className="w-4 h-4 mr-1.5"/> {appt.time} <span className="mx-2">|</span> {appt.type === 'Virtual' ? <VideoCameraIcon className="w-4 h-4 mr-1.5"/> : <CalendarIcon className="w-4 h-4 mr-1.5"/>} {appt.type}
+                                                 <ClockIcon className="w-4 h-4 mr-1.5"/> {appt.time} ({appt.duration} min) <span className="mx-2">|</span> {appt.type === 'Virtual' ? <VideoCameraIcon className="w-4 h-4 mr-1.5"/> : <CalendarIcon className="w-4 h-4 mr-1.5"/>} {appt.type}
                                              </div>
                                          </div>
                                      </div>
@@ -107,14 +117,13 @@ const PatientAppointments: React.FC = () => {
                 <Card>
                     <h2 className="text-xl font-bold mb-4">Past</h2>
                      <div className="space-y-4">
-                        {sortedAppointments.past.map(appt => (
+                        {sortedAppointments.past.length > 0 ? sortedAppointments.past.map(appt => (
                              <div key={appt.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleOpenDetails(appt)}>
-                                 {/* (Similar structure as upcoming appointment cards) */}
                                  <p className="font-bold text-lg">{appt.providerName} - {new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</p>
                                  <p className="text-sm">{appt.reason}</p>
                                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.status)}`}>{appt.status}</span>
                              </div>
-                        ))}
+                        )) : <p className="text-gray-500">You have no past appointments.</p>}
                     </div>
                 </Card>
             </div>
@@ -124,6 +133,7 @@ const PatientAppointments: React.FC = () => {
                  {selectedAppointment && <div className="space-y-4">
                     <p><strong>Provider:</strong> {selectedAppointment.providerName}</p>
                     <p><strong>Date & Time:</strong> {new Date(selectedAppointment.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })} at {selectedAppointment.time}</p>
+                    <p><strong>Duration:</strong> {selectedAppointment.duration} minutes</p>
                     <p><strong>Reason:</strong> {selectedAppointment.reason}</p>
                     {selectedAppointment.status === 'Completed' && !selectedAppointment.visitSummary && <button onClick={() => setModal('feedback')} className="w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg mt-4">Submit Feedback</button>}
                     {selectedAppointment.status === 'Confirmed' && <button onClick={() => setModal('cancel')} className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg mt-4">Cancel Appointment</button>}
@@ -150,27 +160,48 @@ const PatientAppointments: React.FC = () => {
 
             <Modal isOpen={modal === 'request'} onClose={() => setModal(null)} title="Request New Appointment">
                  <Formik
-                    initialValues={{ providerName: '', date: '', time: '', reason: '', type: 'In-Person' }}
+                    initialValues={{ providerName: '', date: '', time: '', reason: '', type: 'Virtual', duration: 15 }}
                     validationSchema={AppointmentRequestSchema}
-                    onSubmit={(values, { setSubmitting }) => {
-                        setTimeout(() => {
-                            addAppointment(values);
+                    onSubmit={(values, { setSubmitting, setFieldError }) => {
+                        const success = addAppointment(values as Omit<Appointment, 'id' | 'status' | 'patientName'>);
+                        if (success) {
                             showToast('Appointment requested successfully!', 'success');
                             setSubmitting(false);
                             setModal(null);
-                        }, 1000);
+                        } else {
+                            setFieldError('time', 'This time slot is already booked. Please choose another time.');
+                            setSubmitting(false);
+                        }
                     }}
                 >
-                   {({ isSubmitting, errors, touched }) => (<Form className="space-y-4">
-                       <Field as="select" name="providerName" className={`w-full p-2 border rounded ${errors.providerName && touched.providerName ? 'border-red-500' : 'border-gray-300'}`}>
+                   {({ isSubmitting, errors, touched, values }) => (<Form className="space-y-4">
+                       <Field as="select" name="providerName" className={`w-full p-2 border rounded bg-white ${errors.providerName && touched.providerName ? 'border-red-500' : 'border-gray-300'}`}>
                            <option value="">Select a Provider</option>
-                           <option value="Dr. Jane Smith">Dr. Jane Smith (Cardiology)</option>
-                           <option value="Dr. David Chen">Dr. David Chen (Dermatology)</option>
+                           {availableProviders.map(provider => (
+                               <option key={provider.id} value={provider.name}>
+                                   {provider.name} ({provider.specialty})
+                               </option>
+                           ))}
                        </Field> <ErrorMessage name="providerName" component="p" className="text-red-500 text-xs"/>
-                       <Field type="date" name="date" className={`w-full p-2 border rounded ${errors.date && touched.date ? 'border-red-500' : 'border-gray-300'}`} />
-                       <ErrorMessage name="date" component="p" className="text-red-500 text-xs"/>
-                       <Field type="time" name="time" className={`w-full p-2 border rounded ${errors.time && touched.time ? 'border-red-500' : 'border-gray-300'}`} />
-                       <ErrorMessage name="time" component="p" className="text-red-500 text-xs"/>
+                       <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <Field type="date" name="date" className={`w-full p-2 border rounded ${errors.date && touched.date ? 'border-red-500' : 'border-gray-300'}`} />
+                           <ErrorMessage name="date" component="p" className="text-red-500 text-xs mt-1"/>
+                        </div>
+                        <div>
+                           <Field type="time" name="time" className={`w-full p-2 border rounded ${errors.time && touched.time ? 'border-red-500' : 'border-gray-300'}`} />
+                           <ErrorMessage name="time" component="p" className="text-red-500 text-xs mt-1"/>
+                        </div>
+                       </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                            <div role="group" aria-labelledby="duration-group" className="flex space-x-2">
+                                <label className={`flex-1 text-center p-2 border rounded-md cursor-pointer ${values.duration === 15 ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><Field type="radio" name="duration" value={15} className="sr-only"/> 15 min</label>
+                                <label className={`flex-1 text-center p-2 border rounded-md cursor-pointer ${values.duration === 30 ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><Field type="radio" name="duration" value={30} className="sr-only"/> 30 min</label>
+                                <label className={`flex-1 text-center p-2 border rounded-md cursor-pointer ${values.duration === 60 ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><Field type="radio" name="duration" value={60} className="sr-only"/> 60 min</label>
+                            </div>
+                            {values.duration === 30 && <p className="text-xs text-amber-600 mt-1 text-center">+ Additional Fee Applies</p>}
+                        </div>
                        <Field as="textarea" name="reason" placeholder="Reason for visit" className={`w-full p-2 border rounded ${errors.reason && touched.reason ? 'border-red-500' : 'border-gray-300'}`} />
                        <ErrorMessage name="reason" component="p" className="text-red-500 text-xs"/>
                        <div className="flex justify-end pt-4 border-t"><button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-40 flex items-center justify-center">{isSubmitting ? <SpinnerIcon/> : 'Request Appointment'}</button></div>

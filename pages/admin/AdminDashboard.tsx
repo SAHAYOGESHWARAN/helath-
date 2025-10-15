@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { UsersIcon, BriefcaseIcon, ShieldCheckIcon, CollectionIcon as SubscriptionIcon, HomeIcon, ChartBarIcon, CurrencyDollarIcon, ShieldExclamationIcon, BellIcon } from '../../components/shared/Icons';
 import Tabs from '../../components/shared/Tabs';
+import PageHeader from '../../components/shared/PageHeader';
+import { useAuth } from '../../hooks/useAuth';
 
 // --- MOCK DATA ---
 const userGrowthData = [
@@ -150,36 +152,93 @@ const OverviewTab = () => {
     </div>
 )};
 
-const UserAnalyticsTab = () => (
-    <div className="space-y-6">
-         <Card title="User Engagement (DAU/MAU)">
-            <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={engagementData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Line type="monotone" dataKey="DAU" name="Daily Active Users" stroke="#8884d8" />
-                    <Line type="monotone" dataKey="MAU" name="Monthly Active Users" stroke="#82ca9d" />
-                </LineChart>
-            </ResponsiveContainer>
-        </Card>
-        <Card title="User Growth (Last 6 Months)">
-            <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={userGrowthData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Line type="monotone" dataKey="Patients" stroke="#3b82f6" />
-                    <Line type="monotone" dataKey="Providers" stroke="#14b8a6" />
-                </LineChart>
-            </ResponsiveContainer>
-        </Card>
-    </div>
-);
+const UserAnalyticsTab = () => {
+    const { users } = useAuth();
+
+    const userStatusData = useMemo(() => {
+        const active = users.filter(u => u.status === 'Active').length;
+        const inactive = users.filter(u => u.status === 'Suspended').length;
+        return [
+            { name: 'Active Users', value: active },
+            { name: 'Inactive Users', value: inactive },
+        ];
+    }, [users]);
+    const USER_STATUS_COLORS = ['#10b981', '#f59e0b'];
+
+    const subscriptionUpgradeData = [
+        { month: 'Jun', upgrades: 8 },
+        { month: 'Jul', upgrades: 12 },
+        { month: 'Aug', upgrades: 18 },
+    ];
+
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card title="Active vs. Inactive Users">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                            <Pie
+                                data={userStatusData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                outerRadius={110}
+                                fill="#8884d8"
+                                dataKey="value"
+                                nameKey="name"
+                                label={({ name, percent, value }) => `${value} (${(percent * 100).toFixed(0)}%)`}
+                            >
+                                {userStatusData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={USER_STATUS_COLORS[index % USER_STATUS_COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </Card>
+                <Card title="Subscription Plan Upgrades (Last Quarter)">
+                     <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={subscriptionUpgradeData} margin={{ top: 5, right: 20, left: -5, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'gray', strokeDasharray: '3 3' }} />
+                            <Legend />
+                            <Area type="monotone" dataKey="upgrades" name="Plan Upgrades" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </Card>
+            </div>
+            <Card title="User Engagement (DAU/MAU)">
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={engagementData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'gray', strokeDasharray: '3 3' }} />
+                        <Legend />
+                        <Line type="monotone" dataKey="DAU" name="Daily Active Users" stroke="#8884d8" activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="MAU" name="Monthly Active Users" stroke="#82ca9d" activeDot={{ r: 6 }} />
+                    </LineChart>
+                </ResponsiveContainer>
+            </Card>
+            <Card title="User Growth (Last 6 Months)">
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={userGrowthData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'gray', strokeDasharray: '3 3' }} />
+                        <Legend />
+                        <Line type="monotone" dataKey="Patients" stroke="#3b82f6" activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="Providers" stroke="#14b8a6" activeDot={{ r: 6 }} />
+                    </LineChart>
+                </ResponsiveContainer>
+            </Card>
+        </div>
+    );
+};
 
 const FinancialsTab = () => (
      <div className="space-y-6">
@@ -241,7 +300,7 @@ const SystemHealthTab = () => (
         <Card title="Recent System Activity">
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-white">
                         <tr>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">User</th>
@@ -276,7 +335,7 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+            <PageHeader title="Admin Dashboard" />
             <Card className="p-0">
                 <Tabs tabs={tabs} />
             </Card>

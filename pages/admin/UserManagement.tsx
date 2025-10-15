@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
@@ -5,8 +6,10 @@ import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
-import { SearchIcon, SpinnerIcon } from '../../components/shared/Icons';
+import { SearchIcon, SpinnerIcon, CheckCircleIcon } from '../../components/shared/Icons';
 import SkeletonTableRow from '../../components/shared/skeletons/SkeletonTableRow';
+import { useTable } from '../../hooks/useTable';
+import PaginationControls from '../../components/shared/PaginationControls';
 
 const UserForm: React.FC<{ user: Partial<User> | null; onSave: (user: Partial<User>) => void; onCancel: () => void; isSubmitting: boolean; }> = ({ user, onSave, onCancel, isSubmitting }) => {
     const [formData, setFormData] = useState({ id: user?.id, name: user?.name || '', email: user?.email || '', role: user?.role || UserRole.PATIENT });
@@ -29,24 +32,34 @@ const UserForm: React.FC<{ user: Partial<User> | null; onSave: (user: Partial<Us
 };
 
 const UserManagement: React.FC = () => {
-    const { users, addUser, editUser, deleteUser } = useAuth();
+    const { users, addUser, editUser, deleteUser, verifyProvider } = useAuth();
     const { showToast } = useApp();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('All');
     const [modal, setModal] = useState<'edit' | 'delete' | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    const {
+        paginatedItems,
+        requestSort,
+        getSortArrow,
+        setGlobalFilter,
+        setColumnFilters,
+        paginationProps
+    } = useTable<User>(users, 10);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setGlobalFilter(e.target.value);
+    };
+
+    const handleRoleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setColumnFilters(prev => ({ ...prev, role: e.target.value }));
+    };
+
     useEffect(() => {
         const timer = setTimeout(() => setIsLoading(false), 350);
         return () => clearTimeout(timer);
     }, []);
-
-    const filteredUsers = useMemo(() => users.filter(u => 
-        (roleFilter === 'All' || u.role === roleFilter) &&
-        (u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    ), [users, roleFilter, searchTerm]);
 
     const handleSaveUser = (userData: Partial<User>) => {
         setIsSubmitting(true);
@@ -81,6 +94,11 @@ const UserManagement: React.FC = () => {
         editUser({ ...userToToggle, status: newStatus });
         showToast(`User ${userToToggle.name} has been ${newStatus === 'Active' ? 'activated' : 'suspended'}.`, 'success');
     };
+    
+    const handleVerify = (userId: string) => {
+        verifyProvider(userId);
+        showToast('Provider license has been verified!', 'success');
+    };
 
     const openModal = (type: 'edit' | 'delete', user: User | null = null) => {
         setSelectedUser(user);
@@ -94,43 +112,67 @@ const UserManagement: React.FC = () => {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                     <div className="relative w-full md:max-w-xs">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-gray-400" /></div>
-                        <input type="text" placeholder="Search by name or email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md"/>
+                        <input type="text" placeholder="Search..." onChange={handleSearchChange} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md"/>
                     </div>
-                    <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="w-full md:w-auto p-2 border-gray-300 rounded-md bg-white">
+                    <select onChange={handleRoleFilterChange} className="w-full md:w-auto p-2 border-gray-300 rounded-md bg-white">
                         <option value="All">All Roles</option>
                         {Object.values(UserRole).map(role => <option key={role} value={role}>{role}</option>)}
                     </select>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-white">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th onClick={() => requestSort('name')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Name<span className="text-gray-400">{getSortArrow('name')}</span></th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                                <th onClick={() => requestSort('role')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Role<span className="text-gray-400">{getSortArrow('role')}</span></th>
+                                <th onClick={() => requestSort('status')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Status<span className="text-gray-400">{getSortArrow('status')}</span></th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verification</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {isLoading ? (
-                                Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} columns={5} />)
-                            ) : filteredUsers.map(user => (
+                                Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} columns={6} />)
+                            ) : paginatedItems.map(user => (
                                 <tr key={user.id} className={user.status === 'Suspended' ? 'bg-amber-50' : ''}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt="" />
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                                <div className="text-sm text-gray-500">{user.email}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {user.role === UserRole.PROVIDER ? (
+                                            <>
+                                                <div>Lic: {user.licenseNumber}</div>
+                                                <div>State: {user.state}</div>
+                                            </>
+                                        ) : (
+                                            <div>State: {user.state}</div>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                             {user.status}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        {user.role === UserRole.PROVIDER ? (
+                                            user.isVerified ? (
+                                                <span className="flex items-center text-xs font-semibold text-emerald-800">
+                                                    <CheckCircleIcon className="w-4 h-4 mr-1"/> Verified
+                                                </span>
+                                            ) : (
+                                                <button onClick={() => handleVerify(user.id)} className="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200">
+                                                    Verify Now
+                                                </button>
+                                            )
+                                        ) : (<span className="text-gray-400">N/A</span>)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                                         <button onClick={() => openModal('edit', user)} className="text-primary-600 hover:underline">Edit</button>
@@ -144,6 +186,7 @@ const UserManagement: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+                <PaginationControls {...paginationProps} />
             </Card>
 
             <Modal isOpen={modal === 'edit'} onClose={() => setModal(null)} title={selectedUser ? 'Edit User' : 'Add New User'}>

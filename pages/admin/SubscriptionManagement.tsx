@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
@@ -6,6 +7,8 @@ import PageHeader from '../../components/shared/PageHeader';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
 import { SpinnerIcon } from '../../components/shared/Icons';
+import { useTable } from '../../hooks/useTable';
+import PaginationControls from '../../components/shared/PaginationControls';
 
 const SubscriptionManagement: React.FC = () => {
     const { users, providerSubscriptionPlans, updateUserSubscription } = useAuth();
@@ -15,7 +18,21 @@ const SubscriptionManagement: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
     const [selectedPlanId, setSelectedPlanId] = useState('');
 
-    const providers = users.filter(u => u.role === UserRole.PROVIDER);
+    const providersWithFlatSubscription = useMemo(() => 
+        users.filter(u => u.role === UserRole.PROVIDER).map(u => ({
+            ...u,
+            planName: u.subscription?.planName || 'N/A',
+            planStatus: u.subscription?.status || 'N/A',
+            renewalDate: u.subscription?.renewalDate || 'N/A',
+        }))
+    , [users]);
+
+    const {
+        paginatedItems,
+        requestSort,
+        getSortArrow,
+        paginationProps
+    } = useTable<any>(providersWithFlatSubscription, 10);
 
     const handleManageClick = (provider: User) => {
         setSelectedProvider(provider);
@@ -41,22 +58,22 @@ const SubscriptionManagement: React.FC = () => {
             <Card>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-white">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Provider</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Plan</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Renewal Date</th>
+                                <th onClick={() => requestSort('name')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Provider<span className="text-gray-400">{getSortArrow('name')}</span></th>
+                                <th onClick={() => requestSort('planName')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Current Plan<span className="text-gray-400">{getSortArrow('planName')}</span></th>
+                                <th onClick={() => requestSort('planStatus')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Status<span className="text-gray-400">{getSortArrow('planStatus')}</span></th>
+                                <th onClick={() => requestSort('renewalDate')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Renewal Date<span className="text-gray-400">{getSortArrow('renewalDate')}</span></th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {providers.map(provider => (
+                            {paginatedItems.map(provider => (
                                 <tr key={provider.id}>
                                     <td className="px-6 py-4 whitespace-nowrap font-medium">{provider.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.subscription?.planName || 'N/A'}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.subscription?.status || 'N/A'}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.subscription?.renewalDate || 'N/A'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.planName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.planStatus}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{provider.renewalDate}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <button onClick={() => handleManageClick(provider)} className="text-primary-600 hover:underline font-medium text-sm">Manage</button>
                                     </td>
@@ -65,6 +82,7 @@ const SubscriptionManagement: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+                <PaginationControls {...paginationProps} />
             </Card>
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Subscription for ${selectedProvider?.name}`}>

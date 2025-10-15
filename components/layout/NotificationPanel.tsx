@@ -57,7 +57,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose }) => {
                     </div>
                 )}
             </div>
-             <div className="flex justify-between items-center p-2 bg-gray-50 rounded-b-lg">
+             <div className="flex justify-between items-center p-2 bg-white rounded-b-lg border-t">
                 <button onClick={clearAll} className="text-xs font-medium text-red-600 hover:underline">Clear All</button>
                 <button onClick={() => notifications.forEach(n => !n.isRead && markAsRead(n.id))} className="text-xs font-medium text-primary-600 hover:underline">Mark all as read</button>
             </div>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Prescription } from '../../types';
@@ -8,6 +9,13 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useApp } from '../../App';
 import { SpinnerIcon } from '../../components/shared/Icons';
+
+// Mock drug database for autocomplete
+const MOCK_DRUG_DB = [
+    "Lisinopril 10mg", "Atorvastatin 20mg", "Metformin 500mg", "Amlodipine 5mg",
+    "Levothyroxine 50mcg", "Albuterol HFA 90mcg/act", "Omeprazole 20mg",
+    "Losartan 50mg", "Gabapentin 300mg", "Hydrochlorothiazide 25mg"
+];
 
 const getStatusPill = (status: Prescription['status']) => {
     switch (status) {
@@ -30,6 +38,12 @@ const EPrescribing: React.FC = () => {
     const { prescriptions, addPrescription } = useAuth();
     const { showToast } = useApp();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [drugSearch, setDrugSearch] = useState('');
+
+    const drugSuggestions = useMemo(() => {
+        if (!drugSearch) return [];
+        return MOCK_DRUG_DB.filter(drug => drug.toLowerCase().includes(drugSearch.toLowerCase()));
+    }, [drugSearch]);
 
     return (
         <div>
@@ -37,7 +51,7 @@ const EPrescribing: React.FC = () => {
             <Card>
                 <div className="overflow-x-auto">
                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-white">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Drug</th>
@@ -74,10 +88,38 @@ const EPrescribing: React.FC = () => {
                         }, 1000);
                     }}
                 >
-                    {({ isSubmitting, errors, touched }) => (
+                    {({ isSubmitting, errors, touched, setFieldValue, values }) => (
                         <Form className="space-y-4">
                             <Field name="patientName" placeholder="Patient Name" className={`w-full p-2 border rounded ${errors.patientName && touched.patientName ? 'border-red-500' : 'border-gray-300'}`} />
-                             <Field name="drug" placeholder="Drug (e.g., Lisinopril 10mg)" className={`w-full p-2 border rounded ${errors.drug && touched.drug ? 'border-red-500' : 'border-gray-300'}`} />
+                             <div className="relative">
+                                <Field 
+                                    name="drug" 
+                                    placeholder="Drug (e.g., Lisinopril 10mg)" 
+                                    className={`w-full p-2 border rounded ${errors.drug && touched.drug ? 'border-red-500' : 'border-gray-300'}`} 
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setFieldValue('drug', e.target.value);
+                                        setDrugSearch(e.target.value);
+                                    }}
+                                    onBlur={() => setTimeout(() => setDrugSearch(''), 200)}
+                                    autoComplete="off"
+                                />
+                                {drugSearch && drugSuggestions.length > 0 && (
+                                    <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
+                                        {drugSuggestions.map(drug => (
+                                            <li 
+                                                key={drug} 
+                                                className="p-2 hover:bg-primary-100 cursor-pointer"
+                                                onMouseDown={() => {
+                                                    setFieldValue('drug', drug);
+                                                    setDrugSearch('');
+                                                }}
+                                            >
+                                                {drug}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <Field name="dosage" placeholder="Dosage (e.g., 1 tablet)" className={`w-full p-2 border rounded ${errors.dosage && touched.dosage ? 'border-red-500' : 'border-gray-300'}`} />
                                 <Field name="frequency" placeholder="Frequency (e.g., Once daily)" className="w-full p-2 border rounded" />

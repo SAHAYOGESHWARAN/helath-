@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
@@ -30,11 +31,11 @@ const SystemSettings: React.FC = () => {
             <div className="max-w-2xl mx-auto space-y-8">
                 <Card title="Feature Flags">
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50">
+                        <div className="flex items-center justify-between p-3 rounded-md bg-white border">
                             <p className="font-medium text-gray-700">Allow new patient registrations</p>
                             <ToggleSwitch name="newPatientRegistrations" checked={settings.newPatientRegistrations} onChange={handleChange} />
                         </div>
-                         <div className="flex items-center justify-between p-3 rounded-md bg-gray-50">
+                         <div className="flex items-center justify-between p-3 rounded-md bg-white border">
                             <p className="font-medium text-gray-700">Allow new provider applications</p>
                             <ToggleSwitch name="newProviderRegistrations" checked={settings.newProviderRegistrations} onChange={handleChange} />
                         </div>
@@ -43,7 +44,7 @@ const SystemSettings: React.FC = () => {
 
                 <Card title="Platform Status">
                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 rounded-md bg-red-50 border border-red-200">
+                        <div className="flex items-center justify-between p-3 rounded-md bg-white border border-red-200">
                             <div>
                                 <p className="font-medium text-red-800">Enable Maintenance Mode</p>
                                 <p className="text-sm text-red-600">This will make the platform temporarily unavailable to all users.</p>

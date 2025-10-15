@@ -1,26 +1,22 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/shared/Card';
-import { Patient } from '../../types';
-import { useApp } from '../../App';
-
-const mockPatients: (Patient & { vitals?: { bp: string; hr: number; bmi: number }})[] = [
-    { id: 'p1', name: 'John Doe', dob: '1985-05-20', lastSeen: '2024-08-01', status: 'Active', vitals: { bp: '120/80', hr: 72, bmi: 24.5 } },
-    { id: 'p2', name: 'Alice Johnson', dob: '1992-11-12', lastSeen: '2024-07-15', status: 'Active', vitals: { bp: '110/70', hr: 65, bmi: 22.1 } },
-    { id: 'p3', name: 'Bob Williams', dob: '1970-02-01', lastSeen: '2023-12-10', status: 'Inactive', vitals: { bp: '135/85', hr: 78, bmi: 28.3 } },
-    { id: 'p4', name: 'Charlie Brown', dob: '1998-09-30', lastSeen: '2024-08-10', status: 'Active', vitals: { bp: '115/75', hr: 68, bmi: 23.0 } },
-    { id: 'p5', name: 'Diana Prince', dob: '1980-03-22', lastSeen: '2024-06-05', status: 'Active', vitals: { bp: '122/81', hr: 70, bmi: 21.5 } },
-]
+import { User, UserRole } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
+import PageHeader from '../../components/shared/PageHeader';
 
 const getStatusColor = (status: 'Active' | 'Inactive') => {
     return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
 
 
-const PatientSnapshotModal: React.FC<{ patient: Patient & { vitals?: any }, onClose: () => void }> = ({ patient, onClose }) => {
-    const { showToast } = useApp();
+const PatientSnapshotModal: React.FC<{ patient: User | null, onClose: () => void }> = ({ patient, onClose }) => {
+    const navigate = useNavigate();
+
+    if (!patient) return null;
 
     const handleViewChart = () => {
-        showToast(`Navigating to full chart for ${patient.name}... (mock)`, 'info');
+        navigate(`/patients/${patient.id}`);
         onClose();
     };
     
@@ -30,7 +26,7 @@ const PatientSnapshotModal: React.FC<{ patient: Patient & { vitals?: any }, onCl
                 <div className="p-6">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-4">
-                            <img src={`https://picsum.photos/seed/${patient.id}/100`} alt="Patient Avatar" className="w-16 h-16 rounded-full border-2 border-primary-200" />
+                            <img src={patient.avatarUrl} alt="Patient Avatar" className="w-16 h-16 rounded-full border-2 border-primary-200" />
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-800">{patient.name}</h2>
                                 <p className="text-sm text-gray-500">DOB: {patient.dob}</p>
@@ -41,31 +37,14 @@ const PatientSnapshotModal: React.FC<{ patient: Patient & { vitals?: any }, onCl
                         </button>
                     </div>
 
-                    <div className="mt-6 border-t pt-6">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4">Latest Vitals</h3>
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                            <div>
-                                <p className="text-sm text-gray-500">Blood Pressure</p>
-                                <p className="text-xl font-bold text-gray-800">{patient.vitals?.bp || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Heart Rate</p>
-                                <p className="text-xl font-bold text-gray-800">{patient.vitals?.hr || 'N/A'} bpm</p>
-                            </div>
-                             <div>
-                                <p className="text-sm text-gray-500">BMI</p>
-                                <p className="text-xl font-bold text-gray-800">{patient.vitals?.bmi || 'N/A'}</p>
-                            </div>
-                        </div>
-                    </div>
                      <div className="mt-6 border-t pt-6 grid grid-cols-2 gap-4">
                          <div>
-                            <p className="text-sm text-gray-500">Last Appointment</p>
-                            <p className="font-semibold text-gray-800">{patient.lastSeen}</p>
+                             <p className="text-sm text-gray-500">State</p>
+                            <p className="font-semibold text-gray-800">{patient.state}</p>
                          </div>
                          <div>
                              <p className="text-sm text-gray-500">Status</p>
-                             <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusColor(patient.status)}`}>
+                             <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusColor(patient.status || 'Active')}`}>
                                 {patient.status}
                             </span>
                          </div>
@@ -83,32 +62,38 @@ const PatientSnapshotModal: React.FC<{ patient: Patient & { vitals?: any }, onCl
 
 
 const PatientManagement: React.FC = () => {
+    const { user: providerUser, users } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Patient; direction: 'asc' | 'desc' } | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: 'asc' | 'desc' } | null>(null);
 
-    const [selectedPatient, setSelectedPatient] = useState<(Patient & { vitals?: any }) | null>(null);
+    const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
 
     const sortedAndFilteredPatients = useMemo(() => {
-        let filtered = mockPatients.filter(p => {
+        if (!providerUser?.state) return [];
+        
+        let filtered = users.filter(p => {
+            const matchesState = p.state === providerUser.state;
+            const isPatient = p.role === UserRole.PATIENT;
             const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                   p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                  p.status.toLowerCase().includes(searchTerm.toLowerCase());
+                                  (p.status || '').toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
-            return matchesSearch && matchesStatus;
+            return isPatient && matchesState && matchesSearch && matchesStatus;
         });
 
         if (sortConfig !== null) {
             filtered.sort((a, b) => {
                 const aVal = a[sortConfig.key];
                 const bVal = b[sortConfig.key];
+                
+                if (aVal === undefined || aVal === null) return 1;
+                if (bVal === undefined || bVal === null) return -1;
 
                 let comparison = 0;
-                if (sortConfig.key === 'lastSeen' || sortConfig.key === 'dob') {
-                    // Date comparison
-                    comparison = new Date(aVal).getTime() - new Date(bVal).getTime();
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    comparison = aVal.localeCompare(bVal);
                 } else {
-                    // String/other comparison
                     if (aVal < bVal) comparison = -1;
                     if (aVal > bVal) comparison = 1;
                 }
@@ -117,9 +102,9 @@ const PatientManagement: React.FC = () => {
             });
         }
         return filtered;
-    }, [searchTerm, statusFilter, sortConfig]);
+    }, [searchTerm, statusFilter, sortConfig, users, providerUser]);
 
-    const requestSort = (key: keyof Patient) => {
+    const requestSort = (key: keyof User) => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
@@ -127,20 +112,20 @@ const PatientManagement: React.FC = () => {
         setSortConfig({ key, direction });
     };
     
-    const getSortArrow = (key: keyof Patient) => {
+    const getSortArrow = (key: keyof User) => {
         if (!sortConfig || sortConfig.key !== key) return null;
         return sortConfig.direction === 'asc' ? '▲' : '▼';
     }
     
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Patient Management</h1>
+      <PageHeader title="Patient Management" />
       <Card>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
             <input 
                 type="text" 
                 placeholder="Search by name, ID, or status..." 
-                className="w-full md:max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                className="w-full md:max-w-md px-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
             />
@@ -152,11 +137,11 @@ const PatientManagement: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-white">
                     <tr>
                         <th onClick={() => requestSort('name')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Name {getSortArrow('name')}</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th>
-                        <th onClick={() => requestSort('lastSeen')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Last Seen {getSortArrow('lastSeen')}</th>
+                        <th onClick={() => requestSort('dob')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Date of Birth {getSortArrow('dob')}</th>
                         <th onClick={() => requestSort('status')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Status {getSortArrow('status')}</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
@@ -166,9 +151,9 @@ const PatientManagement: React.FC = () => {
                         <tr key={p.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.name}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{p.id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.lastSeen}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.dob}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(p.status)}`}>
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(p.status || 'Active')}`}>
                                     {p.status}
                                 </span>
                             </td>
@@ -186,7 +171,7 @@ const PatientManagement: React.FC = () => {
             </table>
         </div>
       </Card>
-      {selectedPatient && <PatientSnapshotModal patient={selectedPatient} onClose={() => setSelectedPatient(null)} />}
+      <PatientSnapshotModal patient={selectedPatient} onClose={() => setSelectedPatient(null)} />
     </div>
   );
 };

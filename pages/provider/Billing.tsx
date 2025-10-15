@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus, ClaimType } from '../../types';
 import { CurrencyDollarIcon } from '../../components/shared/Icons';
 import Modal from '../../components/shared/Modal';
+import PageHeader from '../../components/shared/PageHeader';
 
 const mockClaims: Claim[] = [
   { id: 'C1001', patientId: 'p1', status: ClaimStatus.PAID_IN_FULL, claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 250.00, createdAt: '2024-08-10', serviceDate: '2024-08-10', provider: 'Dr. Jane Smith', patientOwes: 0, insurancePaid: 250.00, lineItems: [{ service: 'Office Visit', charge: 250.00 }] },
@@ -78,13 +80,12 @@ const Billing: React.FC = () => {
 
   return (
     <div>
-        <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800">Billing & Coding</h1>
+        <PageHeader title="Billing & Coding">
             <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
                 <CurrencyDollarIcon className="w-5 h-5"/>
                 <span>Create Superbill</span>
             </button>
-        </div>
+        </PageHeader>
       
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
@@ -117,7 +118,7 @@ const Billing: React.FC = () => {
             </div>
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-white">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Claim ID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th>

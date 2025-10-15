@@ -88,7 +88,7 @@ const Header: React.FC = () => {
             type="search"
             name="search"
             id="search"
-            className="hidden md:block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            className="hidden md:block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             placeholder="Search..."
           />
            <button className="md:hidden p-2 rounded-full hover:bg-gray-100 text-gray-500">
@@ -117,7 +117,7 @@ const Header: React.FC = () => {
           >
             <BellIcon className="w-6 h-6"/>
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold animate-pulse-badge">
                 {unreadCount}
               </span>
             )}

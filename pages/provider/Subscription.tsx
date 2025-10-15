@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
 import { DownloadIcon } from '../../components/shared/Icons';
+import PageHeader from '../../components/shared/PageHeader';
 
 interface BillingHistoryItem {
     id: string;
@@ -122,7 +123,7 @@ const Subscription: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Subscription & Billing</h1>
+      <PageHeader title="Subscription & Billing" />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -169,7 +170,7 @@ const Subscription: React.FC = () => {
         <Card title="Billing History">
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-white">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>

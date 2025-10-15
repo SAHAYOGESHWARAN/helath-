@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
-import { CheckCircleIcon, CreditCardIcon, DownloadIcon } from '../../components/shared/Icons';
+import { CheckCircleIcon, CreditCardIcon, DownloadIcon, SparklesIcon } from '../../components/shared/Icons';
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
+import PageHeader from '../../components/shared/PageHeader';
 
 interface BillingHistoryItem {
     id: string;
@@ -14,10 +16,7 @@ interface BillingHistoryItem {
     status: 'Paid';
 }
 
-const billingHistory: BillingHistoryItem[] = [
-    { id: 'inv_sub_1', date: '2024-08-01', amount: 19.00, status: 'Paid' },
-    { id: 'inv_sub_2', date: '2024-07-01', amount: 19.00, status: 'Paid' },
-];
+const billingHistory: BillingHistoryItem[] = []; // Start with no history
 
 const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: string; onClose: () => void }> = ({ invoice, planName, onClose }) => {
     if (!invoice) return null;
@@ -90,14 +89,10 @@ const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: str
 
 
 const Subscription: React.FC = () => {
-    const { currentSubscription, changeSubscription, patientSubscriptionPlans } = useAuth();
+    const { user, currentSubscription, changeSubscription, patientSubscriptionPlans } = useAuth();
     const { showToast } = useApp();
     const [modalState, setModalState] = useState<{ isOpen: boolean; plan: SubscriptionPlan | null }>({ isOpen: false, plan: null });
     const [selectedInvoice, setSelectedInvoice] = useState<BillingHistoryItem | null>(null);
-
-    if (!currentSubscription) {
-        return <div>Loading subscription...</div>;
-    }
 
     const handleChoosePlan = (planId: string) => {
         const plan = patientSubscriptionPlans.find(p => p.id === planId);
@@ -116,25 +111,46 @@ const Subscription: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">My Subscription</h1>
-      <p className="text-gray-600 mb-6">Manage your plan, billing, and payment details.</p>
+      <PageHeader 
+        title="My Subscription"
+        subtitle="Manage your plan to unlock features like unlimited video consultations."
+      />
       
+        {!user?.subscription && (
+            <div className="mb-8 p-6 bg-gradient-to-r from-primary-500 to-accent rounded-lg text-white shadow-lg flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold flex items-center"><SparklesIcon className="w-6 h-6 mr-2"/> New Subscriber Offer!</h2>
+                    <p>Get <span className="font-bold">50% OFF</span> your first video consultation call when you subscribe to any plan.</p>
+                </div>
+                <a href="#plans" className="bg-white text-primary-600 font-bold py-2 px-5 rounded-lg shadow hover:bg-primary-50 transition-colors">View Plans</a>
+            </div>
+        )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column */}
         <div className="lg:col-span-1 flex flex-col gap-8">
            <Card title="Current Plan">
-                <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg">
-                    <h3 className="text-2xl font-bold text-primary-700">{currentSubscription.name}</h3>
-                    <p className="text-gray-600 mt-1">Renews on August 31, 2025</p>
-                </div>
-                <ul className="space-y-3 mt-4 text-sm">
-                    {currentSubscription.features.map(feature => (
-                        <li key={feature} className="flex items-center text-gray-700">
-                            <CheckCircleIcon className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" />
-                            <span>{feature}</span>
-                        </li>
-                    ))}
-                </ul>
+                {currentSubscription ? (
+                    <>
+                        <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg">
+                            <h3 className="text-2xl font-bold text-primary-700">{currentSubscription.name}</h3>
+                            <p className="text-gray-600 mt-1">Renews on {user?.subscription?.renewalDate}</p>
+                        </div>
+                        <ul className="space-y-3 mt-4 text-sm">
+                            {currentSubscription.features.map(feature => (
+                                <li key={feature} className="flex items-center text-gray-700">
+                                    <CheckCircleIcon className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" />
+                                    <span>{feature}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </>
+                ) : (
+                    <div className="text-center py-4">
+                        <p className="text-gray-600">You are not currently subscribed to a plan.</p>
+                        <a href="#plans" className="mt-2 inline-block text-primary-600 font-semibold hover:underline">Choose a plan to get started</a>
+                    </div>
+                )}
           </Card>
           <Card title="Payment Method">
               <div className="flex items-center">
@@ -150,7 +166,7 @@ const Subscription: React.FC = () => {
           </Card>
            <Card title="Billing History">
                 <div className="space-y-3">
-                    {billingHistory.map(item => (
+                    {billingHistory.length > 0 ? billingHistory.map(item => (
                         <div key={item.id} className="flex justify-between items-center text-sm">
                             <div>
                                 <p className="font-medium text-gray-800">Payment on {item.date}</p>
@@ -158,20 +174,20 @@ const Subscription: React.FC = () => {
                             </div>
                             <p className="font-semibold text-gray-600">${item.amount.toFixed(2)}</p>
                         </div>
-                    ))}
+                    )) : <p className="text-gray-500 text-sm text-center">No billing history found.</p>}
                 </div>
             </Card>
         </div>
 
         {/* Right Column */}
-        <div className="lg:col-span-2">
+        <div id="plans" className="lg:col-span-2">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Upgrade Your Plan</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {patientSubscriptionPlans.map(plan => (
                     <SubscriptionTierCard
                         key={plan.id}
                         plan={plan}
-                        currentPlanName={currentSubscription.name}
+                        currentPlanName={currentSubscription?.name || ''}
                         onChoosePlan={handleChoosePlan}
                     />
                 ))}
@@ -192,7 +208,7 @@ const Subscription: React.FC = () => {
 
       <InvoiceModal 
         invoice={selectedInvoice}
-        planName={currentSubscription.name}
+        planName={currentSubscription?.name || ''}
         onClose={() => setSelectedInvoice(null)}
       />
     </div>

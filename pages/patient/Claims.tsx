@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus } from '../../types';
 import Modal from '../../components/shared/Modal';
+import PageHeader from '../../components/shared/PageHeader';
 
 const mockClaims: Claim[] = [
   { 
@@ -178,7 +179,7 @@ const Claims: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Claims</h1>
+      <PageHeader title="My Claims" />
       <Card>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
@@ -218,7 +219,7 @@ const Claims: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-white">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>

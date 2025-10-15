@@ -1,33 +1,33 @@
+
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { useApp } from '../../App';
+import { useAuth } from '../../hooks/useAuth';
 import { SpinnerIcon } from '../../components/shared/Icons';
 
 const ProviderSettings: React.FC = () => {
     const { showToast } = useApp();
+    const { user, updateUser } = useAuth();
+    
+    const [settings, setSettings] = useState(user?.notificationSettings);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [notifications, setNotifications] = useState({
-        newAppointments: true,
-        appointmentCancellations: true,
-        newMessages: true,
-        refillRequests: true,
-    });
+
+    if (!settings) return null;
 
     const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = e.target;
-        setNotifications(prev => ({ ...prev, [name]: checked }));
+        setSettings(prev => ({ ...prev!, [name]: checked }));
     };
 
     const handleSave = () => {
         setIsSubmitting(true);
-        setTimeout(() => {
-            // In a real app, this would call a context function `updateProviderSettings(settings)`
-            console.log("Saving settings:", notifications);
+        updateUser(currentUser => ({ ...currentUser, notificationSettings: settings }))
+        .then(() => {
             showToast('Settings saved successfully!', 'success');
             setIsSubmitting(false);
-        }, 1000);
+        });
     };
 
     const handleCalendarConnect = (calendar: 'Google' | 'Outlook') => {
@@ -36,6 +36,8 @@ const ProviderSettings: React.FC = () => {
             showToast(`Successfully connected to ${calendar} Calendar!`, 'success');
         }, 1500);
     }
+    
+    const hasPhoneForSms = user?.phone && user.phone.trim() !== '';
 
     return (
         <div>
@@ -43,11 +45,25 @@ const ProviderSettings: React.FC = () => {
 
             <div className="space-y-8 max-w-3xl mx-auto">
                 <Card title="Notification Settings">
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>New appointment bookings</p><ToggleSwitch name="newAppointments" checked={notifications.newAppointments} onChange={handleNotificationChange} /></div>
-                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>Appointment cancellations</p><ToggleSwitch name="appointmentCancellations" checked={notifications.appointmentCancellations} onChange={handleNotificationChange} /></div>
-                        <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>New patient messages</p><ToggleSwitch name="newMessages" checked={notifications.newMessages} onChange={handleNotificationChange} /></div>
-                         <div className="flex items-center justify-between p-3 rounded-md bg-gray-50"><p>Prescription refill requests</p><ToggleSwitch name="refillRequests" checked={notifications.refillRequests} onChange={handleNotificationChange} /></div>
+                    <div className="space-y-4 divide-y">
+                        <div className="pt-4 first:pt-0">
+                             <h3 className="font-semibold text-gray-800 mb-2">Email Notifications</h3>
+                             <div className="space-y-3">
+                                <div className="flex items-center justify-between"><p>New appointment bookings</p><ToggleSwitch name="emailAppointments" checked={settings.emailAppointments} onChange={handleNotificationChange} /></div>
+                                <div className="flex items-center justify-between"><p>Appointment cancellations</p><ToggleSwitch name="emailBilling" checked={settings.emailBilling} onChange={handleNotificationChange} /></div>
+                                <div className="flex items-center justify-between"><p>New patient messages</p><ToggleSwitch name="emailMessages" checked={settings.emailMessages} onChange={handleNotificationChange} /></div>
+                            </div>
+                        </div>
+                         <div className="pt-4">
+                            <h3 className="font-semibold text-gray-800 mb-2">SMS Notifications</h3>
+                            <div className={`p-3 rounded-md ${!hasPhoneForSms ? 'bg-white border' : ''}`}>
+                                <div className="flex items-center justify-between">
+                                    <p className={`text-sm ${!hasPhoneForSms ? 'text-gray-400' : 'text-gray-600'}`}>New patient messages</p>
+                                    <ToggleSwitch name="smsMessages" checked={settings.smsMessages && hasPhoneForSms} onChange={handleNotificationChange} />
+                                </div>
+                                {!hasPhoneForSms && <p className="text-xs text-gray-500 mt-2">Please add a phone number to your <a href="#/profile" className="text-primary-600 underline">profile</a> to enable SMS notifications.</p>}
+                            </div>
+                        </div>
                     </div>
                 </Card>
 

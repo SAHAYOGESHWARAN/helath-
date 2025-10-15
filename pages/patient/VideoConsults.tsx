@@ -1,60 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { VideoCameraIcon, CheckCircleIcon, XCircleIcon } from '../../components/shared/Icons';
+import { VideoCameraIcon, CheckCircleIcon, XCircleIcon, ShieldCheckIcon } from '../../components/shared/Icons';
 import { SpeakerWaveIcon, MicrophoneIcon } from '../../components/shared/Icons';
-
-const upcomingConsult = {
-    providerName: 'Dr. David Chen',
-    reason: 'Dermatology Follow-up',
-    date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-    time: '02:00 PM',
-};
+import { useAuth } from '../../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 const VideoConsults: React.FC = () => {
+    const { user } = useAuth();
     const [cameraStatus, setCameraStatus] = useState<'checking' | 'ok' | 'error'>('checking');
     const [micStatus, setMicStatus] = useState<'checking' | 'ok' | 'error'>('checking');
-    const [speakerStatus, setSpeakerStatus] = useState<'checking' | 'ok' | 'error'>('ok'); // Hard to test speakers programmatically
+    const [speakerStatus] = useState<'checking' | 'ok' | 'error'>('ok'); // Hard to test speakers
     const videoRef = useRef<HTMLVideoElement>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
 
-    const stopStream = () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            setStream(null);
-        }
-    };
+    const isSubscribed = user?.subscription?.status === 'Active';
 
     useEffect(() => {
         let isMounted = true;
         
         const checkPermissions = async () => {
-            // Check Camera
             try {
-                const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 if (isMounted) {
                     setCameraStatus('ok');
-                    setStream(videoStream);
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = videoStream;
-                    }
-                }
-            } catch (err) {
-                if (isMounted) setCameraStatus('error');
-                console.error("Camera access denied:", err);
-            }
-
-            // Check Microphone
-            try {
-                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                if (isMounted) {
                     setMicStatus('ok');
-                    // We need to stop this stream as we don't need it active
-                    audioStream.getTracks().forEach(track => track.stop());
+                    setStream(mediaStream);
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = mediaStream;
+                    }
+                     // Mute audio from the preview
+                    const audioTracks = mediaStream.getAudioTracks();
+                    audioTracks.forEach(track => track.enabled = false);
                 }
             } catch (err) {
-                if (isMounted) setMicStatus('error');
-                console.error("Microphone access denied:", err);
+                if (isMounted) {
+                    setCameraStatus('error');
+                    setMicStatus('error');
+                }
+                console.error("Media access denied:", err);
             }
         };
 
@@ -62,7 +46,7 @@ const VideoConsults: React.FC = () => {
 
         return () => {
             isMounted = false;
-            stopStream();
+            stream?.getTracks().forEach(track => track.stop());
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -78,41 +62,55 @@ const VideoConsults: React.FC = () => {
             <PageHeader title="Video Consultations" subtitle="Connect with your provider from anywhere." />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card title="Upcoming Virtual Visit">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                        <div>
-                            <p className="text-2xl font-bold text-gray-800">{upcomingConsult.providerName}</p>
-                            <p className="text-gray-600 mb-2">{upcomingConsult.reason}</p>
-                            <p className="font-semibold text-primary-700">
-                                {upcomingConsult.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {upcomingConsult.time}
-                            </p>
+                <Card title="Consultation Room">
+                    <div className="space-y-4">
+                        <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg">
+                            <h3 className="text-xl font-bold text-primary-700">Your virtual visit is ready.</h3>
+                            <p className="text-gray-600 mt-1">When it's time for your appointment, click the button below to join the secure session.</p>
                         </div>
-                        <div className="mt-4 sm:mt-0">
-                            <button className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm transition-transform transform hover:scale-105 flex items-center space-x-2">
+                        
+                        <div>
+                             <p className="font-semibold text-gray-700 mb-2">Status</p>
+                             <div className={`p-3 rounded-lg flex items-center ${isSubscribed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                                <ShieldCheckIcon className="w-5 h-5 mr-3"/>
+                                <span className="text-sm font-medium">{isSubscribed ? 'Subscription Active: You can join consultations.' : 'Subscription Required to Join Calls'}</span>
+                             </div>
+                        </div>
+
+                        <div className="pt-4 border-t">
+                            <button 
+                                disabled={!isSubscribed}
+                                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm transition-all transform hover:scale-105 flex items-center justify-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none"
+                            >
                                 <VideoCameraIcon className="w-5 h-5" />
-                                <span>Join Now</span>
+                                <span>Join Consultation</span>
                             </button>
+                             {!isSubscribed && (
+                                <p className="text-center text-sm text-gray-600 mt-3">
+                                    Please <Link to="/subscription" className="font-semibold text-primary-600 hover:underline">subscribe to a plan</Link> to enable video consultations.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </Card>
 
                 <Card title="System Check">
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
                             <div className="flex items-center">
                                 <VideoCameraIcon className="w-6 h-6 text-gray-500 mr-3"/>
                                 <span className="font-medium text-gray-700">Camera</span>
                             </div>
                             <StatusIndicator status={cameraStatus} />
                         </div>
-                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                         <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
                             <div className="flex items-center">
                                 <MicrophoneIcon className="w-6 h-6 text-gray-500 mr-3"/>
                                 <span className="font-medium text-gray-700">Microphone</span>
                             </div>
                             <StatusIndicator status={micStatus} />
                         </div>
-                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                         <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
                             <div className="flex items-center">
                                 <SpeakerWaveIcon className="w-6 h-6 text-gray-500 mr-3"/>
                                 <span className="font-medium text-gray-700">Speakers</span>
