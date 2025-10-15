@@ -276,3 +276,23 @@ export interface BillingInvoice {
     status: 'Paid' | 'Due' | 'Overdue';
     description: string;
 }
+
+export interface Referral {
+  id: number;
+  patient: string;
+  referredTo?: string;
+  referredFrom?: string;
+  date: string;
+  status: 'Pending' | 'Approved' | 'Declined';
+  type: 'Outgoing' | 'Incoming';
+  reason: string;
+}
+
+export interface ComplianceLog {
+  id: number;
+  timestamp: string;
+  user: string;
+  userRole: 'Patient' | 'Provider' | 'Admin' | 'System';
+  action: string;
+  details: string;
+}

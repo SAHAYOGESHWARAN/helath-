@@ -1,8 +1,8 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { Prescription } from '../../types';
+import { Prescription, UserRole, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
@@ -35,19 +35,46 @@ const PrescriptionSchema = Yup.object().shape({
 });
 
 const EPrescribing: React.FC = () => {
-    const { prescriptions, addPrescription } = useAuth();
+    const { user, users, prescriptions, addPrescription } = useAuth();
     const { showToast } = useApp();
+    const location = useLocation();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [drugSearch, setDrugSearch] = useState('');
+    const [initialFormValues, setInitialFormValues] = useState({ patientName: '', drug: '', dosage: '', frequency: '', quantity: 30, refills: 0, pharmacy: '' });
+    
+    useEffect(() => {
+        const patientContext = location.state as { patientId: string, patientName: string } | null;
+        if (patientContext?.patientId && patientContext?.patientName) {
+            handleNewPrescription(patientContext.patientId, patientContext.patientName);
+             // Clear location state to prevent re-triggering
+            window.history.replaceState({}, document.title)
+        }
+    }, [location.state]);
+
 
     const drugSuggestions = useMemo(() => {
         if (!drugSearch) return [];
         return MOCK_DRUG_DB.filter(drug => drug.toLowerCase().includes(drugSearch.toLowerCase()));
     }, [drugSearch]);
+    
+    const providerPatients = useMemo(() => {
+        if (!user) return [];
+        return users.filter(u => u.role === UserRole.PATIENT && u.state === user.state);
+    }, [users, user]);
+
+    const handleNewPrescription = (patientId = '', patientName = '') => {
+        const patient = providerPatients.find(p => p.id === patientId);
+        setInitialFormValues({
+            patientName: patient ? patient.name : '',
+            drug: '', dosage: '', frequency: '', quantity: 30, refills: 0, pharmacy: ''
+        });
+        setIsModalOpen(true);
+    };
 
     return (
         <div>
-            <PageHeader title="E-Prescribing" buttonText="New Prescription" onButtonClick={() => setIsModalOpen(true)} />
+            <PageHeader title="E-Prescribing" buttonText="New Prescription" onButtonClick={() => handleNewPrescription()} />
             <Card>
                 <div className="overflow-x-auto">
                      <table className="min-w-full divide-y divide-gray-200">
@@ -75,11 +102,18 @@ const EPrescribing: React.FC = () => {
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Prescription">
                 <Formik
-                    initialValues={{ patientName: '', drug: '', dosage: '', frequency: '', quantity: 30, refills: 0, pharmacy: '' }}
+                    initialValues={initialFormValues}
                     validationSchema={PrescriptionSchema}
+                    enableReinitialize
                     onSubmit={(values, { setSubmitting, resetForm }) => {
                         setTimeout(() => {
-                            const newRx = { ...values, patientId: 'p_new', datePrescribed: new Date().toISOString().split('T')[0] };
+                             const patient = providerPatients.find(p => p.name === values.patientName);
+                            if (!patient) {
+                                showToast("Selected patient not found.", "error");
+                                setSubmitting(false);
+                                return;
+                            }
+                            const newRx = { ...values, patientId: patient.id, datePrescribed: new Date().toISOString().split('T')[0] };
                             addPrescription(newRx);
                             showToast('Prescription sent successfully!', 'success');
                             setSubmitting(false);
@@ -88,9 +122,12 @@ const EPrescribing: React.FC = () => {
                         }, 1000);
                     }}
                 >
-                    {({ isSubmitting, errors, touched, setFieldValue, values }) => (
+                    {({ isSubmitting, errors, touched, setFieldValue }) => (
                         <Form className="space-y-4">
-                            <Field name="patientName" placeholder="Patient Name" className={`w-full p-2 border rounded ${errors.patientName && touched.patientName ? 'border-red-500' : 'border-gray-300'}`} />
+                             <Field as="select" name="patientName" className={`w-full p-2 border rounded bg-white ${errors.patientName && touched.patientName ? 'border-red-500' : 'border-gray-300'} ${initialFormValues.patientName ? 'bg-gray-100 cursor-not-allowed' : ''}`} disabled={!!initialFormValues.patientName}>
+                                <option value="">Select a Patient</option>
+                                {providerPatients.map(p => (<option key={p.id} value={p.name}>{p.name}</option>))}
+                            </Field>
                              <div className="relative">
                                 <Field 
                                     name="drug" 

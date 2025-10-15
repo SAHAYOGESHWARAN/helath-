@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment } from '../../types';
+import { Link } from 'react-router-dom';
 
 const patientVolumeData = [
     { day: 'Mon', patients: 14 }, { day: 'Tue', patients: 18 }, { day: 'Wed', patients: 16 },
@@ -48,13 +49,13 @@ const ProviderDashboard: React.FC = () => {
         const pendingAppointments = appointments.filter(a => a.status === 'Pending' && a.providerId === user?.id);
 
         if (unsignedNotes.length > 0) {
-            items.push({ id: 'inbox_notes', type: 'Note', description: `Sign ${unsignedNotes.length} pending note(s)`, icon: <DocumentTextIcon className="w-5 h-5 text-amber-600"/>, actionText: "Review & Sign" });
+            items.push({ id: 'inbox_notes', type: 'Note', description: `Sign ${unsignedNotes.length} pending note(s)`, icon: <DocumentTextIcon className="w-5 h-5 text-amber-600"/>, actionText: "Review & Sign", link: '/progress-notes' });
         }
         if (pendingPrescriptions.length > 0) {
-            items.push({ id: 'inbox_rx', type: 'Refill', description: `Approve ${pendingPrescriptions.length} refill request(s)`, icon: <PillIcon className="w-5 h-5 text-emerald-600"/>, actionText: "Approve/Deny" });
+            items.push({ id: 'inbox_rx', type: 'Refill', description: `Approve ${pendingPrescriptions.length} refill request(s)`, icon: <PillIcon className="w-5 h-5 text-emerald-600"/>, actionText: "Approve/Deny", link: '/e-prescribing' });
         }
          if (pendingAppointments.length > 0) {
-            items.push({ id: 'inbox_appt', type: 'Appointments', description: `You have ${pendingAppointments.length} new appointment requests`, icon: <BellIcon className="w-5 h-5 text-red-600"/>, actionText: "View" });
+            items.push({ id: 'inbox_appt', type: 'Appointments', description: `You have ${pendingAppointments.length} new appointment requests`, icon: <BellIcon className="w-5 h-5 text-red-600"/>, actionText: "View", link: '/appointments' });
         }
         
         return items;
@@ -85,10 +86,10 @@ const ProviderDashboard: React.FC = () => {
                  <Card title="Provider Inbox" className="h-full flex flex-col" style={{'--stagger-index': 1} as React.CSSProperties}>
                     <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 flex-grow">
                         {inboxItems.length > 0 ? inboxItems.map(item => (
-                            <div key={item.id} className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 hover:shadow-sm transition-all cursor-pointer">
+                            <div key={item.id} className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 hover:shadow-sm transition-all">
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">{item.icon}</div>
                                 <div className="flex-1 ml-3"><p className="font-semibold text-gray-800 text-sm">{item.description}</p></div>
-                                <button className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-md">{item.actionText}</button>
+                                <Link to={item.link} className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-md">{item.actionText}</Link>
                             </div>
                         )) : <p className="text-center text-gray-500 py-4">Your inbox is clear!</p>}
                     </div>

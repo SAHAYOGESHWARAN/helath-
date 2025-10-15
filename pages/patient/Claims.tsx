@@ -1,78 +1,9 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus } from '../../types';
 import Modal from '../../components/shared/Modal';
 import PageHeader from '../../components/shared/PageHeader';
-
-const mockClaims: Claim[] = [
-  { 
-    id: 'CLM78901', 
-    serviceDate: '2024-07-15', 
-    provider: 'Dr. Jane Smith', 
-    totalClaimChargeAmount: 450.00, 
-    patientOwes: 50.00, 
-    status: ClaimStatus.PAID_IN_FULL,
-    insurancePaid: 400.00,
-    lineItems: [
-      { service: 'Office Visit, Established Patient', charge: 250.00 },
-      { service: 'EKG, Interpretation & Report', charge: 150.00 },
-      { service: 'Blood Draw', charge: 50.00 },
-    ]
-  },
-  { 
-    id: 'CLM78902', 
-    serviceDate: '2024-07-22', 
-    provider: 'Anytown General Hospital', 
-    totalClaimChargeAmount: 1250.00, 
-    patientOwes: 250.00, 
-    status: ClaimStatus.PROCESSING,
-    insurancePaid: 1000.00,
-    lineItems: [
-      { service: 'Emergency Room Visit', charge: 800.00 },
-      { service: 'X-Ray, Chest', charge: 250.00 },
-      { service: 'IV Administration', charge: 200.00 },
-    ]
-  },
-  { 
-    id: 'CLM78903', 
-    serviceDate: '2024-06-10', 
-    provider: 'Dr. David Chen', 
-    totalClaimChargeAmount: 180.00, 
-    patientOwes: 0.00, 
-    status: ClaimStatus.PAID_IN_FULL,
-    insurancePaid: 180.00,
-    lineItems: [
-      { service: 'Dermatology Follow-up', charge: 180.00 },
-    ]
-  },
-  { 
-    id: 'CLM78904', 
-    serviceDate: '2024-05-05', 
-    provider: 'Quest Diagnostics', 
-    totalClaimChargeAmount: 85.50, 
-    patientOwes: 20.00, 
-    status: ClaimStatus.DENIED,
-    insurancePaid: 65.50,
-    lineItems: [
-      { service: 'Comprehensive Metabolic Panel', charge: 85.50 },
-    ],
-    denialReason: 'Service not covered under current plan benefits.'
-  },
-  { 
-    id: 'CLM78905', 
-    serviceDate: '2024-08-01', 
-    provider: 'Dr. Jane Smith', 
-    totalClaimChargeAmount: 300.00, 
-    patientOwes: 50.00, 
-    status: ClaimStatus.SUBMITTED,
-    insurancePaid: 250.00,
-    lineItems: [
-      { service: 'Office Visit, Established Patient', charge: 250.00 },
-      { service: 'Flu Shot Administration', charge: 50.00 },
-    ]
-  },
-];
+import { useAuth } from '../../hooks/useAuth';
 
 const getStatusColor = (status: ClaimStatus) => {
   switch (status) {
@@ -157,18 +88,20 @@ const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> 
 };
 
 const Claims: React.FC = () => {
+  const { user, claims } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
 
   const filteredClaims = useMemo(() => {
-    return mockClaims.filter(claim => {
+    return claims.filter(claim => {
+      const matchesPatient = claim.patientId === user?.id;
       const matchesStatus = statusFilter === 'All' || claim.status === statusFilter;
       const matchesSearch = claim.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             claim.provider.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesStatus && matchesSearch;
+      return matchesPatient && matchesStatus && matchesSearch;
     });
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, claims, user]);
   
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -252,7 +185,7 @@ const Claims: React.FC = () => {
               ) : (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-gray-500">
-                    No claims found matching your criteria.
+                    You have no claims on file.
                   </td>
                 </tr>
               )}

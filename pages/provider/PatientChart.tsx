@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { ChevronLeftIcon } from '../../components/shared/Icons';
+import { ChevronLeftIcon, PencilAltIcon, PillIcon, CalendarIcon } from '../../components/shared/Icons';
 
 const PatientChart: React.FC = () => {
     const { patientId } = useParams<{ patientId: string }>();
@@ -27,6 +27,8 @@ const PatientChart: React.FC = () => {
             </div>
         );
     }
+    
+    const patientContext = { state: { patientId: patient.id, patientName: patient.name } };
 
     return (
         <div>
@@ -34,10 +36,24 @@ const PatientChart: React.FC = () => {
                 title={patient.name}
                 subtitle={`DOB: ${patient.dob} | Patient ID: ${patient.id}`}
             >
-                <Link to="/patients" className="bg-white hover:bg-gray-100 text-gray-700 font-bold py-2 px-5 rounded-lg shadow-sm border border-gray-300 transition-colors flex items-center">
-                    <ChevronLeftIcon className="w-5 h-5 mr-2" />
-                    Back to Patient List
-                </Link>
+                <div className="flex items-center space-x-2">
+                    <Link to="/patients" className="bg-white hover:bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm border border-gray-300 transition-colors flex items-center">
+                        <ChevronLeftIcon className="w-5 h-5 mr-2" />
+                        <span>Back</span>
+                    </Link>
+                     <Link to="/progress-notes" {...patientContext} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center">
+                        <PencilAltIcon className="w-5 h-5 mr-2" />
+                        <span>Add Note</span>
+                    </Link>
+                    <Link to="/e-prescribing" {...patientContext} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center">
+                        <PillIcon className="w-5 h-5 mr-2" />
+                        <span>New Rx</span>
+                    </Link>
+                    <Link to="/appointments" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center">
+                        <CalendarIcon className="w-5 h-5 mr-2" />
+                        <span>Schedule</span>
+                    </Link>
+                </div>
             </PageHeader>
             
             <div className="space-y-8">

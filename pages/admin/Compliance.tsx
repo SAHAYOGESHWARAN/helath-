@@ -1,28 +1,23 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
-import { DownloadIcon, FilterIcon } from '../../components/shared/Icons';
+import { DownloadIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
+import { useAuth } from '../../hooks/useAuth';
+import { ComplianceLog } from '../../types';
 
-const mockLogs = [
-  { id: 1, timestamp: '2024-08-15 10:32:15', user: 'Dr. Jane Smith', userRole: 'Provider', action: 'Login Success', details: 'User logged in from IP 192.168.1.1' },
-  { id: 2, timestamp: '2024-08-15 10:33:01', user: 'Dr. Jane Smith', userRole: 'Provider', action: 'View Patient Chart', details: 'Viewed chart for John Doe (pat1)' },
-  { id: 3, timestamp: '2024-08-15 09:45:22', user: 'Alex Johnson', userRole: 'Admin', action: 'Update Settings', details: 'Updated system feature flags' },
-  { id: 4, timestamp: '2024-08-15 09:10:48', user: 'John Doe', userRole: 'Patient', action: 'Login Success', details: 'User logged in from IP 203.0.113.25' },
-  { id: 5, timestamp: '2024-08-14 15:20:11', user: 'Dr. Jane Smith', userRole: 'Provider', action: 'E-Prescription Sent', details: 'Sent prescription for Amoxicillin to patient Alice Johnson' },
-  { id: 6, timestamp: '2024-08-14 14:05:56', user: 'Alex Johnson', userRole: 'Admin', action: 'Login Failed', details: 'Failed login attempt for user: admin_support' },
-  { id: 7, timestamp: '2024-08-14 11:55:03', user: 'John Doe', userRole: 'Patient', action: 'Payment Submitted', details: 'Submitted payment of $50.00' },
-  { id: 8, timestamp: '2024-08-13 18:00:00', user: 'System', userRole: 'System', action: 'Data Export', details: 'Weekly analytics data exported by automated job' },
+const actionTypes = [
+    'Login Success', 'Login Failed', 'Logout',
+    'View Patient Chart', 'Update Settings', 
+    'E-Prescription Sent', 'Payment Submitted', 
+    'Data Export', 'Registration', 'User Created'
 ];
 
-const actionTypes = [...new Set(mockLogs.map(log => log.action))];
-
-type LogEntry = typeof mockLogs[0];
-type SortableKeys = keyof LogEntry;
+type SortableKeys = keyof ComplianceLog;
 
 const ITEMS_PER_PAGE = 10;
 
 const Compliance: React.FC = () => {
+  const { complianceLogs } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('All');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -30,7 +25,7 @@ const Compliance: React.FC = () => {
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys; direction: 'asc' | 'desc' } | null>({ key: 'timestamp', direction: 'desc' });
 
   const filteredLogs = useMemo(() => {
-    return mockLogs.filter(log => {
+    return complianceLogs.filter(log => {
       const logDate = new Date(log.timestamp);
       const startDate = dateRange.start ? new Date(dateRange.start) : null;
       const endDate = dateRange.end ? new Date(dateRange.end) : null;
@@ -47,7 +42,7 @@ const Compliance: React.FC = () => {
 
       return matchesAction && matchesSearch && matchesDate;
     });
-  }, [searchTerm, actionFilter, dateRange]);
+  }, [searchTerm, actionFilter, dateRange, complianceLogs]);
 
   const sortedLogs = useMemo(() => {
     let sortableItems = [...filteredLogs];

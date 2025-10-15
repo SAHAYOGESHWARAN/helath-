@@ -2,27 +2,20 @@ import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { ChevronLeftIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
+import { useAuth } from '../../hooks/useAuth';
+import { Appointment as AppointmentType } from '../../types';
 
-// Interface for appointment data for type safety
-interface Appointment {
-  id: number;
+interface CalendarAppointment {
+  id: string;
   title: string;
   start: Date;
   end: Date;
 }
 
-// Mock data - In a real app, this would be fetched from an API
-const mockAppointments: Appointment[] = [
-  { id: 1, title: 'John Doe - Annual Check-up', start: new Date(new Date().setHours(9, 0, 0, 0)), end: new Date(new Date().setHours(10, 0, 0, 0)) },
-  { id: 2, title: 'Alice Johnson - Follow-up', start: new Date(new Date().setHours(11, 30, 0, 0)), end: new Date(new Date().setHours(12, 0, 0, 0)) },
-  { id: 3, title: 'Bob Williams - Consultation', start: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(14, 0, 0, 0)), end: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(14, 45, 0, 0))},
-  { id: 4, title: 'Charlie Brown - Sick Visit', start: new Date(new Date(new Date().setDate(new Date().getDate() - 2)).setHours(10, 0, 0, 0)), end: new Date(new Date(new Date().setDate(new Date().getDate() - 2)).setHours(10, 30, 0, 0))},
-];
-
 type CalendarView = 'month' | 'week' | 'day';
 
 const AppointmentDetailModal: React.FC<{
-  appointment: Appointment | null;
+  appointment: CalendarAppointment | null;
   onClose: () => void;
 }> = ({ appointment, onClose }) => {
     if (!appointment) return null;
@@ -137,7 +130,7 @@ const CalendarHeader: React.FC<{
   );
 };
 
-const MonthView: React.FC<{ currentDate: Date; appointments: Appointment[]; onAppointmentClick: (appointment: Appointment) => void; }> = ({ currentDate, appointments, onAppointmentClick }) => {
+const MonthView: React.FC<{ currentDate: Date; appointments: CalendarAppointment[]; onAppointmentClick: (appointment: CalendarAppointment) => void; }> = ({ currentDate, appointments, onAppointmentClick }) => {
     const days = useMemo(() => {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const month = date.getMonth();
@@ -209,7 +202,7 @@ const MonthView: React.FC<{ currentDate: Date; appointments: Appointment[]; onAp
     );
 };
 
-const TimeGridView: React.FC<{ dates: Date[]; appointments: Appointment[]; onAppointmentClick: (appointment: Appointment) => void; }> = ({ dates, appointments, onAppointmentClick }) => {
+const TimeGridView: React.FC<{ dates: Date[]; appointments: CalendarAppointment[]; onAppointmentClick: (appointment: CalendarAppointment) => void; }> = ({ dates, appointments, onAppointmentClick }) => {
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
     const getPositionAndHeight = (start: Date, end: Date) => {
@@ -262,11 +255,27 @@ const TimeGridView: React.FC<{ dates: Date[]; appointments: Appointment[]; onApp
 
 
 const ProviderCalendar: React.FC = () => {
+    const { appointments: rawAppointments } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [view, setView] = useState<CalendarView>('month');
-    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [selectedAppointment, setSelectedAppointment] = useState<CalendarAppointment | null>(null);
 
-    const handleAppointmentClick = (appointment: Appointment) => {
+    const appointments = useMemo((): CalendarAppointment[] => 
+        rawAppointments
+            .filter(appt => appt.status !== 'Cancelled')
+            .map(appt => {
+                const start = new Date(`${appt.date}T${appt.time}:00`);
+                const end = new Date(start.getTime() + appt.duration * 60000);
+                return {
+                    id: appt.id,
+                    title: `${appt.patientName} - ${appt.reason}`,
+                    start,
+                    end,
+                };
+            })
+    , [rawAppointments]);
+
+    const handleAppointmentClick = (appointment: CalendarAppointment) => {
         setSelectedAppointment(appointment);
     };
 
@@ -283,12 +292,12 @@ const ProviderCalendar: React.FC = () => {
     const renderView = () => {
         switch(view) {
             case 'week':
-                return <TimeGridView dates={weekDates} appointments={mockAppointments} onAppointmentClick={handleAppointmentClick} />;
+                return <TimeGridView dates={weekDates} appointments={appointments} onAppointmentClick={handleAppointmentClick} />;
             case 'day':
-                return <TimeGridView dates={[currentDate]} appointments={mockAppointments} onAppointmentClick={handleAppointmentClick} />;
+                return <TimeGridView dates={[currentDate]} appointments={appointments} onAppointmentClick={handleAppointmentClick} />;
             case 'month':
             default:
-                return <MonthView currentDate={currentDate} appointments={mockAppointments} onAppointmentClick={handleAppointmentClick} />;
+                return <MonthView currentDate={currentDate} appointments={appointments} onAppointmentClick={handleAppointmentClick} />;
         }
     };
     
@@ -302,7 +311,11 @@ const ProviderCalendar: React.FC = () => {
                     onViewChange={setView}
                     onDateChange={setCurrentDate}
                 />
-                {renderView()}
+                {appointments.length > 0 ? renderView() : (
+                    <div className="flex-1 flex items-center justify-center text-gray-500">
+                        No appointments to display.
+                    </div>
+                )}
             </Card>
             <AppointmentDetailModal
                 appointment={selectedAppointment}

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
@@ -6,7 +5,7 @@ import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
-import { SearchIcon, SpinnerIcon, CheckCircleIcon } from '../../components/shared/Icons';
+import { SearchIcon, SpinnerIcon, CheckCircleIcon, DownloadIcon } from '../../components/shared/Icons';
 import SkeletonTableRow from '../../components/shared/skeletons/SkeletonTableRow';
 import { useTable } from '../../hooks/useTable';
 import PaginationControls from '../../components/shared/PaginationControls';
@@ -41,6 +40,7 @@ const UserManagement: React.FC = () => {
 
     const {
         paginatedItems,
+        sortedAndFilteredItems,
         requestSort,
         getSortArrow,
         setGlobalFilter,
@@ -105,9 +105,73 @@ const UserManagement: React.FC = () => {
         setModal(type);
     };
 
+    const handleExport = () => {
+        if (sortedAndFilteredItems.length === 0) {
+            showToast('No data to export.', 'info');
+            return;
+        }
+
+        const headers = ["ID", "Name", "Email", "Role", "Status", "State", "License Number", "Verification Status"];
+        
+        const csvRows = sortedAndFilteredItems.map(user => {
+            const verificationStatus = user.role === UserRole.PROVIDER 
+                ? (user.isVerified ? "Verified" : "Not Verified")
+                : "N/A";
+            
+            const escapeCsvCell = (cell: string | undefined | null) => {
+                if (cell === undefined || cell === null) return '';
+                const str = String(cell);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            return [
+                user.id,
+                escapeCsvCell(user.name),
+                escapeCsvCell(user.email),
+                escapeCsvCell(user.role),
+                escapeCsvCell(user.status || 'Active'),
+                escapeCsvCell(user.state),
+                escapeCsvCell(user.licenseNumber),
+                verificationStatus
+            ].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'user_data_export.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        showToast('User data exported!', 'success');
+    };
+
+
     return (
         <div>
-            <PageHeader title="User Management" buttonText="Add New User" onButtonClick={() => openModal('edit')} />
+            <PageHeader 
+                title="User Management" 
+                buttonText="Add New User" 
+                onButtonClick={() => openModal('edit')}
+            >
+                 <button
+                    onClick={handleExport}
+                    className="bg-white hover:bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-lg flex items-center space-x-2 border border-gray-300 shadow-sm"
+                >
+                    <DownloadIcon className="w-5 h-5"/>
+                    <span>Export CSV</span>
+                </button>
+            </PageHeader>
             <Card>
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                     <div className="relative w-full md:max-w-xs">

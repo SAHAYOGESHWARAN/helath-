@@ -4,17 +4,7 @@ import { User, ChatMessage, UserRole } from '../../types';
 import Card from '../../components/shared/Card';
 import { SearchIcon, MessageSquareIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
-import { useApp } from '../../App';
-
-const mockMessages: { [key: string]: ChatMessage[] } = {
-    'user_1720556157018': [ // Corresponds to Dr. Jane Smith
-        { id: 'msg1', senderId: 'user_1720556157018', receiverId: 'user_1720556108835', text: 'Hello John, how are you feeling today?', timestamp: new Date(Date.now() - 5 * 60000).toISOString(), isRead: false },
-        { id: 'msg2', senderId: 'user_1720556108835', receiverId: 'user_1720556157018', text: 'I am feeling much better, thank you Dr. Smith!', timestamp: new Date(Date.now() - 3 * 60000).toISOString(), isRead: true },
-    ],
-    'user_1720556182270': [ // Corresponds to Dr. David Chen
-        { id: 'msg3', senderId: 'user_1720556182270', receiverId: 'user_1720556108835', text: 'Your test results are back and look good. We should schedule a follow-up to discuss the next steps.', timestamp: new Date(Date.now() - 24 * 3600000).toISOString(), isRead: true },
-    ]
-};
+import Modal from '../../components/shared/Modal';
 
 const ChatSkeletonLoader: React.FC = () => (
     <div className="flex-1 px-6 py-4 space-y-6 animate-pulse">
@@ -36,9 +26,9 @@ const TypingIndicator: React.FC<{ avatar: string | undefined }> = ({ avatar }) =
 );
 
 const Messaging: React.FC = () => {
-    const { user, users } = useAuth();
-    const { showToast } = useApp();
+    const { user, users, messages, sendMessage } = useAuth();
     
+    const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
     const availableProviders = useMemo(() => {
         if (!user?.state) return [];
         return users.filter(u => 
@@ -47,13 +37,27 @@ const Messaging: React.FC = () => {
             u.state === user.state
         );
     }, [users, user]);
+    
+    const providersInConversations = useMemo(() => {
+        const providerIds = new Set(Object.keys(messages));
+        return availableProviders.filter(p => providerIds.has(p.id));
+    }, [messages, availableProviders]);
 
-    const [selectedProvider, setSelectedProvider] = useState<User | null>(availableProviders.length > 0 ? availableProviders[0] : null);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [selectedProvider, setSelectedProvider] = useState<User | null>(providersInConversations.length > 0 ? providersInConversations[0] : null);
     const [newMessage, setNewMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [isTyping, setIsTyping] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const currentMessages = useMemo(() => {
+        if (!selectedProvider) return [];
+        return messages[selectedProvider.id] || [];
+    }, [selectedProvider, messages]);
+
+    const isTyping = useMemo(() => {
+        if (!user || currentMessages.length === 0) return false;
+        const lastMessage = currentMessages[currentMessages.length - 1];
+        return lastMessage.senderId === user.id;
+    }, [currentMessages, user]);
 
     const timeSince = (date: string) => {
         const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
@@ -65,68 +69,39 @@ const Messaging: React.FC = () => {
         const days = Math.floor(hours / 24);
         return `${days}d ago`;
     };
-
+    
     useEffect(() => {
-        if (selectedProvider) {
-            setIsLoading(true);
-            setTimeout(() => {
-                setMessages(mockMessages[selectedProvider.id] || []);
-                setIsLoading(false);
-            }, 300);
-        } else {
-            setMessages([]);
-            setIsLoading(false);
+        if (!selectedProvider && providersInConversations.length > 0) {
+            setSelectedProvider(providersInConversations[0]);
         }
-    }, [selectedProvider]);
+    }, [providersInConversations, selectedProvider]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isLoading, isTyping]);
+    }, [currentMessages, isLoading, isTyping]);
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (newMessage.trim() === '' || !user || !selectedProvider) return;
-
-        const message: ChatMessage = {
-            id: `msg_${Date.now()}`,
+        sendMessage({
             senderId: user.id,
             receiverId: selectedProvider.id,
             text: newMessage,
-            timestamp: new Date().toISOString(),
-            isRead: false,
-        };
-
-        setMessages(prev => [...prev, message]);
+        });
         setNewMessage('');
-
-        // Simulate notification
-        const recipient = users.find(u => u.id === selectedProvider.id);
-        if (recipient?.notificationSettings?.emailMessages) {
-            showToast(`Simulating email notification to ${recipient.name}`, 'info');
+    };
+    
+    const startNewConversation = (providerId: string) => {
+        const provider = availableProviders.find(p => p.id === providerId);
+        if (provider) {
+            setSelectedProvider(provider);
         }
-        if (recipient?.notificationSettings?.smsMessages && recipient.phone) {
-            showToast(`Simulating SMS notification to ${recipient.name}`, 'info');
-        }
-
-        // Simulate typing and response
-        setIsTyping(true);
-        setTimeout(() => {
-            const reply: ChatMessage = {
-                 id: `msg_${Date.now() + 1}`,
-                 senderId: selectedProvider.id,
-                 receiverId: user.id,
-                 text: `Thank you for your message. I will get back to you shortly.`,
-                 timestamp: new Date().toISOString(),
-                 isRead: false,
-            };
-            setIsTyping(false);
-            setMessages(prev => [...prev, reply]);
-        }, 2000);
+        setIsNewMessageModalOpen(false);
     };
 
     return (
         <div>
-            <PageHeader title="Secure Messaging" />
+            <PageHeader title="Secure Messaging" buttonText="New Message" onButtonClick={() => setIsNewMessageModalOpen(true)} />
             <Card className="p-0 flex h-[calc(100vh-14rem)]">
                 {/* Contact List Column */}
                 <div className="w-full md:w-[320px] lg:w-[360px] flex-shrink-0 border-r border-gray-200 flex flex-col">
@@ -134,8 +109,9 @@ const Messaging: React.FC = () => {
                          <div className="relative"><input type="text" placeholder="Search contacts..." className="w-full pl-10 pr-4 py-2 border rounded-full bg-white focus:ring-2 focus:ring-primary-300" /><SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /></div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {availableProviders.map(provider => {
-                            const lastMessage = mockMessages[provider.id]?.slice(-1)[0];
+                        {providersInConversations.map(provider => {
+                            const thread = messages[provider.id] || [];
+                            const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
                             const unread = lastMessage && lastMessage.senderId === provider.id && !lastMessage.isRead;
                             return (
                                 <div key={provider.id} onClick={() => setSelectedProvider(provider)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedProvider?.id === provider.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
@@ -159,7 +135,7 @@ const Messaging: React.FC = () => {
                         </div>
                         {isLoading ? <ChatSkeletonLoader /> : (
                             <div className="flex-1 px-6 py-4 overflow-y-auto space-y-2">
-                                {messages.map((msg) => (
+                                {currentMessages.map((msg) => (
                                     <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                                         {msg.senderId !== user?.id && <img src={selectedProvider.avatarUrl} alt={selectedProvider.name} className="w-8 h-8 rounded-full flex-shrink-0" />}
                                         <div className={`flex flex-col max-w-xl ${msg.senderId === user?.id ? 'items-end' : 'items-start'}`}>
@@ -180,10 +156,25 @@ const Messaging: React.FC = () => {
                         </div>
                         </>
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-8"><MessageSquareIcon className="w-16 h-16 text-gray-300 mb-4" /><h3 className="text-lg font-semibold text-gray-700">No Providers Available</h3><p>As providers in your state join, they will appear here. Please check back later.</p></div>
+                        <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-8"><MessageSquareIcon className="w-16 h-16 text-gray-300 mb-4" /><h3 className="text-lg font-semibold text-gray-700">No Conversations</h3><p>Click "New Message" to start a secure chat with a provider.</p></div>
                     )}
                 </div>
             </Card>
+
+            <Modal isOpen={isNewMessageModalOpen} onClose={() => setIsNewMessageModalOpen(false)} title="Start a New Conversation">
+                <div className="space-y-2">
+                    <p className="text-sm text-gray-600 mb-4">Select a provider to message:</p>
+                    {availableProviders.map(p => (
+                        <button key={p.id} onClick={() => startNewConversation(p.id)} className="w-full text-left p-3 flex items-center rounded-lg hover:bg-gray-100">
+                            <img src={p.avatarUrl} alt={p.name} className="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <p className="font-semibold">{p.name}</p>
+                                <p className="text-sm text-gray-500">{p.specialty}</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </Modal>
         </div>
     );
 };

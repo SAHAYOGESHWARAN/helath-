@@ -5,14 +5,10 @@ import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field } from 'formik';
 import { useApp } from '../../App';
 import { SpinnerIcon } from '../../components/shared/Icons';
+import { useAuth } from '../../hooks/useAuth';
+import { Referral } from '../../types';
 
 type Status = 'Pending' | 'Approved' | 'Declined';
-const initialReferrals = [
-  { id: 1, patient: 'John Doe', referredTo: 'Dr. Evelyn Reed (Cardiology)', date: '2024-08-10', status: 'Approved' as Status, type: 'Outgoing', reason: 'Abnormal EKG results' },
-  { id: 2, patient: 'Alice Johnson', referredFrom: 'Dr. Ben Carter (PCP)', date: '2024-08-12', status: 'Pending' as Status, type: 'Incoming', reason: 'Asthma follow-up' },
-  { id: 3, patient: 'Diana Prince', referredTo: 'Dr. Frank Miller (Ortho)', date: '2024-07-25', status: 'Approved' as Status, type: 'Outgoing', reason: 'Knee pain evaluation' },
-  { id: 4, patient: 'Steve Rogers', referredTo: 'Dr. Grace Lee (Neurology)', date: '2024-08-14', status: 'Declined' as Status, type: 'Outgoing', reason: 'Patient declined referral' },
-];
 
 const getStatusColor = (status: Status) => {
   switch (status) {
@@ -23,8 +19,8 @@ const getStatusColor = (status: Status) => {
 };
 
 const Referrals: React.FC = () => {
+  const { referrals, addReferral } = useAuth();
   const [filter, setFilter] = useState('All');
-  const [referrals, setReferrals] = useState(initialReferrals);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showToast } = useApp();
 
@@ -57,7 +53,7 @@ const Referrals: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReferrals.map((ref) => (
+              {filteredReferrals.length > 0 ? filteredReferrals.map((ref) => (
                 <tr key={ref.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{ref.patient}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ref.type === 'Incoming' ? ref.referredFrom : ref.referredTo}</td>
@@ -69,7 +65,9 @@ const Referrals: React.FC = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={5} className="text-center py-10 text-gray-500">No referrals found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -79,22 +77,18 @@ const Referrals: React.FC = () => {
           <Formik
             initialValues={{ patient: '', specialist: '', reason: '' }}
             onSubmit={(values, { setSubmitting, resetForm }) => {
-                setTimeout(() => {
-                    const newReferral = {
-                        id: referrals.length + 1,
-                        patient: values.patient,
-                        referredTo: values.specialist,
-                        date: new Date().toISOString().split('T')[0],
-                        status: 'Pending' as Status,
-                        type: 'Outgoing',
-                        reason: values.reason,
-                    };
-                    setReferrals(prev => [newReferral, ...prev]);
-                    setSubmitting(false);
-                    resetForm();
-                    setIsModalOpen(false);
-                    showToast("Referral submitted successfully!", "success");
-                }, 1000)
+                const newReferral: Omit<Referral, 'id' | 'status'> = {
+                    patient: values.patient,
+                    referredTo: values.specialist,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'Outgoing',
+                    reason: values.reason,
+                };
+                addReferral(newReferral);
+                setSubmitting(false);
+                resetForm();
+                setIsModalOpen(false);
+                showToast("Referral submitted successfully!", "success");
             }}
           >
             {({ isSubmitting }) => (

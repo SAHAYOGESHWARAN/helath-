@@ -94,6 +94,7 @@ export const useTable = <T extends Record<string, any>>(
 
     return {
         paginatedItems: paginatedData,
+        sortedAndFilteredItems: sortedData,
         requestSort,
         getSortArrow,
         setPage: setCurrentPage,

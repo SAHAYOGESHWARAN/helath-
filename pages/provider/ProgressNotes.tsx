@@ -1,5 +1,5 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { ProgressNote, User, UserRole } from '../../types';
@@ -137,7 +137,7 @@ const NoteEditorModal: React.FC<{
                         <div className="grid grid-cols-2 gap-4">
                              <div>
                                 <label htmlFor="patientId" className="block text-sm font-medium text-gray-700">Patient</label>
-                                <Field as="select" id="patientId" name="patientId" disabled={isEditing} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.patientId && touched.patientId ? 'border-red-500' : 'border-gray-300'} ${isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
+                                <Field as="select" id="patientId" name="patientId" disabled={isEditing || !!initialValues.patientId} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.patientId && touched.patientId ? 'border-red-500' : 'border-gray-300'} ${(isEditing || !!initialValues.patientId) ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
                                     <option value="">Select a patient...</option>
                                     {patients.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
                                 </Field>
@@ -186,8 +186,20 @@ const NoteEditorModal: React.FC<{
 const ProgressNotes: React.FC = () => {
     const { user, users, progressNotes, addNote, updateNote } = useAuth();
     const { showToast } = useApp();
+    const location = useLocation();
     const [selectedNote, setSelectedNote] = useState<Partial<ProgressNote> | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        // If navigated from a patient chart, open the new note modal automatically
+        const patientContext = location.state as { patientId: string, patientName: string } | null;
+        if (patientContext?.patientId && patientContext?.patientName) {
+            handleNewNote(patientContext.patientId, patientContext.patientName);
+            // Clear location state to prevent re-triggering
+            window.history.replaceState({}, document.title)
+        }
+    }, [location.state]);
+
 
     const providerPatients = useMemo(() => {
         if (!user) return [];
@@ -222,10 +234,10 @@ const ProgressNotes: React.FC = () => {
         }, 1000);
     };
 
-    const handleNewNote = () => {
+    const handleNewNote = (patientId = '', patientName = '') => {
         setSelectedNote({ 
-            patientId: '', 
-            patientName: '', 
+            patientId, 
+            patientName, 
             date: new Date().toISOString().split('T')[0], 
             content: { subjective: '', objective: '', assessment: '', plan: '' } 
         });
@@ -238,7 +250,7 @@ const ProgressNotes: React.FC = () => {
 
     return (
         <div>
-            <PageHeader title="Progress Notes" buttonText="New Note" onButtonClick={handleNewNote} />
+            <PageHeader title="Progress Notes" buttonText="New Note" onButtonClick={() => handleNewNote()} />
             <Card>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">

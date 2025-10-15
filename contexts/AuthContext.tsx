@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User, UserRole, BillingInvoice, SubscriptionPlan, Appointment, Prescription, ProgressNote, EnterpriseSettingsConfig, InsuranceInfo, NotificationSettings } from '../types';
+import { User, UserRole, BillingInvoice, SubscriptionPlan, Appointment, Prescription, ProgressNote, EnterpriseSettingsConfig, InsuranceInfo, NotificationSettings, ChatMessage, Claim, Referral, ComplianceLog } from '../types';
 
 interface SystemSettingsConfig {
     maintenanceMode: boolean;
@@ -25,6 +25,8 @@ interface AuthContextType {
   makePayment: (invoiceId: string, paymentAmount: number) => void;
   addInvoice: (invoiceData: Omit<BillingInvoice, 'id' | 'status' | 'amountDue' | 'date'>) => void;
   markInvoiceAsPaid: (invoiceId: string) => void;
+  claims: Claim[];
+  addClaim: (claimData: Omit<Claim, 'id'>) => void;
   // Subscriptions
   patientSubscriptionPlans: SubscriptionPlan[];
   providerSubscriptionPlans: SubscriptionPlan[];
@@ -47,6 +49,14 @@ interface AuthContextType {
   progressNotes: ProgressNote[];
   addNote: (note: Omit<ProgressNote, 'id' | 'status'>) => void;
   updateNote: (note: ProgressNote) => void;
+  // Referrals
+  referrals: Referral[];
+  addReferral: (referralData: Omit<Referral, 'id' | 'status'>) => void;
+  // Messaging
+  messages: { [key: string]: ChatMessage[] };
+  sendMessage: (message: Omit<ChatMessage, 'id' | 'timestamp' | 'isRead'>) => void;
+  // Compliance
+  complianceLogs: ComplianceLog[];
   // Settings
   changePassword: (current: string, newPass: string) => Promise<boolean>;
   systemSettings: SystemSettingsConfig;
@@ -92,8 +102,7 @@ function useSessionStorage<T>(key: string, initialValue: T): [T, React.Dispatch<
             const item = window.sessionStorage.getItem(key);
             if (item) {
                 const parsed = JSON.parse(item);
-                // If there is existing data, use it. If not, and it's the 'users' key, check if we need to add the default user.
-                if (key === 'novopath-users' && Array.isArray(parsed) && !parsed.some(u => u.id === DEFAULT_USERS[0].id)) {
+                 if (key === 'novopath-users' && Array.isArray(parsed) && !parsed.some(u => u.id === DEFAULT_USERS[0].id)) {
                   const mergedUsers = [...parsed, ...DEFAULT_USERS.filter(du => !parsed.some(pu => pu.id === du.id))];
                   window.sessionStorage.setItem(key, JSON.stringify(mergedUsers));
                   return mergedUsers;
@@ -136,14 +145,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [systemSettings, setSystemSettings] = useSessionStorage<SystemSettingsConfig>('novopath-systemSettings', SYSTEM_SETTINGS);
   const [enterpriseSettings, setEnterpriseSettings] = useSessionStorage<EnterpriseSettingsConfig>('novopath-enterpriseSettings', ENTERPRISE_SETTINGS);
   const [providerSubscriptionPlans, setProviderSubscriptionPlans] = useSessionStorage<SubscriptionPlan[]>('novopath-providerPlans', PROVIDER_PLANS);
-  
+  const [claims, setClaims] = useSessionStorage<Claim[]>('novopath-claims', []);
+  const [referrals, setReferrals] = useSessionStorage<Referral[]>('novopath-referrals', []);
+  const [complianceLogs, setComplianceLogs] = useSessionStorage<ComplianceLog[]>('novopath-complianceLogs', []);
+  const [messages, setMessages] = useSessionStorage<{ [key: string]: ChatMessage[] }>('novopath-messages', {});
+
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<SubscriptionPlan | null>(null);
+  
+  const addComplianceLog = useCallback((logData: Omit<ComplianceLog, 'id' | 'timestamp'>) => {
+    setComplianceLogs(prev => [
+        { ...logData, id: Date.now(), timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) }, 
+        ...prev
+    ]);
+  }, [setComplianceLogs]);
 
   // --- EFFECTS ---
   useEffect(() => {
-    // `useSessionStorage` handles initial load, so this effect just manages loading state and subscription object.
     if (user && user.subscription) {
       const allPlans = [...PATIENT_PLANS, ...providerSubscriptionPlans];
       const sub = allPlans.find(p => p.id === user.subscription!.planId);
@@ -159,24 +178,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsSubmitting(true);
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Find the user from the persisted list
         const userToLogin = users.find((u: User) => u.email.toLowerCase() === credentials.email.toLowerCase());
         
         if (userToLogin) {
-          setUser(userToLogin); // This automatically persists the logged-in user
+          setUser(userToLogin);
+          addComplianceLog({ user: userToLogin.name, userRole: userToLogin.role, action: 'Login Success', details: `User logged in.` });
           resolve(true);
         } else {
-          console.warn(`No user with email ${credentials.email} found. Please register first.`);
+          addComplianceLog({ user: credentials.email, userRole: 'System', action: 'Login Failed', details: `Failed login attempt for email: ${credentials.email}` });
           resolve(false);
         }
         setIsSubmitting(false);
       }, 700);
     });
-  }, [users, setUser]);
+  }, [users, setUser, addComplianceLog]);
 
   const logout = useCallback(() => {
-    setUser(null); // This automatically removes the user from session storage
-  }, [setUser]);
+    if (user) {
+        addComplianceLog({ user: user.name, userRole: user.role, action: 'Logout', details: 'User logged out.' });
+    }
+    setUser(null);
+  }, [setUser, user, addComplianceLog]);
 
   const register = useCallback((userData: Partial<User>, role: UserRole) => {
     setIsSubmitting(true);
@@ -190,23 +212,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             avatarUrl: `https://i.pravatar.cc/150?u=${userData.email}`,
             status: 'Active',
             isVerified: role === UserRole.PROVIDER ? false : undefined,
-            notificationSettings: NOTIF_SETTINGS, // Assign default notification settings
+            notificationSettings: NOTIF_SETTINGS,
         };
       setUsers(prev => [...prev, newUser]);
       setUser(newUser);
+      addComplianceLog({ user: newUser.name, userRole: newUser.role, action: 'Registration', details: `New ${role.toLowerCase()} registered.` });
       setIsSubmitting(false);
     }, 700);
-  }, [setUsers, setUser]);
+  }, [setUsers, setUser, addComplianceLog]);
 
   const addUser = useCallback((userData: Omit<User, 'id'>) => {
-    setUsers(prev => [...prev, { 
+    const newUser: User = { 
         id: `user_${Date.now()}`, 
         avatarUrl: `https://i.pravatar.cc/150?u=${userData.email}`, 
         status: 'Active', 
-        notificationSettings: NOTIF_SETTINGS, // Assign default notification settings
+        notificationSettings: NOTIF_SETTINGS,
         ...userData, 
-    }]);
-  }, [setUsers]);
+    };
+    setUsers(prev => [...prev, newUser]);
+    addComplianceLog({ user: user?.name || 'Admin', userRole: 'Admin', action: 'User Created', details: `Created new user: ${newUser.name}` });
+  }, [setUsers, user, addComplianceLog]);
 
   const editUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
@@ -232,7 +257,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return null;
           }
           const updatedUser = updater(currentUser);
-          // Also update the master users list
           setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
           return updatedUser;
         });
@@ -305,6 +329,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       inv.id === invoiceId ? { ...inv, status: 'Paid', amountDue: 0 } : inv
     ));
   }, [setInvoices]);
+  
+  const addClaim = useCallback((claimData: Omit<Claim, 'id'>) => {
+    setClaims(prev => [{ ...claimData, id: `C${Date.now()}` }, ...prev]);
+  }, [setClaims]);
 
   // --- APPOINTMENTS ---
   const addAppointment = useCallback((appointment: Omit<Appointment, 'id' | 'status' | 'patientName'>): boolean => {
@@ -342,6 +370,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const updateNote = useCallback((updatedNote: ProgressNote) => {
     setProgressNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
   }, [setProgressNotes]);
+  
+  // --- REFERRALS ---
+  const addReferral = useCallback((referralData: Omit<Referral, 'id' | 'status'>) => {
+    const newReferral: Referral = {
+        ...referralData,
+        id: Date.now(),
+        status: 'Pending',
+    };
+    setReferrals(prev => [newReferral, ...prev]);
+  }, [setReferrals]);
+
+  // --- MESSAGING ---
+  const sendMessage = useCallback((message: Omit<ChatMessage, 'id' | 'timestamp' | 'isRead'>) => {
+    const partnerId = message.senderId === user?.id ? message.receiverId : message.senderId;
+    
+    setMessages(prev => {
+        const existingThread = prev[partnerId] || [];
+        const newMessage: ChatMessage = {
+            ...message,
+            id: `msg_${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            isRead: false,
+        };
+        const updatedThread = [...existingThread, newMessage];
+        return { ...prev, [partnerId]: updatedThread };
+    });
+
+    // Simulate reply
+    setTimeout(() => {
+        setMessages(prev => {
+            const existingThread = prev[partnerId] || [];
+            const replyMessage: ChatMessage = {
+                id: `msg_${Date.now()}`,
+                senderId: message.receiverId,
+                receiverId: message.senderId,
+                text: user?.role === UserRole.PATIENT ? 'Thank you for your message. The provider will get back to you shortly.' : 'Thank you, I\'ve received your message.',
+                timestamp: new Date().toISOString(),
+                isRead: false,
+            };
+            const updatedThread = [...existingThread, replyMessage];
+            return { ...prev, [partnerId]: updatedThread };
+        });
+    }, 2000 + Math.random() * 1000);
+
+  }, [setMessages, user]);
 
   // --- SETTINGS & PROFILE ---
   const updateInsurance = useCallback((data: InsuranceInfo) => {
@@ -374,11 +447,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateUser,
         register, addUser, editUser, deleteUser, verifyProvider,
         invoices, makePayment, addInvoice, markInvoiceAsPaid,
+        claims, addClaim,
         patientSubscriptionPlans: PATIENT_PLANS, providerSubscriptionPlans, currentSubscription, changeSubscription, updateProviderPlans, updateUserSubscription,
         appointments, addAppointment, cancelAppointment, confirmAppointment, submitAppointmentFeedback,
         insurance, updateInsurance,
         prescriptions, addPrescription,
         progressNotes, addNote, updateNote,
+        referrals, addReferral,
+        messages, sendMessage,
+        complianceLogs,
         changePassword,
         systemSettings, updateSystemSettings,
         enterpriseSettings, updateEnterpriseSettings
