@@ -3,7 +3,7 @@ import React from 'react';
 import { 
     HomeIcon, CalendarIcon, DocumentTextIcon, UsersIcon, CogIcon, ShieldCheckIcon, ProfileIcon as ProfileNavIcon,
     CreditCardIcon, SparklesIcon, VideoCameraIcon, ClipboardListIcon, PillIcon, ShareIcon,
-    CurrencyDollarIcon, ChartBarIcon, CubeIcon, CollectionIcon, BriefcaseIcon, PencilAltIcon, MessageSquareIcon, ClockIcon
+    CurrencyDollarIcon, ChartBarIcon, CollectionIcon, PencilAltIcon, MessageSquareIcon, ClockIcon
 } from './components/shared/Icons';
 
 // Using CollectionIcon and aliasing for semantic clarity
@@ -45,14 +45,14 @@ export const PROVIDER_NAV = [
 
 export const ADMIN_NAV = [
   { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon /> },
-  { name: 'Users', href: '/users', icon: <UsersIcon /> },
+  { name: 'User Management', href: '/users', icon: <UsersIcon /> },
   { name: 'Subscriptions', href: '/subscriptions', icon: <CollectionIcon /> },
-  { name: 'Products', href: '/products', icon: <CubeIcon /> },
+  { name: 'Product Management', href: '/products', icon: <PillIcon /> }, // Placeholder icon
   { name: 'Billing', href: '/billing', icon: <CurrencyDollarIcon /> },
   { name: 'Reports', href: '/reports', icon: <ChartBarIcon /> },
-  { name: 'Settings', href: '/settings', icon: <CogIcon /> },
-  { name: 'Enterprise', href: '/enterprise', icon: <BriefcaseIcon /> },
   { name: 'Compliance', href: '/compliance', icon: <ShieldCheckIcon /> },
+  { name: 'Enterprise', href: '/enterprise', icon: <HomeIcon /> }, // Placeholder icon
+  { name: 'System Settings', href: '/settings', icon: <CogIcon /> },
 ];
 
 export const US_STATES = [

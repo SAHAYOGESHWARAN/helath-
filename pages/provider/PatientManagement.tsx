@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { User, UserRole } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import PageHeader from '../../components/shared/PageHeader';
+import { SearchIcon } from '../../components/shared/Icons';
 
 const getStatusColor = (status: 'Active' | 'Inactive') => {
     return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
@@ -122,13 +124,18 @@ const PatientManagement: React.FC = () => {
       <PageHeader title="Patient Management" />
       <Card>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-            <input 
-                type="text" 
-                placeholder="Search by name, ID, or status..." 
-                className="w-full md:max-w-md px-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-            />
+            <div className="relative w-full md:max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <SearchIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input 
+                    type="text" 
+                    placeholder="Search by name, ID, or status..." 
+                    className="w-full pl-10 pr-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                />
+            </div>
             <div className="flex items-center space-x-2">
                 <button onClick={() => setStatusFilter('All')} className={`px-4 py-2 text-sm font-medium rounded-md ${statusFilter === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>All</button>
                 <button onClick={() => setStatusFilter('Active')} className={`px-4 py-2 text-sm font-medium rounded-md ${statusFilter === 'Active' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>Active</button>

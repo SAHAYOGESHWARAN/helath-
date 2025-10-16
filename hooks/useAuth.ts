@@ -1,5 +1,6 @@
 
 import { useContext } from 'react';
+// FIX: Corrected import path for AuthContext
 import { AuthContext } from '../contexts/AuthContext';
 
 export const useAuth = () => {

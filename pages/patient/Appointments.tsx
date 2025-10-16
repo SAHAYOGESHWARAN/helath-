@@ -4,10 +4,11 @@ import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, UserRole } from '../../types';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
-import { CalendarIcon, ClockIcon, VideoCameraIcon, SpinnerIcon } from '../../components/shared/Icons';
+import { CalendarIcon, ClockIcon, VideoCameraIcon, SpinnerIcon, UsersIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { Link } from 'react-router-dom';
 
 const getStatusPill = (status: Appointment['status']) => {
     switch (status) {
@@ -89,10 +90,15 @@ const PatientAppointments: React.FC = () => {
                 <Card>
                     <h2 className="text-xl font-bold mb-4">Upcoming</h2>
                     <div className="space-y-4">
-                        {sortedAppointments.upcoming.length > 0 ? sortedAppointments.upcoming.map(appt => (
-                             <div key={appt.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleOpenDetails(appt)}>
+                        {sortedAppointments.upcoming.length > 0 ? sortedAppointments.upcoming.map(appt => {
+                            const isVirtual = appt.type === 'Virtual';
+                            const appointmentDateTime = new Date(`${appt.date}T${appt.time}`);
+                            const canJoin = isVirtual && appointmentDateTime.getTime() - Date.now() < 15 * 60 * 1000; // Can join 15 mins before
+
+                            return (
+                             <div key={appt.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
                                  <div className="flex flex-col sm:flex-row justify-between">
-                                     <div className="flex items-center space-x-4">
+                                     <div className="flex items-center space-x-4 flex-grow cursor-pointer" onClick={() => handleOpenDetails(appt)}>
                                          <div className="flex flex-col items-center justify-center bg-primary-50 text-primary-700 rounded-lg p-3 w-20 text-center">
                                              <span className="text-sm font-bold uppercase">{new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</span>
                                              <span className="text-2xl font-extrabold">{new Date(appt.date).getUTCDate()}</span>
@@ -101,16 +107,23 @@ const PatientAppointments: React.FC = () => {
                                              <p className="font-bold text-lg text-gray-800">{appt.reason}</p>
                                              <p className="text-sm text-gray-600">with {appt.providerName}</p>
                                              <div className="flex items-center text-sm text-gray-500 mt-1">
-                                                 <ClockIcon className="w-4 h-4 mr-1.5"/> {appt.time} ({appt.duration} min) <span className="mx-2">|</span> {appt.type === 'Virtual' ? <VideoCameraIcon className="w-4 h-4 mr-1.5"/> : <CalendarIcon className="w-4 h-4 mr-1.5"/>} {appt.type}
+                                                 <ClockIcon className="w-4 h-4 mr-1.5"/> {appt.time} ({appt.duration} min) <span className="mx-2">|</span> {isVirtual ? <VideoCameraIcon className="w-4 h-4 mr-1.5"/> : <UsersIcon className="w-4 h-4 mr-1.5"/>} {appt.type}
                                              </div>
                                          </div>
                                      </div>
-                                     <div className="flex items-center justify-end mt-3 sm:mt-0">
+                                     <div className="flex items-center justify-end mt-3 sm:mt-0 space-x-3">
                                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.status)}`}>{appt.status}</span>
+                                         {isVirtual && (
+                                            <Link to="/video-consults">
+                                                <button disabled={!canJoin} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                                    <VideoCameraIcon className="w-4 h-4 mr-2" /> Join Call
+                                                </button>
+                                            </Link>
+                                         )}
                                      </div>
                                  </div>
                              </div>
-                        )) : <p className="text-gray-500">You have no upcoming appointments.</p>}
+                        )}) : <p className="text-gray-500">You have no upcoming appointments.</p>}
                     </div>
                 </Card>
 
@@ -136,6 +149,7 @@ const PatientAppointments: React.FC = () => {
                     <p><strong>Duration:</strong> {selectedAppointment.duration} minutes</p>
                     <p><strong>Reason:</strong> {selectedAppointment.reason}</p>
                     {selectedAppointment.status === 'Completed' && !selectedAppointment.visitSummary && <button onClick={() => setModal('feedback')} className="w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg mt-4">Submit Feedback</button>}
+                    {selectedAppointment.status === 'Completed' && selectedAppointment.visitSummary && <Link to="/history" className="block w-full text-center bg-primary-600 text-white font-bold py-2 px-4 rounded-lg mt-4">View Visit Summary</Link>}
                     {selectedAppointment.status === 'Confirmed' && <button onClick={() => setModal('cancel')} className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg mt-4">Cancel Appointment</button>}
                 </div>}
             </Modal>

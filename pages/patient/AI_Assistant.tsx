@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
 import Card from '../../components/shared/Card';
@@ -55,7 +56,7 @@ const AIHealthGuide: React.FC = () => {
   useEffect(scrollToBottom, [history, loading]);
 
   const handleSendMessage = async (text: string) => {
-    if (!text.trim() || loading || !ai.current) return;
+    if (!text.trim() || loading || !ai.current || !user) return;
 
     const userMessage: Message = { role: 'user', parts: [{ text }] };
     const historyForApi = [...history, userMessage];
@@ -65,15 +66,31 @@ const AIHealthGuide: React.FC = () => {
     setLoading(true);
 
     try {
+      const activeMedications = user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'none';
+      const lifestyleInfo = user.lifestyle 
+        ? `Diet: ${user.lifestyle.diet}, Exercise: ${user.lifestyle.exercise}, Smoking: ${user.lifestyle.smokingStatus}, Alcohol: ${user.lifestyle.alcoholConsumption}` 
+        : 'not specified';
+
+      const patientContext = `
+        The current user is ${user.name}. 
+        Their known medical conditions are: ${user.conditions?.map(c => c.name).join(', ') || 'none'}.
+        Their known allergies are: ${user.allergies?.map(a => a.name).join(', ') || 'none'}.
+        They are currently taking the following active medications: ${activeMedications}.
+        Their known lifestyle factors are: ${lifestyleInfo}.
+      `;
+      
       const systemInstruction = `You are NovoPath Medical's AI Health Guide, powered by Gemini. Your primary function is to act as a friendly and informative symptom checker and health information resource for the patient.
-      - Your goal is to help the user understand their symptoms and provide general health information.
-      - When a user describes symptoms, you can ask clarifying questions to get more details (e.g., "How long have you had this symptom?", "Can you describe the pain?").
-      - Based on the conversation, you can provide potential informational causes and suggest general wellness tips.
+      You have the following context about the patient: ${patientContext}
+      
+      Your operational guidelines are:
+      - Your goal is to help the user understand their symptoms and provide general health information, taking their context into account. When relevant, you can make gentle connections to their health context, for example: "Given that you are taking [Medication], it's always good to check with your doctor before...".
+      - When a user describes symptoms, ask clarifying questions to get more details (e.g., "How long have you had this symptom?", "Can you describe the pain?").
+      - Based on the conversation, provide potential informational causes and suggest general wellness tips. You can tailor these tips to their lifestyle, for example: "Since you mentioned your diet is [Diet Type], you might consider...".
       - If the user's query is outside your scope or requires up-to-date information (e.g., "latest news on diabetes research"), use the Google Search tool and ALWAYS cite your sources.
-      - **CRITICAL SAFETY INSTRUCTION**: At the end of EVERY response, you MUST include a clear, bolded disclaimer: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
-      - Do not provide a diagnosis. Do not prescribe medication.
-      - Keep your tone empathetic, clear, and helpful.
-      - The current user's name is ${user?.name}.`;
+      
+      - **CRITICAL SAFETY INSTRUCTION**: You must NEVER provide a medical diagnosis, prescribe medication, or give direct medical advice. Your role is informational only.
+      - At the end of EVERY single response, without exception, you MUST include a clear, bolded disclaimer on its own line: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
+      - Keep your tone empathetic, clear, and helpful.`;
       
       const contents = historyForApi.map(msg => ({ role: msg.role, parts: msg.parts }));
       

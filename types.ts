@@ -1,5 +1,6 @@
 // FIX: Removed self-import of `UserRole` which was causing a declaration conflict.
 
+// FIX: Added 'ADMIN' to UserRole to support admin-specific functionality.
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -71,6 +72,8 @@ export interface User {
   vitals?: VitalsRecord[];
   lifestyle?: LifestyleInfo;
   notificationSettings?: NotificationSettings; // User-specific notification settings
+  healthGoals?: HealthGoal[];
+  labResults?: LabResult[];
 }
 
 export interface Appointment {
@@ -252,20 +255,6 @@ export interface ChatMessage {
   isRead: boolean;
 }
 
-export interface SystemSettingsConfig {
-    maintenanceMode: boolean;
-    newPatientRegistrations: boolean;
-    newProviderRegistrations: boolean;
-}
-
-export interface EnterpriseSettingsConfig {
-  ssoProvider: 'Okta' | 'Azure AD' | 'Google Workspace';
-  ssoEntityId: string;
-  primaryColor: string;
-  enforceMfa: boolean;
-  customLogoUrl?: string;
-}
-
 export interface BillingInvoice {
     id: string;
     patientId: string;
@@ -286,13 +275,4 @@ export interface Referral {
   status: 'Pending' | 'Approved' | 'Declined';
   type: 'Outgoing' | 'Incoming';
   reason: string;
-}
-
-export interface ComplianceLog {
-  id: number;
-  timestamp: string;
-  user: string;
-  userRole: 'Patient' | 'Provider' | 'Admin' | 'System';
-  action: string;
-  details: string;
 }

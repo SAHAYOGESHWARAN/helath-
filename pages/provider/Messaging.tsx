@@ -26,7 +26,7 @@ const TypingIndicator: React.FC<{ avatar: string | undefined }> = ({ avatar }) =
 );
 
 const Messaging: React.FC = () => {
-    const { user, users, messages, sendMessage } = useAuth();
+    const { user, users, messages, sendMessage, markMessagesAsRead } = useAuth();
     const { showToast } = useApp();
 
     const availablePatients = useMemo(() => {
@@ -43,6 +43,14 @@ const Messaging: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (selectedPatient) {
+            setTimeout(() => {
+                markMessagesAsRead(selectedPatient.id);
+            }, 500);
+        }
+    }, [selectedPatient, markMessagesAsRead]);
     
     const currentMessages = useMemo(() => {
         if (!selectedPatient) return [];
@@ -110,13 +118,22 @@ const Messaging: React.FC = () => {
                         {patientsInConversations.map(patient => {
                             const thread = messages[patient.id] || [];
                             const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
-                            const unread = lastMessage && lastMessage.senderId === patient.id && !lastMessage.isRead;
+                            const unreadCount = thread.filter(msg => !msg.isRead && msg.senderId === patient.id).length;
                              return (
                                 <div key={patient.id} onClick={() => setSelectedPatient(patient)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedPatient?.id === patient.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
                                     <img src={patient.avatarUrl} alt={patient.name} className="w-12 h-12 rounded-full flex-shrink-0" />
                                     <div className="ml-3 flex-grow overflow-hidden">
                                         <div className="flex justify-between items-center"><p className="font-semibold text-gray-800 truncate">{patient.name}</p>{lastMessage && <p className="text-xs text-gray-400 flex-shrink-0 ml-2">{timeSince(lastMessage.timestamp)}</p>}</div>
-                                        <div className="flex justify-between items-center"><p className={`text-sm text-gray-500 truncate ${unread ? 'font-bold text-gray-800' : ''}`}>{lastMessage?.text || `DOB: ${patient.dob}`}</p>{unread && <div className="w-2.5 h-2.5 bg-primary-500 rounded-full flex-shrink-0 ml-2"></div>}</div>
+                                        <div className="flex justify-between items-center">
+                                            <p className={`text-sm text-gray-500 truncate ${unreadCount > 0 ? 'font-bold text-gray-800' : ''}`}>
+                                                {lastMessage?.text || `DOB: ${patient.dob}`}
+                                            </p>
+                                            {unreadCount > 0 && (
+                                                <span className="bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 ml-2">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );

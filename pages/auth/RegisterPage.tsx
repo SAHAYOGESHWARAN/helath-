@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { NovoPathIcon, ProfileIcon, UsersIcon, ChevronLeftIcon } from '../../components/shared/Icons';
@@ -61,16 +62,6 @@ const RegisterPage: React.FC = () => {
                 Already have a patient or provider account?{' '}
                 <Link to="/login" className="font-semibold text-primary-600 hover:underline">
                     Sign In
-                </Link>
-            </p>
-             <p className="text-sm text-gray-600">
-                Are you an administrator?{' '}
-                <Link to="/admin/login" className="font-semibold text-primary-600 hover:underline">
-                    Admin Login
-                </Link>
-                 {' or '}
-                <Link to="/register/admin" className="font-semibold text-primary-600 hover:underline">
-                    Register
                 </Link>
             </p>
         </div>

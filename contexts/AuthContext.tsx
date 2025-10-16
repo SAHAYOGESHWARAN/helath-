@@ -1,466 +1,271 @@
+
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User, UserRole, BillingInvoice, SubscriptionPlan, Appointment, Prescription, ProgressNote, EnterpriseSettingsConfig, InsuranceInfo, NotificationSettings, ChatMessage, Claim, Referral, ComplianceLog } from '../types';
+import { User, UserRole, Appointment, Medication, LabResult, HealthGoal, Allergy, Surgery, FamilyHistoryEntry, ImmunizationRecord, LifestyleInfo, VitalsRecord, InsuranceInfo, Claim, ProgressNote, Prescription, Referral, SubscriptionPlan, BillingInvoice, ClaimStatus, ClaimType } from '../types';
+import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_INVOICES, MOCK_PRESCRIPTIONS, MOCK_PROGRESS_NOTES, MOCK_REFERRALS, MOCK_PATIENT_PLANS, MOCK_PROVIDER_PLANS } from '../mockData'; // Using a separate mock data file for cleanliness
 
-interface SystemSettingsConfig {
-    maintenanceMode: boolean;
-    newPatientRegistrations: boolean;
-    newProviderRegistrations: boolean;
-}
-
-interface AuthContextType {
+// --- Context Type Definition ---
+export interface AuthContextType {
   user: User | null;
-  users: User[];
   loading: boolean;
-  isSubmitting: boolean;
-  login: (credentials: { email: string; password?: string }) => Promise<boolean>;
+  login: (email: string) => void;
   logout: () => void;
-  updateUser: (updater: (currentUser: User) => User) => Promise<void>;
   register: (userData: Partial<User>, role: UserRole) => void;
-  addUser: (newUser: Omit<User, 'id'>) => void;
-  editUser: (updatedUser: User) => void;
-  deleteUser: (userId: string) => void;
-  verifyProvider: (userId: string) => void;
-  // Billing
-  invoices: BillingInvoice[];
-  makePayment: (invoiceId: string, paymentAmount: number) => void;
-  addInvoice: (invoiceData: Omit<BillingInvoice, 'id' | 'status' | 'amountDue' | 'date'>) => void;
-  markInvoiceAsPaid: (invoiceId: string) => void;
+  updateUser: (updateFn: (currentUser: User) => User) => Promise<void>;
+  
+  // Data for the whole app
+  users: User[];
+  appointments: Appointment[];
   claims: Claim[];
-  addClaim: (claimData: Omit<Claim, 'id'>) => void;
-  // Subscriptions
+  invoices: BillingInvoice[];
+  prescriptions: Prescription[];
+  progressNotes: ProgressNote[];
+  referrals: Referral[];
+  insurance: InsuranceInfo | null;
+  currentSubscription: SubscriptionPlan | null;
   patientSubscriptionPlans: SubscriptionPlan[];
   providerSubscriptionPlans: SubscriptionPlan[];
-  currentSubscription: SubscriptionPlan | null;
-  changeSubscription: (planId: string) => void;
-  updateProviderPlans: (plans: SubscriptionPlan[]) => void;
-  updateUserSubscription: (userId: string, newPlanId: string) => void;
-  // Appointments
-  appointments: Appointment[];
-  addAppointment: (appointment: Omit<Appointment, 'id' | 'status' | 'patientName'>) => boolean;
-  cancelAppointment: (appointmentId: string) => void;
-  confirmAppointment: (appointmentId: string) => void;
-  submitAppointmentFeedback: (appointmentId: string, summary: string) => void;
-   // Insurance
-  insurance: InsuranceInfo | null;
-  updateInsurance: (data: InsuranceInfo) => Promise<void>;
-  // Prescriptions & Notes
-  prescriptions: Prescription[];
-  addPrescription: (prescription: Omit<Prescription, 'id' | 'status'>) => void;
-  progressNotes: ProgressNote[];
+
+  // Functions to modify data
+  addAppointment: (appt: Omit<Appointment, 'id' | 'status' | 'patientName'>) => boolean;
+  cancelAppointment: (id: string) => void;
+  confirmAppointment: (id: string) => void;
+  submitAppointmentFeedback: (id: string, summary: string) => void;
+  addClaim: (claim: Omit<Claim, 'id'>) => void;
+  makePayment: (invoiceId: string, amount: number) => void;
+  addPrescription: (rx: Omit<Prescription, 'id' | 'status'>) => void;
   addNote: (note: Omit<ProgressNote, 'id' | 'status'>) => void;
   updateNote: (note: ProgressNote) => void;
-  // Referrals
-  referrals: Referral[];
-  addReferral: (referralData: Omit<Referral, 'id' | 'status'>) => void;
-  // Messaging
-  messages: { [key: string]: ChatMessage[] };
-  sendMessage: (message: Omit<ChatMessage, 'id' | 'timestamp' | 'isRead'>) => void;
-  // Compliance
-  complianceLogs: ComplianceLog[];
-  // Settings
+  addReferral: (ref: Omit<Referral, 'id' | 'status'>) => void;
+  updateInsurance: (info: InsuranceInfo) => Promise<void>;
+  changeSubscription: (planId: string) => void;
   changePassword: (current: string, newPass: string) => Promise<boolean>;
-  systemSettings: SystemSettingsConfig;
-  updateSystemSettings: (settings: SystemSettingsConfig) => Promise<void>;
-  enterpriseSettings: EnterpriseSettingsConfig;
-  updateEnterpriseSettings: (settings: EnterpriseSettingsConfig) => Promise<void>;
+  markMessagesAsRead: (contactId: string) => void;
+  sendMessage: (message: any) => void;
+  messages: any;
+
+  // Admin functions
+  verifyUser: (userId: string) => void;
+  updateUserStatus: (userId: string, status: 'Active' | 'Suspended') => void;
 }
 
+// --- Create Context ---
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- STARTING (EMPTY) DATA ---
-const PATIENT_PLANS: SubscriptionPlan[] = [
-    { id: 'plan_basic_patient', name: 'Basic Care', price: '$19/month', patientLimit: 0, features: ['Secure Messaging', 'Appointment Scheduling', 'Health Records Access', 'Basic AI Assistant', '50% off first video call'] },
-    { id: 'plan_plus_patient', name: 'Plus Care', price: '$49/month', patientLimit: 0, isPopular: true, features: ['All Basic features', 'Unlimited Video Consults', 'Priority Support', 'Advanced AI Assistant', 'Personalized Health Goals'] },
-    { id: 'plan_total_patient', name: 'Total Wellness', price: '$99/month', patientLimit: 0, features: ['All features of Plus Care', '24/7 On-Demand Nurse Chat', 'Annual In-depth Health Review'] },
-];
-const PROVIDER_PLANS: SubscriptionPlan[] = [
-  { id: 'prod_1', name: 'Basic Tier', price: '$49/mo', patientLimit: 50, features: ['Up to 50 patients', 'Basic EHR', 'Appointment Scheduling'] },
-  { id: 'prod_2', name: 'Pro Tier', price: '$99/mo', patientLimit: 200, isPopular: true, features: ['Up to 200 patients', 'Full EHR & E-Prescribing', 'Telehealth Included', 'Advanced Reporting'] },
-  { id: 'prod_3', name: 'Enterprise', price: 'Custom', patientLimit: 0, features: ['Unlimited patients', 'All Pro features', 'Dedicated Support', 'SSO Integration'] },
-];
-const NOTIF_SETTINGS: NotificationSettings = { emailAppointments: true, emailBilling: true, emailMessages: true, smsMessages: false, pushAll: false };
-const SYSTEM_SETTINGS: SystemSettingsConfig = { maintenanceMode: false, newPatientRegistrations: true, newProviderRegistrations: true };
-const ENTERPRISE_SETTINGS: EnterpriseSettingsConfig = { ssoProvider: 'Okta', ssoEntityId: 'urn:example:saml:sp', primaryColor: '#3b82f6', enforceMfa: true, customLogoUrl: '' };
-
-const DEFAULT_USERS: User[] = [
-  {
-    id: 'admin_default_rish',
-    name: 'Rish Novo',
-    email: 'rishnovo@gmail.com',
-    role: UserRole.ADMIN,
-    avatarUrl: `https://i.pravatar.cc/150?u=rishnovo@gmail.com`,
-    status: 'Active',
-    notificationSettings: NOTIF_SETTINGS,
-  }
-];
-
-
-// Custom hook to manage state with session storage and keep it synchronized
-function useSessionStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const [storedValue, setStoredValue] = useState<T>(() => {
-        try {
-            const item = window.sessionStorage.getItem(key);
-            if (item) {
-                const parsed = JSON.parse(item);
-                 if (key === 'novopath-users' && Array.isArray(parsed) && !parsed.some(u => u.id === DEFAULT_USERS[0].id)) {
-                  const mergedUsers = [...parsed, ...DEFAULT_USERS.filter(du => !parsed.some(pu => pu.id === du.id))];
-                  window.sessionStorage.setItem(key, JSON.stringify(mergedUsers));
-                  return mergedUsers;
-                }
-                if (parsed !== null || initialValue === null) {
-                    return parsed;
-                }
-            }
-            window.sessionStorage.setItem(key, JSON.stringify(initialValue));
-            return initialValue;
-        } catch (error) {
-            console.error(`Error reading sessionStorage key “${key}”:`, error);
-            return initialValue;
-        }
-    });
-
-    const setValue: React.Dispatch<React.SetStateAction<T>> = (value) => {
-        try {
-            const valueToStore = value instanceof Function ? value(storedValue) : value;
-            setStoredValue(valueToStore);
-            window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
-        } catch (error) {
-            console.error(`Error setting sessionStorage key “${key}”:`, error);
-        }
-    };
-
-    return [storedValue, setValue];
-}
-
-
+// --- Auth Provider Component ---
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // --- STATE MANAGEMENT (Now with Persistence) ---
-  const [users, setUsers] = useSessionStorage<User[]>('novopath-users', DEFAULT_USERS);
-  const [user, setUser] = useSessionStorage<User | null>('novopath-user', null);
-  const [appointments, setAppointments] = useSessionStorage<Appointment[]>('novopath-appointments', []);
-  const [invoices, setInvoices] = useSessionStorage<BillingInvoice[]>('novopath-invoices', []);
-  const [prescriptions, setPrescriptions] = useSessionStorage<Prescription[]>('novopath-prescriptions', []);
-  const [progressNotes, setProgressNotes] = useSessionStorage<ProgressNote[]>('novopath-progressNotes', []);
-  const [insurance, setInsurance] = useSessionStorage<InsuranceInfo | null>('novopath-insurance', null);
-  const [systemSettings, setSystemSettings] = useSessionStorage<SystemSettingsConfig>('novopath-systemSettings', SYSTEM_SETTINGS);
-  const [enterpriseSettings, setEnterpriseSettings] = useSessionStorage<EnterpriseSettingsConfig>('novopath-enterpriseSettings', ENTERPRISE_SETTINGS);
-  const [providerSubscriptionPlans, setProviderSubscriptionPlans] = useSessionStorage<SubscriptionPlan[]>('novopath-providerPlans', PROVIDER_PLANS);
-  const [claims, setClaims] = useSessionStorage<Claim[]>('novopath-claims', []);
-  const [referrals, setReferrals] = useSessionStorage<Referral[]>('novopath-referrals', []);
-  const [complianceLogs, setComplianceLogs] = useSessionStorage<ComplianceLog[]>('novopath-complianceLogs', []);
-  const [messages, setMessages] = useSessionStorage<{ [key: string]: ChatMessage[] }>('novopath-messages', {});
-
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState<SubscriptionPlan | null>(null);
   
-  const addComplianceLog = useCallback((logData: Omit<ComplianceLog, 'id' | 'timestamp'>) => {
-    setComplianceLogs(prev => [
-        { ...logData, id: Date.now(), timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) }, 
-        ...prev
-    ]);
-  }, [setComplianceLogs]);
+  // App-wide data state
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [claims, setClaims] = useState<Claim[]>(MOCK_CLAIMS);
+  const [invoices, setInvoices] = useState<BillingInvoice[]>(MOCK_INVOICES);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
+  const [progressNotes, setProgressNotes] = useState<ProgressNote[]>(MOCK_PROGRESS_NOTES);
+  const [referrals, setReferrals] = useState<Referral[]>(MOCK_REFERRALS);
+  const [insurance, setInsurance] = useState<InsuranceInfo | null>({ provider: 'Blue Cross', planName: 'PPO Gold', memberId: 'XG123456789', groupId: 'GRP9876' });
+  
+  // Mock messages
+   const [messages, setMessages] = useState<Record<string, any>>({
+    'provider-1': [
+      { id: 'msg1', senderId: 'provider-1', receiverId: 'patient-1', text: 'Hello Jane, just following up on your recent lab results.', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), isRead: false },
+      { id: 'msg2', senderId: 'patient-1', receiverId: 'provider-1', text: 'Hi Dr. Smith! Thanks for reaching out. Is everything okay?', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), isRead: true },
+    ]
+  });
 
-  // --- EFFECTS ---
+  // Load user from localStorage on initial render
   useEffect(() => {
-    if (user && user.subscription) {
-      const allPlans = [...PATIENT_PLANS, ...providerSubscriptionPlans];
-      const sub = allPlans.find(p => p.id === user.subscription!.planId);
-      setCurrentSubscription(sub || null);
-    } else {
-        setCurrentSubscription(null);
-    }
-    setLoading(false);
-  }, [user, providerSubscriptionPlans]);
-
-  // --- AUTH & USER MANAGEMENT ---
-  const login = useCallback(async (credentials: { email: string; password?: string }): Promise<boolean> => {
-    setIsSubmitting(true);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const userToLogin = users.find((u: User) => u.email.toLowerCase() === credentials.email.toLowerCase());
-        
-        if (userToLogin) {
-          setUser(userToLogin);
-          addComplianceLog({ user: userToLogin.name, userRole: userToLogin.role, action: 'Login Success', details: `User logged in.` });
-          resolve(true);
-        } else {
-          addComplianceLog({ user: credentials.email, userRole: 'System', action: 'Login Failed', details: `Failed login attempt for email: ${credentials.email}` });
-          resolve(false);
+    setTimeout(() => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         }
-        setIsSubmitting(false);
-      }, 700);
-    });
-  }, [users, setUser, addComplianceLog]);
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+      }
+      setLoading(false);
+    }, 1000); // Simulate network delay
+  }, []);
+  
+  const login = useCallback((email: string) => {
+    setLoading(true);
+    setTimeout(() => {
+        const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (foundUser) {
+            setUser(foundUser);
+            localStorage.setItem('user', JSON.stringify(foundUser));
+        } else {
+            alert('User not found!');
+        }
+        setLoading(false);
+    }, 800);
+  }, []);
 
   const logout = useCallback(() => {
-    if (user) {
-        addComplianceLog({ user: user.name, userRole: user.role, action: 'Logout', details: 'User logged out.' });
-    }
     setUser(null);
-  }, [setUser, user, addComplianceLog]);
+    localStorage.removeItem('user');
+  }, []);
 
   const register = useCallback((userData: Partial<User>, role: UserRole) => {
-    setIsSubmitting(true);
+    setLoading(true);
     setTimeout(() => {
         const newUser: User = {
-            id: `user_${Date.now()}`,
-            name: userData.name || 'New User',
-            email: userData.email || 'new@user.com',
-            ...userData,
-            role,
+            id: role === UserRole.PATIENT ? `patient-${Date.now()}` : `provider-${Date.now()}`,
+            name: userData.name || '',
+            email: userData.email || '',
+            role: role,
             avatarUrl: `https://i.pravatar.cc/150?u=${userData.email}`,
+            isVerified: role === UserRole.PATIENT, // Patients are auto-verified
             status: 'Active',
-            isVerified: role === UserRole.PROVIDER ? false : undefined,
-            notificationSettings: NOTIF_SETTINGS,
+            ...userData
         };
-      setUsers(prev => [...prev, newUser]);
-      setUser(newUser);
-      addComplianceLog({ user: newUser.name, userRole: newUser.role, action: 'Registration', details: `New ${role.toLowerCase()} registered.` });
-      setIsSubmitting(false);
-    }, 700);
-  }, [setUsers, setUser, addComplianceLog]);
+        setUsers(prev => [...prev, newUser]);
+        setUser(newUser);
+        localStorage.setItem('user', JSON.stringify(newUser));
+        setLoading(false);
+    }, 1200);
+  }, []);
 
-  const addUser = useCallback((userData: Omit<User, 'id'>) => {
-    const newUser: User = { 
-        id: `user_${Date.now()}`, 
-        avatarUrl: `https://i.pravatar.cc/150?u=${userData.email}`, 
-        status: 'Active', 
-        notificationSettings: NOTIF_SETTINGS,
-        ...userData, 
-    };
-    setUsers(prev => [...prev, newUser]);
-    addComplianceLog({ user: user?.name || 'Admin', userRole: 'Admin', action: 'User Created', details: `Created new user: ${newUser.name}` });
-  }, [setUsers, user, addComplianceLog]);
-
-  const editUser = useCallback((updatedUser: User) => {
-    setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
-    if (user?.id === updatedUser.id) {
-        setUser(updatedUser);
-    }
-  }, [user, setUsers, setUser]);
-
-  const deleteUser = useCallback((userId: string) => { 
-    setUsers(prev => prev.filter(u => u.id !== userId));
-  }, [setUsers]);
-  
-  const verifyProvider = useCallback((userId: string) => {
-    setUsers(prev => prev.map(u => (u.id === userId && u.role === UserRole.PROVIDER) ? { ...u, isVerified: true } : u));
-  }, [setUsers]);
-
-  const updateUser = useCallback((updater: (currentUser: User) => User) => {
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        setUser(currentUser => {
-          if (!currentUser) {
-            resolve();
-            return null;
-          }
-          const updatedUser = updater(currentUser);
-          setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-          return updatedUser;
-        });
-        resolve();
-      }, 300);
+  const updateUser = useCallback(async (updateFn: (currentUser: User) => User) => {
+    setUser(prevUser => {
+        if (!prevUser) return null;
+        const updatedUser = updateFn(prevUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+        
+        return updatedUser;
     });
-  }, [setUser, setUsers]);
+  }, []);
+
+  const addAppointment = useCallback((appt: Omit<Appointment, 'id' | 'status' | 'patientName'>) => {
+    if (!user) return false;
+    const newAppt: Appointment = {
+        ...appt,
+        id: `appt_${Date.now()}`,
+        patientName: user.name,
+        status: 'Pending',
+    };
+    setAppointments(prev => [newAppt, ...prev]);
+    return true;
+  }, [user]);
   
-  // --- SUBSCRIPTIONS ---
-  const updateUserSubscription = useCallback((userId: string, newPlanId: string) => {
-      const allPlans = [...PATIENT_PLANS, ...providerSubscriptionPlans];
-      const newPlan = allPlans.find(p => p.id === newPlanId);
-      if (!newPlan) return;
-      
-      const updater = (currentUser: User): User => ({
-          ...currentUser,
-          subscription: {
+  const cancelAppointment = useCallback((id: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
+  }, []);
+  
+  const confirmAppointment = useCallback((id: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a));
+  }, []);
+  
+  const submitAppointmentFeedback = useCallback((id: string, summary: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, visitSummary: summary } : a));
+  }, []);
+
+  const changeSubscription = useCallback((planId: string) => {
+      const allPlans = [...MOCK_PATIENT_PLANS, ...MOCK_PROVIDER_PLANS];
+      const newPlan = allPlans.find(p => p.id === planId);
+      if (newPlan && user) {
+          const subscriptionData = {
               planId: newPlan.id,
               planName: newPlan.name,
-              status: currentUser.subscription?.status || 'Active',
-              renewalDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
-          }
-      });
-
-      if (user?.id === userId) {
-          updateUser(updater);
-      } else {
-          const targetUser = users.find(u => u.id === userId);
-          if (targetUser) {
-              editUser(updater(targetUser));
-          }
+              status: 'Active' as const,
+              renewalDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString(),
+          };
+          updateUser(currentUser => ({...currentUser, subscription: subscriptionData }));
       }
-  }, [providerSubscriptionPlans, user, updateUser, users, editUser]);
-  
-  const changeSubscription = useCallback((planId: string) => {
-    if (!user) return;
-    updateUserSubscription(user.id, planId);
-  }, [user, updateUserSubscription]);
+  }, [user, updateUser]);
 
-  const updateProviderPlans = useCallback((plans: SubscriptionPlan[]) => { setProviderSubscriptionPlans(plans); }, [setProviderSubscriptionPlans]);
+  const verifyUser = useCallback((userId: string) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, isVerified: true } : u));
+  }, []);
+
+  const updateUserStatus = useCallback((userId: string, status: 'Active' | 'Suspended') => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status } : u));
+  }, []);
   
-  // --- BILLING & PAYMENTS ---
-  const makePayment = useCallback((invoiceId: string, paymentAmount: number) => {
+  // Combine all other state modification functions...
+  const addClaim = (claim: Omit<Claim, 'id'>) => setClaims(prev => [{ ...claim, id: `claim_${Date.now()}` }, ...prev]);
+  const makePayment = (invoiceId: string, amount: number) => {
     setInvoices(prev => prev.map(inv => {
         if (inv.id === invoiceId) {
-            const newAmountDue = inv.amountDue - paymentAmount;
+            const newAmountDue = inv.amountDue - amount;
             return {
                 ...inv,
-                amountDue: Math.max(0, newAmountDue),
-                status: newAmountDue <= 0 ? 'Paid' : 'Due'
+                amountDue: newAmountDue,
+                status: newAmountDue <= 0 ? 'Paid' : 'Due',
+                date: new Date().toLocaleDateString(),
             };
         }
         return inv;
     }));
-  }, [setInvoices]);
+  };
+  const addPrescription = (rx: Omit<Prescription, 'id' | 'status'>) => setPrescriptions(prev => [{ ...rx, id: `rx_${Date.now()}`, status: 'Sent' }, ...prev]);
+  const addNote = (note: Omit<ProgressNote, 'id' | 'status'>) => setProgressNotes(prev => [{ ...note, id: `note_${Date.now()}`, status: 'Draft' }, ...prev]);
+  const updateNote = (note: ProgressNote) => setProgressNotes(prev => prev.map(n => n.id === note.id ? note : n));
+  const addReferral = (ref: Omit<Referral, 'id' | 'status'>) => setReferrals(prev => [{ ...ref, id: Date.now(), status: 'Pending' }, ...prev]);
+  const updateInsurance = async (info: InsuranceInfo) => { setInsurance(info); };
+  const changePassword = async (current: string, newPass: string) => { return true; };
+  const markMessagesAsRead = (contactId: string) => {
+      setMessages(prev => ({
+          ...prev,
+          [contactId]: (prev[contactId] || []).map((msg: any) => ({ ...msg, isRead: true }))
+      }));
+  };
+   const sendMessage = (message: any) => {
+    const receiverId = message.receiverId === user?.id ? message.senderId : message.receiverId;
+    const newMessage = { ...message, id: `msg_${Date.now()}`, timestamp: new Date().toISOString(), isRead: false };
 
-  const addInvoice = useCallback((invoiceData: Omit<BillingInvoice, 'id' | 'status' | 'amountDue' | 'date'>) => {
-    const newInvoice: BillingInvoice = {
-      ...invoiceData,
-      id: `inv_${Date.now()}`,
-      status: 'Due',
-      amountDue: invoiceData.totalAmount,
-      date: new Date().toISOString().split('T')[0],
-    };
-    setInvoices(prev => [newInvoice, ...prev]);
-  }, [setInvoices]);
-
-  const markInvoiceAsPaid = useCallback((invoiceId: string) => {
-    setInvoices(prev => prev.map(inv => 
-      inv.id === invoiceId ? { ...inv, status: 'Paid', amountDue: 0 } : inv
-    ));
-  }, [setInvoices]);
+    setMessages(prev => ({
+      ...prev,
+      [receiverId]: [...(prev[receiverId] || []), newMessage]
+    }));
+  };
   
-  const addClaim = useCallback((claimData: Omit<Claim, 'id'>) => {
-    setClaims(prev => [{ ...claimData, id: `C${Date.now()}` }, ...prev]);
-  }, [setClaims]);
+  const currentSubscription = user?.role === UserRole.PATIENT 
+    ? MOCK_PATIENT_PLANS.find(p => p.name === user?.subscription?.planName) || null
+    : MOCK_PROVIDER_PLANS.find(p => p.name === user?.subscription?.planName) || null;
 
-  // --- APPOINTMENTS ---
-  const addAppointment = useCallback((appointment: Omit<Appointment, 'id' | 'status' | 'patientName'>): boolean => {
-    const isSlotTaken = appointments.some(a => a.date === appointment.date && a.time === appointment.time && a.status !== 'Cancelled');
-    if (isSlotTaken) {
-        console.error("Appointment slot is already booked.");
-        return false;
-    }
-    if(!user) return false;
-    setAppointments(prev => [...prev, { ...appointment, id: `appt_${Date.now()}`, status: 'Pending', patientName: user.name }]);
-    return true;
-  }, [user, appointments, setAppointments]);
+  // --- Value provided to consumers ---
+  const value: AuthContextType = {
+    user,
+    loading,
+    login,
+    logout,
+    register,
+    updateUser,
+    users,
+    appointments,
+    claims,
+    invoices,
+    prescriptions,
+    progressNotes,
+    referrals,
+    insurance,
+    currentSubscription,
+    patientSubscriptionPlans: MOCK_PATIENT_PLANS,
+    providerSubscriptionPlans: MOCK_PROVIDER_PLANS,
+    addAppointment,
+    cancelAppointment,
+    confirmAppointment,
+    submitAppointmentFeedback,
+    addClaim,
+    makePayment,
+    addPrescription,
+    addNote,
+    updateNote,
+    addReferral,
+    updateInsurance,
+    changeSubscription,
+    changePassword,
+    markMessagesAsRead,
+    sendMessage,
+    messages,
+    verifyUser,
+    updateUserStatus,
+  };
 
-  const cancelAppointment = useCallback((appointmentId: string) => {
-    setAppointments(prev => prev.map(a => a.id === appointmentId ? {...a, status: 'Cancelled'} : a));
-  }, [setAppointments]);
-
-   const confirmAppointment = useCallback((appointmentId: string) => {
-    setAppointments(prev => prev.map(a => a.id === appointmentId ? {...a, status: 'Confirmed'} : a));
-  }, [setAppointments]);
-
-  const submitAppointmentFeedback = useCallback((appointmentId: string, summary: string) => {
-    setAppointments(prev => prev.map(a => a.id === appointmentId ? {...a, visitSummary: summary} : a));
-  }, [setAppointments]);
-  
-  // --- RECORDS ---
-  const addPrescription = useCallback((prescription: Omit<Prescription, 'id' | 'status'>) => {
-    setPrescriptions(prev => [...prev, { ...prescription, id: `rx_${Date.now()}`, status: 'Sent' }]);
-  }, [setPrescriptions]);
-  
-  const addNote = useCallback((note: Omit<ProgressNote, 'id' | 'status'>) => {
-    setProgressNotes(prev => [...prev, { ...note, id: `pn_${Date.now()}`, status: 'Draft' }]);
-  }, [setProgressNotes]);
-  
-  const updateNote = useCallback((updatedNote: ProgressNote) => {
-    setProgressNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
-  }, [setProgressNotes]);
-  
-  // --- REFERRALS ---
-  const addReferral = useCallback((referralData: Omit<Referral, 'id' | 'status'>) => {
-    const newReferral: Referral = {
-        ...referralData,
-        id: Date.now(),
-        status: 'Pending',
-    };
-    setReferrals(prev => [newReferral, ...prev]);
-  }, [setReferrals]);
-
-  // --- MESSAGING ---
-  const sendMessage = useCallback((message: Omit<ChatMessage, 'id' | 'timestamp' | 'isRead'>) => {
-    const partnerId = message.senderId === user?.id ? message.receiverId : message.senderId;
-    
-    setMessages(prev => {
-        const existingThread = prev[partnerId] || [];
-        const newMessage: ChatMessage = {
-            ...message,
-            id: `msg_${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            isRead: false,
-        };
-        const updatedThread = [...existingThread, newMessage];
-        return { ...prev, [partnerId]: updatedThread };
-    });
-
-    // Simulate reply
-    setTimeout(() => {
-        setMessages(prev => {
-            const existingThread = prev[partnerId] || [];
-            const replyMessage: ChatMessage = {
-                id: `msg_${Date.now()}`,
-                senderId: message.receiverId,
-                receiverId: message.senderId,
-                text: user?.role === UserRole.PATIENT ? 'Thank you for your message. The provider will get back to you shortly.' : 'Thank you, I\'ve received your message.',
-                timestamp: new Date().toISOString(),
-                isRead: false,
-            };
-            const updatedThread = [...existingThread, replyMessage];
-            return { ...prev, [partnerId]: updatedThread };
-        });
-    }, 2000 + Math.random() * 1000);
-
-  }, [setMessages, user]);
-
-  // --- SETTINGS & PROFILE ---
-  const updateInsurance = useCallback((data: InsuranceInfo) => {
-    return new Promise<void>((resolve) => {
-        setTimeout(() => { setInsurance(data); resolve(); }, 800);
-    });
-  }, [setInsurance]);
-  
-  const changePassword = useCallback((current: string, newPass: string) => {
-    return new Promise<boolean>((resolve) => {
-        setTimeout(() => { resolve(true); }, 800);
-    });
-  }, []);
-
-  const updateSystemSettings = useCallback((settings: SystemSettingsConfig) => {
-     return new Promise<void>((resolve) => {
-        setTimeout(() => { setSystemSettings(settings); resolve(); }, 800);
-    });
-  }, [setSystemSettings]);
-
-  const updateEnterpriseSettings = useCallback((settings: EnterpriseSettingsConfig) => {
-    return new Promise<void>((resolve) => {
-       setTimeout(() => { setEnterpriseSettings(settings); resolve(); }, 800);
-   });
- }, [setEnterpriseSettings]);
-
-  return (
-    <AuthContext.Provider value={{ 
-        user, users, loading, isSubmitting, login, logout, 
-        updateUser,
-        register, addUser, editUser, deleteUser, verifyProvider,
-        invoices, makePayment, addInvoice, markInvoiceAsPaid,
-        claims, addClaim,
-        patientSubscriptionPlans: PATIENT_PLANS, providerSubscriptionPlans, currentSubscription, changeSubscription, updateProviderPlans, updateUserSubscription,
-        appointments, addAppointment, cancelAppointment, confirmAppointment, submitAppointmentFeedback,
-        insurance, updateInsurance,
-        prescriptions, addPrescription,
-        progressNotes, addNote, updateNote,
-        referrals, addReferral,
-        messages, sendMessage,
-        complianceLogs,
-        changePassword,
-        systemSettings, updateSystemSettings,
-        enterpriseSettings, updateEnterpriseSettings
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -17,7 +17,7 @@ const ChatSkeletonLoader: React.FC = () => (
 const TypingIndicator: React.FC<{ avatar: string | undefined }> = ({ avatar }) => (
   <div className="flex items-start gap-3 justify-start">
     <img src={avatar} alt="typing user" className="w-8 h-8 rounded-full flex-shrink-0" />
-    <div className="p-3 rounded-lg bg-white shadow-sm flex items-center space-x-1">
+    <div className="p-3 rounded-lg bg-gray-100 text-gray-800 rounded-bl-none shadow-sm flex items-center space-x-1">
       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -26,7 +26,7 @@ const TypingIndicator: React.FC<{ avatar: string | undefined }> = ({ avatar }) =
 );
 
 const Messaging: React.FC = () => {
-    const { user, users, messages, sendMessage } = useAuth();
+    const { user, users, messages, sendMessage, markMessagesAsRead } = useAuth();
     
     const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
     const availableProviders = useMemo(() => {
@@ -47,6 +47,15 @@ const Messaging: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (selectedProvider) {
+            // Add a small delay to let the user see the unread count before it disappears
+            setTimeout(() => {
+                markMessagesAsRead(selectedProvider.id);
+            }, 500);
+        }
+    }, [selectedProvider, markMessagesAsRead]);
 
     const currentMessages = useMemo(() => {
         if (!selectedProvider) return [];
@@ -112,13 +121,22 @@ const Messaging: React.FC = () => {
                         {providersInConversations.map(provider => {
                             const thread = messages[provider.id] || [];
                             const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
-                            const unread = lastMessage && lastMessage.senderId === provider.id && !lastMessage.isRead;
+                            const unreadCount = thread.filter(msg => !msg.isRead && msg.senderId === provider.id).length;
                             return (
                                 <div key={provider.id} onClick={() => setSelectedProvider(provider)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedProvider?.id === provider.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
                                     <div className="relative flex-shrink-0"><img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full" /><div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div></div>
                                     <div className="ml-3 flex-grow overflow-hidden">
                                         <div className="flex justify-between items-center"><p className="font-semibold text-gray-800 truncate">{provider.name}</p>{lastMessage && <p className="text-xs text-gray-400 flex-shrink-0 ml-2">{timeSince(lastMessage.timestamp)}</p>}</div>
-                                        <div className="flex justify-between items-center"><p className={`text-sm text-gray-500 truncate ${unread ? 'font-bold text-gray-800' : ''}`}>{lastMessage?.text || provider.specialty}</p>{unread && <div className="w-2.5 h-2.5 bg-primary-500 rounded-full flex-shrink-0 ml-2"></div>}</div>
+                                        <div className="flex justify-between items-center">
+                                            <p className={`text-sm text-gray-500 truncate ${unreadCount > 0 ? 'font-bold text-gray-800' : ''}`}>
+                                                {lastMessage?.text || provider.specialty}
+                                            </p>
+                                            {unreadCount > 0 && (
+                                                <span className="bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 ml-2">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -152,7 +170,7 @@ const Messaging: React.FC = () => {
                             </div>
                         )}
                         <div className="p-4 border-t bg-white">
-                            <form onSubmit={handleSendMessage} className="flex space-x-3"><input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500" /><button type="submit" disabled={!newMessage.trim()} className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button></form>
+                            <form onSubmit={handleSendMessage} className="flex space-x-3"><input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500" /><button type="submit" disabled={!newMessage.trim()} className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400 transition-colors flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button></form>
                         </div>
                         </>
                     ) : (

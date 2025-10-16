@@ -7,12 +7,11 @@ import { UserRole } from './types';
 import LoginPage from './pages/auth/LoginPage';
 import PatientLayout from './components/layout/PatientLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
-import AdminLayout from './components/layout/AdminLayout';
+import AdminLayout from './components/layout/AdminLayout'; // Import AdminLayout
 import UniqueLoader from './components/shared/UniqueLoader';
 import RegisterPage from './pages/auth/RegisterPage';
 import PatientRegister from './pages/auth/PatientRegister';
 import ProviderRegister from './pages/auth/ProviderRegister';
-import AdminRegister from './pages/auth/AdminRegister';
 import { NotificationProvider } from './contexts/NotificationContext';
 import WelcomePage from './pages/WelcomePage';
 
@@ -97,11 +96,9 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin/login" element={<LoginPage isAdminLogin />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/patient" element={<PatientRegister />} />
         <Route path="/register/provider" element={<ProviderRegister />} />
-        <Route path="/register/admin" element={<AdminRegister />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );

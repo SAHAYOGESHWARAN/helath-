@@ -147,7 +147,7 @@ const Profile: React.FC = () => {
                                         <p className={`text-sm ${!hasPhoneForSms ? 'text-gray-400' : 'text-gray-600'}`}>Alerts for new messages</p>
                                         <ToggleSwitch name="smsMessages" checked={notificationSettings.smsMessages && hasPhoneForSms} onChange={handleNotificationChange} disabled={!hasPhoneForSms}/>
                                     </div>
-                                    {!hasPhoneForSms && <p className="text-xs text-gray-500 mt-2">Please add a phone number in your personal information above to enable SMS notifications.</p>}
+                                    {!hasPhoneForSms && <p className="text-xs text-gray-500 mt-2">Please add a phone number in your personal information to enable SMS notifications.</p>}
                                 </div>
                             </div>
                         </div>

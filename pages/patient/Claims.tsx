@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus } from '../../types';
 import Modal from '../../components/shared/Modal';
@@ -22,12 +23,23 @@ const getStatusColor = (status: ClaimStatus) => {
 };
 
 const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> = ({ claim, onClose }) => {
+    const navigate = useNavigate();
+
     if (!claim) return null;
 
+    const handlePayNow = () => {
+        onClose();
+        navigate('/payments');
+    };
+
     return (
-        <Modal isOpen={!!claim} onClose={onClose} title={`Details for Claim #${claim.id}`} size="lg">
+        <Modal isOpen={!!claim} onClose={onClose} title={`Explanation of Benefits`} size="lg">
             <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm p-4 bg-gray-50 rounded-lg border">
+                    <div>
+                        <p className="font-medium text-gray-500">Claim ID</p>
+                        <p className="font-semibold text-gray-800 font-mono">{claim.id}</p>
+                    </div>
                     <div>
                         <p className="font-medium text-gray-500">Provider</p>
                         <p className="font-semibold text-gray-800">{claim.provider}</p>
@@ -35,12 +47,6 @@ const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> 
                     <div>
                         <p className="font-medium text-gray-500">Service Date</p>
                         <p className="font-semibold text-gray-800">{claim.serviceDate}</p>
-                    </div>
-                    <div>
-                        <p className="font-medium text-gray-500">Status</p>
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
-                            {claim.status.replace(/_/g, ' ')}
-                        </span>
                     </div>
                 </div>
 
@@ -50,15 +56,6 @@ const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> 
                         <p className="text-sm">{claim.denialReason || 'No specific reason provided.'}</p>
                     </div>
                 )}
-                
-                <div>
-                    <h4 className="font-semibold text-gray-800 mb-2">Financial Summary</h4>
-                    <div className="space-y-2 text-sm border-t border-b divide-y">
-                        <div className="flex justify-between py-2"><span className="text-gray-600">Total Billed Amount:</span><span className="font-medium text-gray-800">${claim.totalClaimChargeAmount.toFixed(2)}</span></div>
-                        <div className="flex justify-between py-2"><span className="text-gray-600">Paid by Insurance:</span><span className="font-medium text-gray-800">${claim.insurancePaid.toFixed(2)}</span></div>
-                        <div className="flex justify-between py-2 text-base"><span className="font-semibold text-gray-800">Your Responsibility:</span><span className="font-bold text-primary-600">${claim.patientOwes.toFixed(2)}</span></div>
-                    </div>
-                </div>
                 
                 <div>
                     <h4 className="font-semibold text-gray-800 mb-2">Services Provided</h4>
@@ -81,6 +78,23 @@ const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> 
                         </table>
                     </div>
                 </div>
+
+                <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">Financial Summary</h4>
+                    <div className="space-y-2 text-sm border-t border-b divide-y">
+                        <div className="flex justify-between py-2"><span className="text-gray-600">Total Billed Amount:</span><span className="font-medium text-gray-800">${claim.totalClaimChargeAmount.toFixed(2)}</span></div>
+                        <div className="flex justify-between py-2"><span className="text-gray-600">Paid by Insurance:</span><span className="font-medium text-green-700">${claim.insurancePaid.toFixed(2)}</span></div>
+                        <div className="flex justify-between py-2 text-base"><span className="font-semibold text-gray-800">Your Responsibility:</span><span className="font-bold text-red-600">${claim.patientOwes.toFixed(2)}</span></div>
+                    </div>
+                </div>
+
+                {claim.patientOwes > 0 && (
+                     <div className="pt-4 text-right">
+                         <button onClick={handlePayNow} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-lg">
+                             Pay ${claim.patientOwes.toFixed(2)} Now
+                         </button>
+                     </div>
+                )}
 
             </div>
         </Modal>
@@ -171,7 +185,7 @@ const Claims: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{claim.serviceDate}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{claim.provider}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${claim.totalClaimChargeAmount.toFixed(2)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${claim.patientOwes.toFixed(2)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">${claim.patientOwes.toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
                         {claim.status.replace(/_/g, ' ')}

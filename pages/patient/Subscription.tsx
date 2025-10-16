@@ -136,14 +136,20 @@ const Subscription: React.FC = () => {
                             <h3 className="text-2xl font-bold text-primary-700">{currentSubscription.name}</h3>
                             <p className="text-gray-600 mt-1">Renews on {user?.subscription?.renewalDate}</p>
                         </div>
-                        <ul className="space-y-3 mt-4 text-sm">
-                            {currentSubscription.features.map(feature => (
-                                <li key={feature} className="flex items-center text-gray-700">
-                                    <CheckCircleIcon className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" />
-                                    <span>{feature}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="mt-4 space-y-4">
+                            <div>
+                                <div className="flex justify-between text-sm mb-1"><span className="font-medium">Video Consults</span><span>1 of 5 used</span></div>
+                                <div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-primary-600 h-2 rounded-full" style={{width: '20%'}}></div></div>
+                            </div>
+                             <ul className="space-y-3 pt-4 border-t text-sm">
+                                {currentSubscription.features.map(feature => (
+                                    <li key={feature} className="flex items-center text-gray-700">
+                                        <CheckCircleIcon className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" />
+                                        <span>{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </>
                 ) : (
                     <div className="text-center py-4">

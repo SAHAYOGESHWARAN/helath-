@@ -1,202 +1,213 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NovoPath Medical</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-5H8l4-4 4 4h-3v5h-2z' fill='%233b82f6'/></svg>" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovoPath Medical: An intelligent, connected platform that empowers both patients and providers with seamless tools for a healthier tomorrow.">
+  <title>NovoPath Medical</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom animations and styles */
+    @keyframes slide-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-slide-in-up {
+        animation: slide-in-up 0.5s ease-out forwards;
+    }
 
-      @keyframes slideInUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.6s ease-in-out forwards;
+    }
 
-      @keyframes shimmer {
-        100% {
-          transform: translateX(100%);
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
         }
-      }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-fade-in-up {
+        animation: fade-in-up 0.5s ease-out forwards;
+    }
 
-      /* Welcome Page Specific Animations */
-      @keyframes text-focus-in {
-        0% {
-          -webkit-filter: blur(12px);
-                  filter: blur(12px);
-          opacity: 0;
-        }
-        100% {
-          -webkit-filter: blur(0px);
-                  filter: blur(0px);
-          opacity: 1;
-        }
+    @keyframes text-focus-in {
+      0% {
+        -webkit-filter: blur(12px);
+                filter: blur(12px);
+        opacity: 0;
       }
-      @keyframes tracking-in-expand {
-        0% {
-          letter-spacing: -0.5em;
-          opacity: 0;
-        }
-        40% {
-          opacity: 0.6;
-        }
-        100% {
-          opacity: 1;
-        }
+      100% {
+        -webkit-filter: blur(0px);
+                filter: blur(0px);
+        opacity: 1;
       }
-      
-      body {
-        background-color: #F8F9FA; /* slate-50 */
-        font-family: 'Poppins', sans-serif;
-        color: #1F2937; /* gray-800 */
-      }
+    }
+    .animate-text-focus-in {
+      animation: text-focus-in 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+    }
+    
+    @keyframes pulse-badge {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+    .animate-pulse-badge {
+        animation: pulse-badge 1.5s infinite;
+    }
 
-      #bg-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-      }
+    .shimmer-bg {
+        background-color: #e2e8f0;
+        background-image: linear-gradient(to right, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+        background-repeat: no-repeat;
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
 
-      /* Staggered list animations */
-      .stagger-list > * {
-        animation: slideInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-        animation-delay: calc(var(--stagger-index) * 70ms);
-      }
-      
-      /* Scrollbar styling */
-      ::-webkit-scrollbar {
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    .stagger-list > * {
+        animation: slide-in-up 0.5s ease-out backwards;
+        animation-delay: calc(var(--stagger-index) * 100ms);
+    }
+
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
-      }
-      ::-webkit-scrollbar-track {
+    }
+    ::-webkit-scrollbar-track {
         background: #f1f1f1;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #d1d5db; /* gray-300 */
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #9ca3af; /* gray-400 */
-      }
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+    
+    /* Advanced Welcome Page CSS */
+    .gradient-text {
+      background: linear-gradient(45deg, #2563eb, #14B8A6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+    }
+    .scroll-indicator {
+      animation: gentle-bounce 2.5s infinite ease-in-out;
+    }
+    @keyframes gentle-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    .fancy-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .fancy-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    .testimonial-card::before {
+      content: '“';
+      position: absolute;
+      top: -0.5rem;
+      left: 1rem;
+      font-size: 6rem;
+      line-height: 1;
+      font-family: 'Times New Roman', serif;
+      color: #eff6ff;
+      z-index: 0;
+      transition: color 0.3s ease;
+    }
 
-      /* Generic Modal Backdrop */
-      .modal-backdrop {
-        animation: fadeIn 0.3s ease-out forwards;
-      }
-
-      /* Subtle button press feedback */
-      button, a.button {
-        transition: transform 0.1s ease-out, background-color 0.2s, border-color 0.2s;
-      }
-      button:not(:disabled):active, a.button:not(.disabled):active {
-        transform: scale(0.98);
-      }
-      
-      /* Shimmer animation for skeleton loaders */
-      .shimmer-bg {
-        position: relative;
-        overflow: hidden;
-        background-color: #e2e8f0; /* slate-200 */
-      }
-      .shimmer-bg::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        transform: translateX(-100%);
-        background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0));
-        animation: shimmer 1.5s infinite;
-      }
-
-    </style>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'primary': {
-                '50': '#eff6ff',
-                '100': '#dbeafe',
-                '200': '#bfdbfe',
-                '300': '#93c5fd',
-                '400': '#60a5fa',
-                '500': '#3b82f6',
-                '600': '#2563eb',
-                '700': '#1d4ed8',
-                '800': '#1e40af',
-                '900': '#1e3a8a',
-              },
-              'accent': {
-                 DEFAULT: '#14b8a6', // teal-500
-                 'light': '#a7f3d0', // teal-200
-                 'dark': '#0f766e' // teal-700
-              }
+    /* For printing receipts */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #invoice-to-print, #invoice-to-print * {
+            visibility: visible;
+        }
+        #invoice-to-print {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .printable-invoice {
+           font-family: sans-serif;
+        }
+    }
+  </style>
+  <script>
+    // Tailwind custom theme configuration
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
             },
-            keyframes: {
-              'fade-in': {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              'slide-in-up': {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-               'slide-in-left': {
-                '0%': { opacity: '0', transform: 'translateX(-30px)' },
-                '100%': { opacity: '1', transform: 'translateX(0)' },
-              },
-              'pulse-badge': {
-                '0%, 100%': { transform: 'scale(1)' },
-                '50%': { transform: 'scale(1.2)' },
-              },
-            },
-            animation: {
-              'fade-in': 'fade-in 0.5s ease-out forwards',
-              'slide-in-up': 'slide-in-up 0.5s ease-out forwards',
-              'slide-in-left': 'slide-in-left 0.6s ease-out forwards',
-              'pulse-badge': 'pulse-badge 2s ease-in-out infinite',
-              'text-focus-in': 'text-focus-in 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both',
-              'tracking-in-expand': 'tracking-in-expand 0.7s cubic-bezier(0.215, 0.610, 0.355, 1.000) both',
-            },
+            accent: '#14B8A6',
+            'accent-dark': '#0F766E',
+            'accent-light': '#A7F3D0',
           },
           fontFamily: {
-             sans: ['Poppins', 'sans-serif'],
-          }
+            sans: ['Inter', 'sans-serif'],
+          },
         },
-      };
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.3",
-    "formik": "https://aistudiocdn.com/formik@^2.4.6",
-    "yup": "https://aistudiocdn.com/yup@^1.7.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
-    "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
-    "@heroicons/react/": "https://aistudiocdn.com/@heroicons/react@^2.2.0/",
-    "three": "https://aistudiocdn.com/three@^0.167.0"
-  }
-}
-</script>
-  <link rel="stylesheet" href="/index.css">
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+<body class="bg-white">
+  <div id="root"></div>
+  <script type="importmap">
+  {
+    "imports": {
+      "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0",
+      "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+      "react/": "https://aistudiocdn.com/react@^19.2.0/",
+      "react": "https://aistudiocdn.com/react@^19.2.0",
+      "three": "https://aistudiocdn.com/three@^0.180.0",
+      "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.4",
+      "jspdf": "https://aistudiocdn.com/jspdf@^3.0.3",
+      "yup": "https://aistudiocdn.com/yup@^1.7.1",
+      "formik": "https://aistudiocdn.com/formik@^2.4.6"
+    }
+  }
+  </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>

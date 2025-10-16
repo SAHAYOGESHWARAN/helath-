@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Appointment } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
-import { SpinnerIcon } from '../../components/shared/Icons';
+import { SpinnerIcon, SearchIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 
 const getStatusColor = (status: Appointment['status']) => {
@@ -67,13 +68,18 @@ const ProviderAppointments: React.FC = () => {
       <PageHeader title="Appointment Management" />
       <Card>
         <div className="flex justify-between items-center mb-4">
-          <input
-            type="text"
-            placeholder="Search by patient name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-xs px-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-          />
+          <div className="relative w-full max-w-xs">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+                type="text"
+                placeholder="Search by patient name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            />
+          </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
