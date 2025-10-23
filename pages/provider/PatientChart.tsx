@@ -1,22 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { User, UserRole } from '../../types';
-import Card from '../../components/shared/Card';
+import { User, UserRole, ProgressNote } from '../../types';
 import PageHeader from '../../components/shared/PageHeader';
-import { ChevronLeftIcon, PencilAltIcon, PillIcon, CalendarIcon } from '../../components/shared/Icons';
+import {
+    ChevronLeftIcon,
+    PencilAltIcon,
+    PillIcon,
+    CalendarIcon,
+    DocumentTextIcon,
+    BeakerIcon,
+    FolderIcon,
+    UserCircleIcon,
+    ExclamationTriangleIcon,
+    HeartIcon
+} from '../../components/shared/Icons';
+
+type Tab = 'overview' | 'notes' | 'medications' | 'labs' | 'documents';
 
 const PatientChart: React.FC = () => {
     const { patientId } = useParams<{ patientId: string }>();
-    const { users } = useAuth();
+    const { users, progressNotes } = useAuth();
     const [patient, setPatient] = useState<User | null>(null);
+    const [activeTab, setActiveTab] = useState<Tab>('overview');
 
     useEffect(() => {
         const foundPatient = users.find(u => u.id === patientId && u.role === UserRole.PATIENT);
-        if (foundPatient) {
-            setPatient(foundPatient);
-        }
+        setPatient(foundPatient || null);
     }, [patientId, users]);
+
+    const patientNotes = useMemo(() => {
+        return progressNotes.filter(note => note.patientId === patientId)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [progressNotes, patientId]);
 
     if (!patient) {
         return (
@@ -34,104 +50,129 @@ const PatientChart: React.FC = () => {
         <div>
             <PageHeader 
                 title={patient.name}
-                subtitle={`DOB: ${patient.dob} | Patient ID: ${patient.id}`}
+                subtitle={`DOB: ${patient.dob} | Age: ${new Date().getFullYear() - new Date(patient.dob).getFullYear()}`}
             >
                 <div className="flex items-center space-x-2">
                     <Link to="/patients" className="bg-white hover:bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm border border-gray-300 transition-colors flex items-center">
-                        <ChevronLeftIcon className="w-5 h-5 mr-2" />
-                        <span>Back</span>
+                        <ChevronLeftIcon className="w-5 h-5 mr-1" />
+                        <span>All Patients</span>
                     </Link>
                      <Link to="/progress-notes" {...patientContext} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center">
                         <PencilAltIcon className="w-5 h-5 mr-2" />
-                        <span>Add Note</span>
-                    </Link>
-                    <Link to="/e-prescribing" {...patientContext} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center">
-                        <PillIcon className="w-5 h-5 mr-2" />
-                        <span>New Rx</span>
-                    </Link>
-                    <Link to="/appointments" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center">
-                        <CalendarIcon className="w-5 h-5 mr-2" />
-                        <span>Schedule</span>
+                        <span>New Note</span>
                     </Link>
                 </div>
             </PageHeader>
             
-            <div className="space-y-8">
-                <Card title="Medical Conditions">
-                    <ul className="space-y-2">
-                        {patient.conditions?.length ? patient.conditions.map(c => (
-                            <li key={c.id} className="p-2 bg-gray-50 rounded-md">
-                                <span>{c.name}</span>
-                            </li>
-                        )) : <p className="text-gray-500 text-sm">No conditions listed.</p>}
-                    </ul>
-                </Card>
-                <Card title="Allergies">
-                    <ul className="space-y-2">
-                        {patient.allergies?.length ? patient.allergies.map(a => (
-                            <li key={a.id} className="p-3 bg-gray-50 rounded-md">
-                                <div className="flex justify-between items-center">
-                                    <span className="font-semibold">{a.name}</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${a.severity === 'Severe' ? 'bg-red-100 text-red-700' : a.severity === 'Moderate' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{a.severity}</span>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">Reaction: {a.reaction}</p>
-                            </li>
-                        )) : <p className="text-gray-500 text-sm">No allergies listed.</p>}
-                    </ul>
-                </Card>
-                <Card title="Surgeries & Procedures">
-                    <ul className="space-y-2">
-                        {patient.surgeries?.length ? patient.surgeries.map(s => (
-                            <li key={s.id} className="p-2 bg-gray-50 rounded-md flex justify-between items-center">
-                                <span>{s.name}</span>
-                                <span className="text-gray-500 text-sm">{s.date}</span>
-                            </li>
-                        )) : <p className="text-gray-500 text-sm">No surgeries listed.</p>}
-                    </ul>
-                </Card>
-                <Card title="Immunization Records">
-                    <ul className="space-y-2">
-                        {patient.immunizations?.length ? patient.immunizations.map(i => (
-                            <li key={i.id} className="p-2 bg-gray-50 rounded-md flex justify-between items-center">
-                                <span>{i.vaccine}</span>
-                                <span className="text-gray-500 text-sm">{i.date}</span>
-                            </li>
-                        )) : <p className="text-gray-500 text-sm">No immunizations listed.</p>}
-                    </ul>
-                </Card>
-                <Card title="Family History">
-                    <ul className="space-y-2">
-                        {patient.familyHistory?.length ? patient.familyHistory.map(h => (
-                            <li key={h.id} className="p-2 bg-gray-50 rounded-md">
-                                <span className="font-semibold">{h.relation}:</span>
-                                <span className="text-gray-700 ml-2">{h.condition}</span>
-                            </li>
-                        )) : <p className="text-gray-500 text-sm">No family history listed.</p>}
-                    </ul>
-                </Card>
-                 <Card title="Current Medications">
-                    <ul className="space-y-3">
-                        {(patient.medications?.filter(m => m.status === 'Active') || []).length > 0 ? patient.medications?.filter(m => m.status === 'Active').map(m => (
-                            <li key={m.id} className="p-3 bg-gray-50 rounded-md">
-                                <p className="font-semibold">{m.name}</p>
-                                <p className="text-sm text-gray-600">{m.dosage}, {m.frequency}</p>
-                            </li>
-                        )) : <p className="text-gray-500 text-sm">No active medications listed.</p>}
-                    </ul>
-                </Card>
-                <Card title="Lifestyle Information">
-                    {patient.lifestyle ? (
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                             <div><p className="font-semibold text-gray-500">Diet</p><p className="text-gray-800">{patient.lifestyle.diet || 'Not specified'}</p></div>
-                             <div><p className="font-semibold text-gray-500">Exercise</p><p className="text-gray-800">{patient.lifestyle.exercise || 'Not specified'}</p></div>
-                             <div><p className="font-semibold text-gray-500">Smoking</p><p className="text-gray-800">{patient.lifestyle.smokingStatus}</p></div>
-                             <div><p className="font-semibold text-gray-500">Alcohol</p><p className="text-gray-800">{patient.lifestyle.alcoholConsumption}</p></div>
-                        </div>
-                    ) : <p className="text-gray-500 text-sm">No lifestyle information provided.</p>}
-                </Card>
+            <div className="flex space-x-4 border-b border-gray-200 mb-6">
+                {(['overview', 'notes', 'medications', 'labs', 'documents'] as Tab[]).map(tab => (
+                    <button key={tab} onClick={() => setActiveTab(tab)}
+                        className={`capitalize py-3 px-4 text-sm font-bold transition-colors ${activeTab === tab ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500 hover:text-gray-800'}`}>
+                        {tab}
+                    </button>
+                ))}
+            </div>
+
+            <div className="animate-fade-in">
+                {activeTab === 'overview' && <OverviewTab patient={patient} />}
+                {activeTab === 'notes' && <NotesTab notes={patientNotes} />}
+                {activeTab === 'medications' && <MedicationsTab patient={patient} />}
             </div>
         </div>
     );
 };
+
+const TabCard: React.FC<{title: string, icon: React.ReactNode, children: React.ReactNode}> = ({title, icon, children}) => (
+    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100">
+        <div className="flex items-center mb-3">
+            <div className="text-primary-600 mr-2">{icon}</div>
+            <h3 className="font-bold text-lg text-gray-800">{title}</h3>
+        </div>
+        {children}
+    </div>
+);
+
+const OverviewTab: React.FC<{patient: User}> = ({patient}) => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+             <TabCard title="Active Conditions" icon={<HeartIcon className="w-5 h-5"/>}>
+                 <ul className="space-y-1 text-gray-700 list-disc list-inside">
+                    {patient.conditions?.length ? patient.conditions.map(c => <li key={c.id}>{c.name}</li>) : <p className="text-sm text-gray-500">None</p>}
+                 </ul>
+            </TabCard>
+             <TabCard title="Current Medications" icon={<PillIcon className="w-5 h-5"/>}>
+                 <ul className="space-y-2 text-gray-700">
+                    {(patient.medications?.filter(m => m.status === 'Active') || []).map(m => (
+                        <li key={m.id}><strong>{m.name}</strong> - {m.dosage}, {m.frequency}</li>
+                    ))}
+                 </ul>
+            </TabCard>
+        </div>
+         <div className="space-y-6">
+            <TabCard title="Allergies" icon={<ExclamationTriangleIcon className="w-5 h-5"/>}>
+                <ul className="space-y-1 text-gray-700">
+                    {patient.allergies?.length ? patient.allergies.map(a => (
+                        <li key={a.id}><strong>{a.name}</strong> ({a.severity}) - {a.reaction}</li>
+                    )) : <p className="text-sm text-gray-500">No known allergies</p>}
+                </ul>
+            </TabCard>
+             <TabCard title="Patient Information" icon={<UserCircleIcon className="w-5 h-5"/>}>
+                <div className="text-sm">
+                    <p><strong>Contact:</strong> {patient.email}</p>
+                    <p><strong>State:</strong> {patient.state}</p>
+                </div>
+            </TabCard>
+        </div>
+    </div>
+);
+
+const NotesTab: React.FC<{notes: ProgressNote[]}> = ({notes}) => (
+     <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100">
+        <h3 className="font-bold text-lg text-gray-800 mb-4">Chart Notes</h3>
+        <div className="space-y-4">
+            {notes.map(note => (
+                <details key={note.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <summary className="font-semibold cursor-pointer text-gray-900">
+                        {note.date} - {note.title} <span className="text-gray-500 font-medium text-sm">(Status: {note.status})</span>
+                    </summary>
+                    <div className="mt-3 pt-3 border-t border-gray-300 text-gray-700 whitespace-pre-wrap">
+                        <p><strong>Subjective:</strong> {note.subjective}</p>
+                        <p><strong>Objective:</strong> {note.objective}</p>
+                        <p><strong>Assessment:</strong> {note.assessment}</p>
+                        <p><strong>Plan:</strong> {note.plan}</p>
+                    </div>
+                </details>
+            ))}
+        </div>
+    </div>
+);
+
+const MedicationsTab: React.FC<{patient: User}> = ({patient}) => (
+     <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100">
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg text-gray-800">Medication Management</h3>
+             <Link to="/e-prescribing" state={{ patientId: patient.id, patientName: patient.name }} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-3 rounded-lg text-sm flex items-center">
+                <PillIcon className="w-4 h-4 mr-2" /> New Prescription
+            </Link>
+        </div>
+        <table className="w-full text-left">
+            <thead>
+                <tr className="border-b bg-gray-50 text-sm text-gray-600">
+                    <th className="p-3">Medication</th><th>Dosage</th><th>Frequency</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {patient.medications?.map(m => (
+                    <tr key={m.id} className="border-b">
+                        <td className="p-3 font-semibold">{m.name}</td>
+                        <td>{m.dosage}</td><td>{m.frequency}</td>
+                        <td><span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${m.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>{m.status}</span></td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+);
+
 
 export default PatientChart;

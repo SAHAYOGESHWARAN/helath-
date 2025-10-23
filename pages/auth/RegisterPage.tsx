@@ -1,67 +1,60 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { NovoPathIcon, ProfileIcon, UsersIcon, ChevronLeftIcon } from '../../components/shared/Icons';
+import { NovoPathLogoIcon, UserIcon, BriefcaseIcon } from '../../components/shared/Icons';
 
-// A reusable card component for the role selection
-const RoleCard: React.FC<{ to: string, icon: React.ReactNode, title: string, description: string, colorClasses: string }> = 
-({ to, icon, title, description, colorClasses }) => {
+const RoleSelectionCard: React.FC<{ to: string, icon: React.ReactNode, title: string, description: string, buttonText: string }> =
+({ to, icon, title, description, buttonText }) => {
     return (
-        <Link 
-            to={to} 
-            className={`group block text-center p-8 border-2 rounded-2xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${colorClasses}`}
-        >
-            <div className="flex justify-center items-center mb-6">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center flex flex-col items-center transform hover:-translate-y-2 transition-transform duration-300">
+            <div className="bg-primary-100 text-primary-600 w-20 h-20 rounded-full flex items-center justify-center mb-6">
                 {icon}
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">{title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed mb-6">{description}</p>
-            <span className="inline-block font-semibold bg-white text-gray-800 group-hover:bg-opacity-90 px-6 py-2 rounded-full shadow-md transition-transform transform group-hover:scale-105">
-                Get Started &rarr;
-            </span>
-        </Link>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">{title}</h3>
+            <p className="text-gray-600 mb-8 flex-grow">{description}</p>
+            <Link
+                to={to}
+                className="w-full bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-primary-700 transition-all shadow-md"
+            >
+                {buttonText}
+            </Link>
+        </div>
     );
 };
 
-
 const RegisterPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6 animate-fade-in">
-      <div className="max-w-4xl w-full mx-auto text-center">
-        
-        <div className="flex justify-center items-center mb-4 space-x-4 animate-slide-in-up" style={{ animationDelay: '100ms' }}>
-          <NovoPathIcon className="w-12 h-12" />
-          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Welcome to NovoPath</h1>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6" style={{backgroundImage: "url('/pattern-light.svg')"}}>
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+            <Link to="/" className="inline-block mb-6">
+                <NovoPathLogoIcon className="w-12 h-12 text-primary-600" />
+            </Link>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Join NovoPath</h1>
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Choose your account type to get started on your personalized healthcare journey.</p>
         </div>
-        <h2 className="text-2xl font-semibold text-gray-700 mb-2 animate-slide-in-up" style={{ animationDelay: '200ms' }}>Choose Your Path</h2>
-        <p className="text-gray-500 mb-12 animate-slide-in-up" style={{ animationDelay: '300ms' }}>Select the account type that best describes you.</p>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-10">
-          <div className="animate-slide-in-up" style={{ animationDelay: '400ms' }}>
-            <RoleCard 
+        <div className="grid md:grid-cols-2 gap-10">
+            <RoleSelectionCard
                 to="/register/patient"
-                icon={<ProfileIcon className="w-12 h-12 text-primary-600" />}
-                title="I am a Patient"
-                description="Take control of your health. Schedule appointments, access your medical records, and connect with your provider seamlessly."
-                colorClasses="border-primary-300 hover:border-primary-500 bg-blue-50"
+                icon={<UserIcon className="w-10 h-10" />}
+                title="For Patients"
+                description="Create an account to manage your health records, schedule appointments with top providers, and access AI-powered health insights."
+                buttonText="Create Patient Account"
             />
-          </div>
-          <div className="animate-slide-in-up" style={{ animationDelay: '500ms' }}>
-            <RoleCard 
+            <RoleSelectionCard
                 to="/register/provider"
-                icon={<UsersIcon className="w-12 h-12 text-accent-dark" />}
-                title="I am a Provider"
-                description="Streamline your practice. Manage patients, appointments, and billing with our powerful, integrated tools."
-                colorClasses="border-teal-300 hover:border-accent bg-teal-50"
+                icon={<BriefcaseIcon className="w-10 h-10" />}
+                title="For Providers"
+                description="Join our network to streamline your practice, connect with patients, and utilize our state-of-the-art EMR system."
+                buttonText="Create Provider Account"
             />
-          </div>
         </div>
 
-        <div className="text-center mt-10 space-y-4 animate-slide-in-up" style={{ animationDelay: '600ms' }}>
-            <p className="text-sm text-gray-600">
-                Already have a patient or provider account?{' '}
+        <div className="text-center mt-12">
+            <p className="text-gray-600">
+                Already have an account?{' '}
                 <Link to="/login" className="font-semibold text-primary-600 hover:underline">
-                    Sign In
+                    Sign In Here
                 </Link>
             </p>
         </div>

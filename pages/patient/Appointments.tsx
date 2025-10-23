@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { Appointment, UserRole } from '../../types';
+import { Appointment, User, UserRole } from '../../types';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
-import { CalendarIcon, ClockIcon, VideoCameraIcon, SpinnerIcon, UsersIcon } from '../../components/shared/Icons';
+import { CalendarIcon, ClockIcon, VideoCameraIcon, SpinnerIcon, UsersIcon, ChevronLeftIcon, ArrowLeftIcon, ArrowRightIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
 import { Link } from 'react-router-dom';
+import { MEDICAL_SPECIALTIES } from '../../constants';
 
 const getStatusPill = (status: Appointment['status']) => {
     switch (status) {
@@ -20,18 +19,140 @@ const getStatusPill = (status: Appointment['status']) => {
     }
 };
 
-const AppointmentRequestSchema = Yup.object().shape({
-  providerName: Yup.string().required('Provider is required'),
-  date: Yup.date().min(new Date(new Date().setDate(new Date().getDate() - 1)), 'Cannot schedule in the past').required('Date is required'),
-  time: Yup.string().required('Time is required'),
-  duration: Yup.number().oneOf([15, 30, 60]).required('Duration is required'),
-  reason: Yup.string().min(5, 'Too short').required('Reason is required'),
-  type: Yup.string().required('Type is required'),
-});
+const STEPS = {
+  SPECIALTY: 1,
+  PROVIDER: 2,
+  DATE_TIME: 3,
+  CONFIRMATION: 4
+};
 
+const MOCK_TIME_SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30"];
+
+const SchedulerModal: React.FC<{onClose: () => void, availableProviders: User[]}> = ({ onClose, availableProviders }) => {
+    const { addAppointment } = useAuth();
+    const { showToast } = useApp();
+    const [step, setStep] = useState(STEPS.SPECIALTY);
+    const [selectedSpecialty, setSelectedSpecialty] = useState('');
+    const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedTime, setSelectedTime] = useState('');
+    const [reason, setReason] = useState('');
+
+    const filteredProviders = useMemo(() => {
+        return availableProviders.filter(p => p.specialty === selectedSpecialty);
+    }, [selectedSpecialty, availableProviders]);
+
+    const handleDateChange = (offset: number) => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(newDate.getDate() + offset);
+            return newDate;
+        });
+    };
+
+    const handleConfirmBooking = () => {
+      if (!selectedProvider || !selectedTime || !reason) return;
+
+      const newAppointment = {
+        providerName: selectedProvider.name,
+        date: selectedDate.toISOString().split('T')[0],
+        time: selectedTime,
+        reason: reason,
+        type: 'Virtual', // Defaulting for simplicity
+        duration: 30
+      };
+
+      const success = addAppointment(newAppointment as Omit<Appointment, 'id' | 'status' | 'patientName'>);
+      if(success) {
+        showToast('Appointment requested successfully!', 'success');
+        onClose();
+      } else {
+        showToast('This time slot is unavailable. Please select another.', 'error');
+      }
+    };
+
+    return (
+        <div className="p-2">
+            <div className="flex justify-between items-center mb-4">
+                <button
+                  onClick={() => setStep(s => s > 1 ? s - 1 : s)}
+                  className={`text-primary-600 font-bold flex items-center ${step === 1 ? 'invisible' : ''}`}
+                >
+                  <ChevronLeftIcon className="w-5 h-5 mr-1" /> Back
+                </button>
+                <h3 className="text-xl font-bold text-gray-800">Book an Appointment</h3>
+                <div className="w-20"></div>
+            </div>
+
+            {/* Step 1: Specialty Selection */}
+            {step === STEPS.SPECIALTY && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {MEDICAL_SPECIALTIES.map(spec => (
+                      <button key={spec} onClick={() => { setSelectedSpecialty(spec); setStep(STEPS.PROVIDER); }}
+                          className="p-4 bg-gray-50 rounded-lg text-center font-semibold hover:bg-primary-100 hover:text-primary-700 hover:shadow-md transition-all">
+                          {spec}
+                      </button>
+                  ))}
+              </div>
+            )}
+
+            {/* Step 2: Provider Selection */}
+            {step === STEPS.PROVIDER && (
+                <div className="space-y-3">
+                    {filteredProviders.map(prov => (
+                        <div key={prov.id} onClick={() => { setSelectedProvider(prov); setStep(STEPS.DATE_TIME); }}
+                            className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-100">
+                            <img src={prov.avatarUrl} alt={prov.name} className="w-14 h-14 rounded-full mr-4"/>
+                            <div>
+                                <p className="font-bold text-lg text-gray-900">{prov.name}</p>
+                                <p className="text-sm text-gray-600">{prov.specialty}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Step 3: Date & Time Selection */}
+            {step === STEPS.DATE_TIME && (
+              <div className="animate-fade-in">
+                  <div className="flex items-center justify-between p-2 bg-gray-100 rounded-lg mb-4">
+                      <button onClick={() => handleDateChange(-1)} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeftIcon className="w-5 h-5"/></button>
+                      <p className="font-bold text-lg">{selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                      <button onClick={() => handleDateChange(1)} className="p-2 rounded-full hover:bg-gray-200"><ArrowRightIcon className="w-5 h-5"/></button>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 text-center">
+                      {MOCK_TIME_SLOTS.map(time => (
+                          <button key={time} onClick={() => setSelectedTime(time)}
+                              className={`p-3 rounded-lg font-semibold transition-colors ${selectedTime === time ? 'bg-primary-600 text-white' : 'bg-gray-100 hover:bg-primary-100'}`}>
+                              {time}
+                          </button>
+                      ))}
+                  </div>
+                  <button onClick={() => setStep(STEPS.CONFIRMATION)} disabled={!selectedTime}
+                    className="w-full mt-6 bg-primary-600 text-white font-bold py-3 rounded-lg disabled:bg-gray-300">
+                    Next
+                  </button>
+              </div>
+            )}
+
+            {/* Step 4: Confirmation */}
+            {step === STEPS.CONFIRMATION && (
+                <div className="space-y-4">
+                    <p><strong>Provider:</strong> {selectedProvider?.name}</p>
+                    <p><strong>Date & Time:</strong> {selectedDate.toLocaleDateString('en-US', {timeZone: 'UTC'})} at {selectedTime}</p>
+                    <textarea value={reason} onChange={(e) => setReason(e.target.value)}
+                        placeholder="Reason for your visit..." className="w-full p-2 border rounded-lg h-24"/>
+                    <button onClick={handleConfirmBooking} className="w-full bg-emerald-500 text-white font-bold py-3 rounded-lg">
+                        Confirm Booking
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const PatientAppointments: React.FC = () => {
-    const { user: patientUser, users, appointments, addAppointment, cancelAppointment, submitAppointmentFeedback } = useAuth();
+    const { user: patientUser, users, appointments, cancelAppointment, submitAppointmentFeedback } = useAuth();
     const { showToast } = useApp();
 
     const [modal, setModal] = useState<'request' | 'details' | 'cancel' | 'feedback' | null>(null);
@@ -40,11 +161,7 @@ const PatientAppointments: React.FC = () => {
     
     const availableProviders = useMemo(() => {
         if (!patientUser?.state) return [];
-        return users.filter(u => 
-            u.role === UserRole.PROVIDER && 
-            u.isVerified && 
-            u.state === patientUser.state
-        );
+        return users.filter(u => u.role === UserRole.PROVIDER && u.isVerified && u.state === patientUser.state);
     }, [users, patientUser]);
 
     const sortedAppointments = useMemo(() => {
@@ -55,10 +172,7 @@ const PatientAppointments: React.FC = () => {
         return { upcoming, past };
     }, [appointments]);
 
-    const handleOpenDetails = (appt: Appointment) => {
-        setSelectedAppointment(appt);
-        setModal('details');
-    };
+    const handleOpenDetails = (appt: Appointment) => { setSelectedAppointment(appt); setModal('details'); };
 
     const handleConfirmCancel = () => {
         if (!selectedAppointment) return;
@@ -84,16 +198,16 @@ const PatientAppointments: React.FC = () => {
 
     return (
         <div>
-            <PageHeader title="Appointments" buttonText="Request Appointment" onButtonClick={() => setModal('request')} />
+            <PageHeader title="Appointments" buttonText="Book New Appointment" onButtonClick={() => setModal('request')} />
             
             <div className="space-y-8">
                 <Card>
-                    <h2 className="text-xl font-bold mb-4">Upcoming</h2>
+                    <h2 className="text-xl font-bold mb-4">Upcoming Appointments</h2>
                     <div className="space-y-4">
                         {sortedAppointments.upcoming.length > 0 ? sortedAppointments.upcoming.map(appt => {
                             const isVirtual = appt.type === 'Virtual';
                             const appointmentDateTime = new Date(`${appt.date}T${appt.time}`);
-                            const canJoin = isVirtual && appointmentDateTime.getTime() - Date.now() < 15 * 60 * 1000; // Can join 15 mins before
+                            const canJoin = isVirtual && appointmentDateTime.getTime() - Date.now() < 15 * 60 * 1000;
 
                             return (
                              <div key={appt.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
@@ -128,20 +242,22 @@ const PatientAppointments: React.FC = () => {
                 </Card>
 
                 <Card>
-                    <h2 className="text-xl font-bold mb-4">Past</h2>
+                    <h2 className="text-xl font-bold mb-4">Past Appointments</h2>
                      <div className="space-y-4">
-                        {sortedAppointments.past.length > 0 ? sortedAppointments.past.map(appt => (
+                        {sortedAppointments.past.map(appt => (
                              <div key={appt.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleOpenDetails(appt)}>
                                  <p className="font-bold text-lg">{appt.providerName} - {new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</p>
                                  <p className="text-sm">{appt.reason}</p>
                                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.status)}`}>{appt.status}</span>
                              </div>
-                        )) : <p className="text-gray-500">You have no past appointments.</p>}
+                        ))}
                     </div>
                 </Card>
             </div>
 
             {/* --- MODALS --- */}
+            {modal === 'request' && <Modal isOpen={true} onClose={() => setModal(null)} title=""><SchedulerModal onClose={() => setModal(null)} availableProviders={availableProviders}/></Modal>}
+
             <Modal isOpen={modal === 'details'} onClose={() => setModal(null)} title="Appointment Details">
                  {selectedAppointment && <div className="space-y-4">
                     <p><strong>Provider:</strong> {selectedAppointment.providerName}</p>
@@ -161,66 +277,6 @@ const PatientAppointments: React.FC = () => {
                     </button>
                 </>}>
                 <p>Are you sure you want to cancel your appointment with <strong>{selectedAppointment?.providerName}</strong> on {new Date(selectedAppointment?.date || '').toLocaleDateString('en-US', { timeZone: 'UTC' })}?</p>
-            </Modal>
-
-            <Modal isOpen={modal === 'feedback'} onClose={() => setModal(null)} title="Submit Feedback">
-                <Formik initialValues={{ summary: ''}} onSubmit={handleFeedbackSubmit}>
-                   {({ isSubmitting }) => ( <Form>
-                        <Field as="textarea" name="summary" rows={4} className="w-full p-2 border rounded" placeholder="How was your visit?"/>
-                        <div className="flex justify-end mt-4"><button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center w-36">{isSubmitting ? <SpinnerIcon/> : 'Submit Feedback'}</button></div>
-                    </Form>)}
-                </Formik>
-            </Modal>
-
-            <Modal isOpen={modal === 'request'} onClose={() => setModal(null)} title="Request New Appointment">
-                 <Formik
-                    initialValues={{ providerName: '', date: '', time: '', reason: '', type: 'Virtual', duration: 15 }}
-                    validationSchema={AppointmentRequestSchema}
-                    onSubmit={(values, { setSubmitting, setFieldError }) => {
-                        const success = addAppointment(values as Omit<Appointment, 'id' | 'status' | 'patientName'>);
-                        if (success) {
-                            showToast('Appointment requested successfully!', 'success');
-                            setSubmitting(false);
-                            setModal(null);
-                        } else {
-                            setFieldError('time', 'This time slot is already booked. Please choose another time.');
-                            setSubmitting(false);
-                        }
-                    }}
-                >
-                   {({ isSubmitting, errors, touched, values }) => (<Form className="space-y-4">
-                       <Field as="select" name="providerName" className={`w-full p-2 border rounded bg-white ${errors.providerName && touched.providerName ? 'border-red-500' : 'border-gray-300'}`}>
-                           <option value="">Select a Provider</option>
-                           {availableProviders.map(provider => (
-                               <option key={provider.id} value={provider.name}>
-                                   {provider.name} ({provider.specialty})
-                               </option>
-                           ))}
-                       </Field> <ErrorMessage name="providerName" component="p" className="text-red-500 text-xs"/>
-                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                           <Field type="date" name="date" className={`w-full p-2 border rounded ${errors.date && touched.date ? 'border-red-500' : 'border-gray-300'}`} />
-                           <ErrorMessage name="date" component="p" className="text-red-500 text-xs mt-1"/>
-                        </div>
-                        <div>
-                           <Field type="time" name="time" className={`w-full p-2 border rounded ${errors.time && touched.time ? 'border-red-500' : 'border-gray-300'}`} />
-                           <ErrorMessage name="time" component="p" className="text-red-500 text-xs mt-1"/>
-                        </div>
-                       </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                            <div role="group" aria-labelledby="duration-group" className="flex space-x-2">
-                                <label className={`flex-1 text-center p-2 border rounded-md cursor-pointer ${values.duration === 15 ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><Field type="radio" name="duration" value={15} className="sr-only"/> 15 min</label>
-                                <label className={`flex-1 text-center p-2 border rounded-md cursor-pointer ${values.duration === 30 ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><Field type="radio" name="duration" value={30} className="sr-only"/> 30 min</label>
-                                <label className={`flex-1 text-center p-2 border rounded-md cursor-pointer ${values.duration === 60 ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><Field type="radio" name="duration" value={60} className="sr-only"/> 60 min</label>
-                            </div>
-                            {values.duration === 30 && <p className="text-xs text-amber-600 mt-1 text-center">+ Additional Fee Applies</p>}
-                        </div>
-                       <Field as="textarea" name="reason" placeholder="Reason for visit" className={`w-full p-2 border rounded ${errors.reason && touched.reason ? 'border-red-500' : 'border-gray-300'}`} />
-                       <ErrorMessage name="reason" component="p" className="text-red-500 text-xs"/>
-                       <div className="flex justify-end pt-4 border-t"><button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-40 flex items-center justify-center">{isSubmitting ? <SpinnerIcon/> : 'Request Appointment'}</button></div>
-                   </Form>)}
-                </Formik>
             </Modal>
         </div>
     );

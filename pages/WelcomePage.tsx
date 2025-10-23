@@ -1,17 +1,24 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import * as THREE from 'three';
-import { NovoPathLogoIcon, StarIcon, DocumentTextIcon, CalendarIcon, SparklesIcon, ChevronDownIcon } from '../components/shared/Icons';
+import {
+    NovoPathLogoIcon,
+    StarIcon,
+    DocumentTextIcon,
+    CalendarIcon,
+    SparklesIcon,
+    ArrowRightIcon,
+    BriefcaseIcon,
+    UserGroupIcon,
+    AcademicCapIcon
+} from '../components/shared/Icons';
 import { useAuth } from '../hooks/useAuth';
 
-// --- Mock Data ---
 const MOCK_TESTIMONIALS = [
-    { name: 'Sarah L.', avatarUrl: 'https://i.pravatar.cc/150?u=sarah.l', rating: 5, feedback: "NovoPath has revolutionized how I manage my health. Everything is in one place, and the AI assistant is incredibly helpful for quick questions." },
-    { name: 'David C.', avatarUrl: 'https://i.pravatar.cc/150?u=david.c', rating: 5, feedback: "As a provider, this platform has saved me hours of administrative work. The patient management and e-prescribing tools are top-notch." },
-    { name: 'Maria G.', avatarUrl: 'https://i.pravatar.cc/150?u=maria.g', rating: 4, feedback: "Booking appointments and seeing my lab results has never been easier. I wish the mobile app had a few more features, but overall it's a fantastic tool." },
+    { name: 'Emily R.', avatarUrl: 'https://i.pravatar.cc/150?u=emily.r', role: 'Patient', rating: 5, feedback: "NovoPath has made managing my family's health records a breeze. The ability to schedule appointments and access lab results from one dashboard is a game-changer." },
+    { name: 'Dr. Ben Carter', avatarUrl: 'https://i.pravatar.cc/150?u=ben.c', role: 'Cardiologist', rating: 5, feedback: "As a specialist, coordinating with primary care physicians is crucial. NovoPath's EMR system is intuitive and has significantly improved my workflow and patient care." },
+    { name: 'Jessica T.', avatarUrl: 'https://i.pravatar.cc/150?u=jessica.t', role: 'Parent', rating: 5, feedback: "The AI Health Guide is like having a nurse in my pocket. It provides reliable answers quickly, which gives me peace of mind when my kids are sick." },
 ];
 
-// --- Custom Hook for Scroll Animations ---
 const useOnScreen = (options: IntersectionObserverInit) => {
     const ref = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
@@ -20,7 +27,7 @@ const useOnScreen = (options: IntersectionObserverInit) => {
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) {
                 setIsVisible(true);
-                if (ref.current) observer.unobserve(ref.current);
+                observer.unobserve(entry.target);
             }
         }, options);
         
@@ -35,145 +42,187 @@ const useOnScreen = (options: IntersectionObserverInit) => {
     return [ref, isVisible] as const;
 };
 
-// --- Sub-components for Sections ---
-
 const AnimatedSection: React.FC<{children: React.ReactNode, className?: string}> = ({ children, className }) => {
     const [ref, isVisible] = useOnScreen({ threshold: 0.1 });
     return (
-        <div ref={ref} className={`transition-all duration-700 ease-out ${className} ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div ref={ref} className={`transition-all duration-1000 ease-in-out ${className} ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             {children}
         </div>
     );
 };
 
-const Header: React.FC = () => (
-    <header className="absolute top-0 left-0 right-0 z-20 animate-fade-in" style={{ animationDelay: '500ms' }}>
-        <div className="container mx-auto px-6 py-5 flex justify-between items-center">
-            <Link to="/" className="flex items-center space-x-3">
-                <NovoPathLogoIcon className="w-8 h-8" />
-                <span className="text-2xl font-bold text-gray-800">NovoPath</span>
-            </Link>
-            <div className="flex items-center space-x-2 md:space-x-4">
-                <div className="hidden md:block border-l h-6 border-gray-300"></div>
-                <Link to="/login" className="hidden md:block text-md font-medium text-gray-700 hover:text-primary-600 transition-colors">
-                    Sign In
-                </Link>
-                <Link to="/register" className="text-md font-medium text-white bg-primary-600 px-5 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm">
-                    Get Started
-                </Link>
-            </div>
-        </div>
-    </header>
-);
+const Header: React.FC = () => {
+    const [isScrolled, setIsScrolled] = useState(false);
 
-const HeroSection: React.FC = () => {
-    const { user } = useAuth();
-    const greeting = user ? `Welcome back, ${user.name}!` : "Pioneering the Future of Personalized Health";
-    
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 10);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
-        <section className="relative flex-grow flex items-center justify-center text-center py-40">
-            <div className="container mx-auto px-6 relative z-10">
-                <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight animate-text-focus-in gradient-text drop-shadow-sm">
-                    {greeting}
-                </h1>
-                <p className="mt-6 text-lg text-gray-600 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
-                    An intelligent, connected platform that empowers both patients and providers with seamless tools for a healthier tomorrow.
-                </p>
-                <div className="mt-10 flex items-center justify-center space-x-4 animate-fade-in" style={{ animationDelay: '600ms' }}>
-                    <Link to={user ? "/dashboard" : "/register"} className="bg-gradient-to-r from-primary-600 to-accent text-white font-semibold py-3 px-8 rounded-lg hover:opacity-90 transition-all transform hover:scale-105 shadow-lg">
-                        {user ? "Go to Dashboard" : "Create a Free Account"}
+        <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+            <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+                <Link to="/" className="flex items-center space-x-2">
+                    <NovoPathLogoIcon className="w-9 h-9" />
+                    <span className={`text-2xl font-bold ${isScrolled ? 'text-gray-900' : 'text-white'}`}>NovoPath</span>
+                </Link>
+                <nav className="hidden md:flex items-center space-x-8">
+                    <a href="#features" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Features</a>
+                    <a href="#testimonials" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Testimonials</a>
+                    <a href="#" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>For Providers</a>
+                </nav>
+                <div className="flex items-center space-x-4">
+                    <Link to="/login" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-primary-600 hover:text-primary-700' : 'text-white hover:opacity-90'}`}>
+                        Sign In
+                    </Link>
+                    <Link to="/register" className="text-sm font-medium text-white bg-primary-600 px-5 py-2.5 rounded-lg hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg">
+                        Get Started
                     </Link>
                 </div>
             </div>
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-fade-in" style={{ animationDelay: '1000ms' }}>
-                <div className="scroll-indicator text-gray-400">
-                    <ChevronDownIcon className="w-8 h-8" />
+        </header>
+    );
+};
+
+const HeroSection: React.FC = () => {
+    const { user } = useAuth();
+    const greeting = user ? `Welcome back, ${user.name}!` : "The Future of Integrated Healthcare is Here";
+    
+    return (
+        <section className="relative bg-gray-900 text-white pt-32 pb-24 md:pt-48 md:pb-32 flex items-center justify-center text-center">
+            <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{backgroundImage: "url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')"}}></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-900/80 to-transparent"></div>
+
+            <div className="container mx-auto px-6 relative z-10">
+                <AnimatedSection>
+                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+                        {greeting}
+                    </h1>
+                    <p className="mt-6 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
+                        NovoPath is a unified platform connecting patients and providers through a comprehensive EMR, seamless scheduling, and AI-powered health insights.
+                    </p>
+                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <Link to={user ? "/dashboard" : "/register/patient"} className="w-full sm:w-auto bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-primary-700 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center">
+                            I'm a Patient <ArrowRightIcon className="w-5 h-5 ml-2" />
+                        </Link>
+                        <Link to={user ? "/dashboard" : "/register/provider"} className="w-full sm:w-auto bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg hover:bg-gray-600 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center">
+                            I'm a Provider <ArrowRightIcon className="w-5 h-5 ml-2" />
+                        </Link>
+                    </div>
+                </AnimatedSection>
+            </div>
+        </section>
+    );
+};
+
+const FeatureCard: React.FC<{icon: React.ReactNode, title: string, description: string, index: number}> = ({ icon, title, description, index }) => {
+    const [ref, isVisible] = useOnScreen({ threshold: 0.2 });
+    return (
+        <div ref={ref} className={`transition-all duration-700 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{transitionDelay: `${index * 100}ms`}}>
+            <div className="bg-white p-8 rounded-2xl shadow-lg h-full border border-gray-100 hover:shadow-primary-100/50 hover:border-primary-200 transition-all">
+                <div className="bg-primary-100 text-primary-600 w-16 h-16 rounded-full flex items-center justify-center mb-5">
+                    {icon}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
+                <p className="text-gray-600">{description}</p>
+            </div>
+        </div>
+    );
+};
+
+const FeaturesSection: React.FC = () => {
+    const features = [
+        { icon: <DocumentTextIcon className="w-8 h-8" />, title: "Unified EMR System", description: "A complete electronic medical record system designed for modern healthcare operations, ensuring all patient data is accessible and secure." },
+        { icon: <CalendarIcon className="w-8 h-8" />, title: "In-Person & Virtual Visits", description: "Seamlessly schedule and manage both in-person and virtual appointments, providing flexibility for patients and providers." },
+        { icon: <SparklesIcon className="w-8 h-8" />, title: "AI-Powered Health Insights", description: "Leverage our intelligent AI to get quick answers to health questions and personalized insights based on your medical history." },
+    ];
+
+    return (
+        <section id="features" className="py-24 bg-gray-50">
+            <div className="container mx-auto px-6 text-center">
+                <AnimatedSection>
+                    <h2 className="text-4xl font-bold text-gray-900">A New Standard for Healthcare</h2>
+                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">NovoPath combines cutting-edge technology with a user-centric design to deliver a superior healthcare experience.</p>
+                </AnimatedSection>
+                <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
+                    {features.map((feature, index) => (
+                        <FeatureCard key={index} {...feature} index={index} />
+                    ))}
                 </div>
             </div>
         </section>
     );
 };
 
-const StaggeredFeatureSection: React.FC = () => {
-    const [ref, isVisible] = useOnScreen({ threshold: 0.1 });
-    const features = [
-        { icon: <DocumentTextIcon className="w-12 h-12 text-primary-600 mx-auto" />, title: "Centralized EMR", description: "Access and manage your complete health history, from lab results to medications, securely and conveniently." },
-        { icon: <CalendarIcon className="w-12 h-12 text-primary-600 mx-auto" />, title: "Effortless Scheduling", description: "Book, manage, and attend appointments—both in-person and virtual—with just a few clicks." },
-        { icon: <SparklesIcon className="w-12 h-12 text-primary-600 mx-auto" />, title: "AI Health Guide", description: "Get instant, reliable information about symptoms and health questions from our intelligent AI assistant." },
-    ];
-
-    return (
-        <div ref={ref} className="py-24 bg-white">
-            <div className="container mx-auto px-6 text-center">
-                <AnimatedSection>
-                    <h2 className="text-4xl font-bold text-gray-800">Everything You Need, All in One Place</h2>
-                    <p className="mt-4 text-gray-600 max-w-2xl mx-auto">NovoPath simplifies healthcare management by integrating essential tools into a single, intuitive platform.</p>
-                </AnimatedSection>
-                <div className={`grid md:grid-cols-3 gap-8 mt-12`}>
-                    {features.map((feature, index) => (
-                         <div key={index} className={`transition-all duration-500 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${index * 150}ms` }}>
-                            <div className="fancy-card bg-gray-50 p-8 rounded-xl border border-gray-200 h-full">
-                                {feature.icon}
-                                <h3 className="text-xl font-semibold mt-4 text-gray-900">{feature.title}</h3>
-                                <p className="text-gray-600 mt-2 text-sm">{feature.description}</p>
-                            </div>
-                        </div>
-                    ))}
+const StatsSection: React.FC = () => (
+    <AnimatedSection className="bg-white py-20">
+        <div className="container mx-auto px-6">
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+                <div>
+                    <p className="text-5xl font-extrabold text-primary-600">10,000+</p>
+                    <p className="mt-2 text-lg font-medium text-gray-700">Active Patients</p>
+                </div>
+                <div>
+                    <p className="text-5xl font-extrabold text-primary-600">500+</p>
+                    <p className="mt-2 text-lg font-medium text-gray-700">Verified Providers</p>
+                </div>
+                <div>
+                    <p className="text-5xl font-extrabold text-primary-600">98%</p>
+                    <p className="mt-2 text-lg font-medium text-gray-700">Patient Satisfaction</p>
                 </div>
             </div>
+        </div>
+    </AnimatedSection>
+);
+
+const TestimonialCard: React.FC<{ testimonial: typeof MOCK_TESTIMONIALS[0], index: number }> = ({ testimonial, index }) => {
+    const [ref, isVisible] = useOnScreen({ threshold: 0.2 });
+    return(
+        <div ref={ref} className={`bg-white p-8 rounded-2xl shadow-lg border border-gray-100 h-full flex flex-col transition-all duration-700 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{transitionDelay: `${index * 100}ms`}}>
+            <div className="flex items-center mb-4">
+                <img src={testimonial.avatarUrl} alt={testimonial.name} className="w-14 h-14 rounded-full shadow-md" />
+                <div className="ml-4">
+                    <p className="font-bold text-gray-900">{testimonial.name}</p>
+                    <p className="text-sm text-primary-600 font-medium">{testimonial.role}</p>
+                </div>
+            </div>
+            <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => <StarIcon key={i} className={`w-5 h-5 ${i < testimonial.rating ? 'text-amber-400' : 'text-gray-300'}`} />)}
+            </div>
+            <p className="text-gray-600 italic">"{testimonial.feedback}"</p>
         </div>
     );
 };
 
-const TestimonialCard: React.FC<{ testimonial: typeof MOCK_TESTIMONIALS[0] }> = ({ testimonial }) => (
-    <div className="fancy-card testimonial-card relative bg-white p-6 rounded-lg border border-gray-200 h-full flex flex-col">
-        <div className="relative z-10">
-            <div className="flex items-center mb-4">
-                <img src={testimonial.avatarUrl} alt={testimonial.name} className="w-12 h-12 rounded-full" />
-                <div className="ml-4">
-                    <p className="font-semibold text-gray-800">{testimonial.name}</p>
-                    <div className="flex">
-                        {[...Array(5)].map((_, i) => <StarIcon key={i} className={`w-4 h-4 ${i < testimonial.rating ? 'text-amber-400' : 'text-gray-300'}`} />)}
-                    </div>
-                </div>
-            </div>
-            <p className="text-gray-600 text-sm flex-grow">"{testimonial.feedback}"</p>
-        </div>
-    </div>
-);
-
 const TestimonialsSection: React.FC = () => {
-    const [ref, isVisible] = useOnScreen({ threshold: 0.1 });
     return(
-        <div ref={ref} className="py-24 bg-slate-50">
+        <section id="testimonials" className="py-24 bg-gray-50">
             <div className="container mx-auto px-6 text-center">
-                 <AnimatedSection>
-                    <h2 className="text-4xl font-bold text-gray-800">Trusted by Patients and Providers</h2>
-                    <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Hear what our users are saying about the NovoPath experience.</p>
+                <AnimatedSection>
+                    <h2 className="text-4xl font-bold text-gray-900">Loved by Patients and Professionals</h2>
+                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Discover why thousands of users trust NovoPath for their healthcare needs.</p>
                 </AnimatedSection>
-                <div className="grid md:grid-cols-3 gap-8 mt-12 text-left">
+                <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
                     {MOCK_TESTIMONIALS.map((t, index) => (
-                        <div key={t.name} className={`transition-all duration-500 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${index * 150}ms` }}>
-                           <TestimonialCard testimonial={t} />
-                        </div>
+                       <TestimonialCard key={t.name} testimonial={t} index={index} />
                     ))}
                 </div>
-                <AnimatedSection>
-                    <button className="mt-12 text-sm font-semibold text-primary-600 hover:underline">Write a Review &rarr;</button>
-                </AnimatedSection>
             </div>
-        </div>
+        </section>
     );
 };
 
 const FinalCtaSection: React.FC = () => (
     <AnimatedSection className="py-24 bg-white">
-        <div className="container mx-auto px-6 text-center">
-            <h2 className="text-4xl font-bold text-gray-800">Ready to Take Control of Your Health?</h2>
-            <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Join thousands of users who are experiencing a smarter, simpler way to manage their healthcare journey.</p>
+        <div className="container mx-auto px-6 text-center bg-primary-600 rounded-2xl py-16 text-white" style={{backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.9), rgba(59, 130, 246, 0.9)), url(https://images.unsplash.com/photo-1556761175-577380e25948?q=80&w=2070&auto=format&fit=crop)'}}>
+            <h2 className="text-4xl font-bold">Start Your Journey to Better Health Today</h2>
+            <p className="mt-4 text-lg text-primary-100 max-w-2xl mx-auto">Create an account in minutes and take the first step towards a more connected and empowered healthcare experience.</p>
             <div className="mt-8">
-                <Link to="/register" className="bg-gradient-to-r from-primary-600 to-accent text-white font-semibold py-3 px-8 rounded-lg hover:opacity-90 transition-transform transform hover:scale-105 shadow-lg">
-                    Get Started for Free
+                <Link to="/register" className="bg-white text-primary-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl text-lg">
+                    Sign Up Now
                 </Link>
             </div>
         </div>
@@ -181,103 +230,62 @@ const FinalCtaSection: React.FC = () => (
 );
 
 const Footer: React.FC = () => (
-    <footer className="bg-gray-800 text-white">
-        <div className="container mx-auto px-6 py-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="flex items-center space-x-3">
-                    <NovoPathLogoIcon className="w-8 h-8"/>
-                    <span className="text-xl font-bold text-gray-200">NovoPath</span>
+    <footer className="bg-gray-900 text-white">
+        <div className="container mx-auto px-6 py-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 className="font-bold text-lg mb-4">NovoPath</h3>
+                    <ul className="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" className="hover:text-white">About Us</a></li>
+                        <li><a href="#" className="hover:text-white">Careers</a></li>
+                        <li><a href="#" className="hover:text-white">Press</a></li>
+                    </ul>
                 </div>
-                <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
-                    <Link to="#" className="text-gray-400 hover:text-white">About</Link>
-                    <Link to="#" className="text-gray-400 hover:text-white">Features</Link>
-                    <Link to="#" className="text-gray-400 hover:text-white">Contact</Link>
+                <div>
+                    <h3 className="font-bold text-lg mb-4">For Patients</h3>
+                    <ul className="space-y-2 text-gray-400 text-sm">
+                        <li><a href="/login" className="hover:text-white">Find a Doctor</a></li>
+                        <li><a href="/login" className="hover:text-white">Book Appointment</a></li>
+                        <li><a href="/login" className="hover:text-white">My Records</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 className="font-bold text-lg mb-4">For Providers</h3>
+                    <ul className="space-y-2 text-gray-400 text-sm">
+                        <li><a href="/login" className="hover:text-white">Platform Overview</a></li>
+                        <li><a href="/login" className="hover:text-white">EMR System</a></li>
+                        <li><a href="/login" className="hover:text-white">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 className="font-bold text-lg mb-4">Support</h3>
+                    <ul className="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" className="hover:text-white">Help Center</a></li>
+                        <li><a href="#" className="hover:text-white">Contact Us</a></li>
+                        <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+                    </ul>
                 </div>
             </div>
-            <div className="mt-6 text-center text-gray-500 text-sm border-t border-gray-700 pt-6">
-                © {new Date().getFullYear()} NovoPath Medical. All Rights Reserved.
+            <div className="mt-12 text-center text-gray-500 text-sm border-t border-gray-800 pt-8">
+                <p>&copy; {new Date().getFullYear()} NovoPath Medical. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
 );
 
+
 const WelcomePage: React.FC = () => {
-    const mountRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!mountRef.current) return;
-        const currentMount = mountRef.current;
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-        camera.position.z = 5;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        currentMount.appendChild(renderer.domElement);
-        
-        const particleCount = 5000;
-        const particlesGeometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        for (let i = 0; i < particleCount * 3; i++) positions[i] = (Math.random() - 0.5) * 10;
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        
-        const particleColor = 0x3b82f6;
-        const particlesMaterial = new THREE.PointsMaterial({ size: 0.02, color: particleColor, transparent: true, opacity: 0.7 });
-        const particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
-        scene.add(particleSystem);
-        
-        let mouseX = 0, mouseY = 0;
-        const onMouseMove = (event: MouseEvent) => {
-            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-        };
-        window.addEventListener('mousemove', onMouseMove);
-
-        const animate = () => {
-            requestAnimationFrame(animate);
-            particleSystem.rotation.y += 0.0005;
-            camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
-            camera.position.y += (mouseY * 0.5 - camera.position.y) * 0.02;
-            camera.lookAt(scene.position);
-            renderer.render(scene, camera);
-        };
-        animate();
-
-        const onResize = () => {
-            if (currentMount) {
-                camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-            }
-        };
-        window.addEventListener('resize', onResize);
-
-        return () => {
-            window.removeEventListener('resize', onResize);
-            window.removeEventListener('mousemove', onMouseMove);
-            if(currentMount && renderer.domElement) {
-                currentMount.removeChild(renderer.domElement);
-            }
-        };
-    }, []);
-
     return (
-        <div className="bg-white min-h-screen font-sans overflow-x-hidden">
-            <div ref={mountRef} id="bg-canvas" className="fixed top-0 left-0 w-full h-full z-0" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(255,255,255,0.7))]"></div>
-            
-            <div className="relative z-10 flex flex-col min-h-screen bg-transparent">
-                <Header />
-                <main className="flex-grow">
-                    <HeroSection />
-                    <StaggeredFeatureSection />
-                    <TestimonialsSection />
-                    <FinalCtaSection />
-                </main>
-                <Footer />
-            </div>
+        <div className="bg-white min-h-screen font-sans antialiased">
+            <Header />
+            <main>
+                <HeroSection />
+                <StatsSection />
+                <FeaturesSection />
+                <TestimonialsSection />
+                <FinalCtaSection />
+            </main>
+            <Footer />
         </div>
     );
 };
