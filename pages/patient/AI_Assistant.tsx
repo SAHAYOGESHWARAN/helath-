@@ -1,18 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, GroundingChunk } from '@google/genai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 import PageHeader from '../../components/shared/PageHeader';
-
-interface GroundingChunk {
-  web: {
-    uri: string;
-    title: string;
-  };
-}
 
 interface Message {
   role: 'user' | 'model';

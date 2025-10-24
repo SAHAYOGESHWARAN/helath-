@@ -7,8 +7,8 @@ import { useAuth } from '../../hooks/useAuth';
 import PageHeader from '../../components/shared/PageHeader';
 import { SearchIcon } from '../../components/shared/Icons';
 
-const getStatusColor = (status: 'Active' | 'Inactive') => {
-    return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+const getStatusColor = (status: 'Active' | 'Suspended') => {
+    return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
 };
 
 
@@ -66,7 +66,7 @@ const PatientSnapshotModal: React.FC<{ patient: User | null, onClose: () => void
 const PatientManagement: React.FC = () => {
     const { user: providerUser, users } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
+    const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Suspended'>('All');
     const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: 'asc' | 'desc' } | null>(null);
 
     const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
@@ -139,7 +139,7 @@ const PatientManagement: React.FC = () => {
             <div className="flex items-center space-x-2">
                 <button onClick={() => setStatusFilter('All')} className={`px-4 py-2 text-sm font-medium rounded-md ${statusFilter === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>All</button>
                 <button onClick={() => setStatusFilter('Active')} className={`px-4 py-2 text-sm font-medium rounded-md ${statusFilter === 'Active' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>Active</button>
-                <button onClick={() => setStatusFilter('Inactive')} className={`px-4 py-2 text-sm font-medium rounded-md ${statusFilter === 'Inactive' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>Inactive</button>
+                <button onClick={() => setStatusFilter('Suspended')} className={`px-4 py-2 text-sm font-medium rounded-md ${statusFilter === 'Suspended' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>Suspended</button>
             </div>
         </div>
         <div className="overflow-x-auto">

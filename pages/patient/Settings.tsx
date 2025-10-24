@@ -39,7 +39,7 @@ const NotificationsTab: React.FC = () => {
 
     const handleSave = () => {
         setIsSubmitting(true);
-        updateUser({ notificationSettings: settings })
+        updateUser(currentUser => ({...currentUser, notificationSettings: settings}))
         .then(() => {
             showToast('Notification settings saved!', 'success');
             setIsSubmitting(false);

@@ -283,7 +283,7 @@ const HealthRecords: React.FC = () => {
     const handleDownloadEmr = () => { /* ... existing download logic ... */ };
     
     const pageTabs = [
-        { name: 'Summary', icon: <HomeIcon />, content: <SummaryTab user={user} onEdit={openModal} onDelete={setDeleteConfirmation} /> },
+        { name: 'Summary', icon: <HomeIcon />, content: <SummaryTab user={user} onEdit={openModal} onDelete={(type, id) => setDeleteConfirmation({ type, id })} /> },
         { name: 'Vitals', icon: <ChartBarIcon />, content: <VitalsTab vitals={user?.vitals || []} /> },
         { name: 'Lab Results', icon: <DocumentTextIcon />, content: <LabResultsTab labResults={user?.labResults || []} /> },
     ];
