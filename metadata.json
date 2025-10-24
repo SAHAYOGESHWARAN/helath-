@@ -1,8 +1,0 @@
-{
-  "name": "NovoPath Medical",
-  "description": "A comprehensive healthcare management platform for patients, providers, and administrators, providing tools for appointment scheduling, health record management, and system administration.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}

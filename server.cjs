@@ -1,25 +1,23 @@
+import path from 'path';
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
 
-const express = require('express');
-const path = require('path');
-const compression = require('compression');
-const helmet = require('helmet');
-const cors = require('cors');
-
-const app = express();
-const PORT = process.env.PORT || 8080;
-
-// Security & performance middlewares
-app.use(helmet());
-app.use(cors());
-app.use(compression());
-
-// Serve static files from dist
-app.use(express.static(path.join(__dirname, 'dist')));
-
-// Catch-all route (compatible with latest path-to-regexp)
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, '.', '');
+    return {
+      server: {
+        port: 3000,
+        host: '0.0.0.0',
+      },
+      plugins: [react()],
+      define: {
+        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      },
+      resolve: {
+        alias: {
+          '@': path.resolve(__dirname, '.'),
+        }
+      }
+    };
 });
-
-// Start server
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

@@ -1,28 +1,17 @@
-{
-  "name": "novopath-medical",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@google/genai": "^1.25.0",
-    "recharts": "^3.2.1",
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0",
-    "three": "^0.180.0",
-    "react-router-dom": "^7.9.4",
-    "jspdf": "^3.0.3",
-    "yup": "^1.7.1",
-    "formik": "^2.4.6"
-  },
-  "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
-  }
-}
+
+import React from 'react';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
+
+const Billing: React.FC = () => {
+    return (
+        <div>
+            <PageHeader title="Billing" />
+            <Card>
+                <p>Platform-wide billing and transaction history will be displayed here, with integration to payment gateways and options for managing invoices and refunds.</p>
+            </Card>
+        </div>
+    );
+};
+
+export default Billing;

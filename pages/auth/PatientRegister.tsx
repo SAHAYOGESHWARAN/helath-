@@ -1,101 +1,107 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types';
-import { NovoPathIcon, ChevronLeftIcon, SpinnerIcon } from '../../components/shared/Icons';
+import { NovoPathLogoIcon, ChevronLeftIcon, SpinnerIcon, UserIcon, EnvelopeIcon, LockClosedIcon, CalendarIcon, MapPinIcon } from '../../components/shared/Icons';
 import { US_STATES } from '../../constants';
 
 const PatientRegisterSchema = Yup.object().shape({
-  name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Full name is required'),
-  email: Yup.string().email('Invalid email').required('Email is required'),
-  dob: Yup.date().max(new Date(), "You can't be born in the future!").required('Date of birth is required'),
+  name: Yup.string().min(2, 'Name is too short').max(50, 'Name is too long').required('Full name is required'),
+  email: Yup.string().email('Invalid email address').required('Email is required'),
+  dob: Yup.date().max(new Date(), "Date of birth cannot be in the future").required('Date of birth is required'),
   state: Yup.string().required('State is required'),
   password: Yup.string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, 'Password must be at least 8 characters long')
     .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])/,
-      'Must contain at least one uppercase, lowercase, number, and special character'
+      'Password needs a mix of uppercase, lowercase, numbers, and special characters'
     )
     .required('Password is required'),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref('password'), undefined], 'Passwords must match')
-    .required('Confirming your password is required'),
+    .oneOf([Yup.ref('password'), undefined], 'Passwords do not match')
+    .required('You must confirm your password'),
 });
+
+const FormField: React.FC<{name: string, type: string, label: string, icon: React.ReactNode, as?: string, children?: React.ReactNode, error?: string, touched?: boolean}> =
+({ name, type, label, icon, as, children, error, touched }) => (
+    <div>
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700 sr-only">{label}</label>
+        <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                {icon}
+            </span>
+            <Field
+                as={as}
+                type={type}
+                name={name}
+                placeholder={label}
+                className={`w-full pl-10 pr-3 py-3 border bg-gray-50 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${error && touched ? 'border-red-500 ring-red-500' : 'border-gray-300'}`}
+            >
+                {children}
+            </Field>
+        </div>
+        <ErrorMessage name={name} component="p" className="text-red-600 text-xs mt-1 pl-1" />
+    </div>
+);
 
 const PatientRegister: React.FC = () => {
   const { register } = useAuth();
-  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-center items-center py-12 px-4">
-      <div className="max-w-md w-full mx-auto">
-        <div className="flex justify-center items-center mb-6 space-x-3">
-          <NovoPathIcon />
-          <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Patient Registration</h1>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" style={{backgroundImage: "url('/pattern-light.svg')"}}>
+      <div className="w-full max-w-lg mx-auto">
+        <div className="text-center mb-8">
+            <Link to="/" className="inline-block mb-4">
+                <NovoPathLogoIcon className="w-10 h-10 text-primary-600" />
+            </Link>
+            <h1 className="text-3xl font-extrabold text-gray-900">Create Your Patient Account</h1>
+            <p className="mt-2 text-gray-600">Begin your journey to better health management.</p>
         </div>
-        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
-          <h2 className="text-xl font-bold text-center text-gray-700 mb-2">Create your Patient Account</h2>
-          <p className="text-center text-gray-500 mb-6">Let's get you set up.</p>
-          
+
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
           <Formik
             initialValues={{ name: '', email: '', dob: '', state: '', password: '', confirmPassword: '' }}
             validationSchema={PatientRegisterSchema}
-            onSubmit={(values) => {
+            onSubmit={(values, { setSubmitting }) => {
               register({ name: values.name, email: values.email, dob: values.dob, state: values.state }, UserRole.PATIENT);
-              // Navigation will be handled by the main App router when user state changes
+              setSubmitting(false);
             }}
           >
             {({ isSubmitting, errors, touched }) => (
-              <Form className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                  <Field type="text" name="name" className={`mt-1 block w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.name && touched.name ? 'border-red-500' : 'border-gray-300'}`} />
-                  <ErrorMessage name="name" component="p" className="text-red-500 text-xs mt-1" />
+              <Form className="space-y-5">
+                <FormField name="name" type="text" label="Full Name" icon={<UserIcon className="w-5 h-5" />} error={errors.name} touched={touched.name} />
+                <FormField name="email" type="email" label="Email Address" icon={<EnvelopeIcon className="w-5 h-5" />} error={errors.email} touched={touched.email} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField name="dob" type="date" label="Date of Birth" icon={<CalendarIcon className="w-5 h-5" />} error={errors.dob} touched={touched.dob} />
+                    <FormField name="state" as="select" type="" label="State" icon={<MapPinIcon className="w-5 h-5" />} error={errors.state} touched={touched.state}>
+                        <option value="">Select State</option>
+                        {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </FormField>
                 </div>
-                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-                  <Field type="email" name="email" className={`mt-1 block w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.email && touched.email ? 'border-red-500' : 'border-gray-300'}`} />
-                  <ErrorMessage name="email" component="p" className="text-red-500 text-xs mt-1" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="dob" className="block text-sm font-medium text-gray-700">Date of Birth</label>
-                        <Field type="date" name="dob" className={`mt-1 block w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.dob && touched.dob ? 'border-red-500' : 'border-gray-300'}`} />
-                        <ErrorMessage name="dob" component="p" className="text-red-500 text-xs mt-1" />
-                    </div>
-                    <div>
-                        <label htmlFor="state" className="block text-sm font-medium text-gray-700">State</label>
-                        <Field as="select" name="state" className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white ${errors.state && touched.state ? 'border-red-500' : 'border-gray-300'}`}>
-                            <option value="">Select State</option>
-                            {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </Field>
-                        <ErrorMessage name="state" component="p" className="text-red-500 text-xs mt-1" />
-                    </div>
-                </div>
-                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                  <Field type="password" name="password" className={`mt-1 block w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.password && touched.password ? 'border-red-500' : 'border-gray-300'}`} />
-                  <ErrorMessage name="password" component="p" className="text-red-500 text-xs mt-1" />
-                </div>
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                  <Field type="password" name="confirmPassword" className={`mt-1 block w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${errors.confirmPassword && touched.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
-                  <ErrorMessage name="confirmPassword" component="p" className="text-red-500 text-xs mt-1" />
-                </div>
-                <button type="submit" disabled={isSubmitting} className="w-full mt-2 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors disabled:bg-primary-400 flex items-center justify-center">
-                  {isSubmitting ? <SpinnerIcon /> : 'Create Account'}
+
+                <FormField name="password" type="password" label="Password" icon={<LockClosedIcon className="w-5 h-5" />} error={errors.password} touched={touched.password} />
+                <FormField name="confirmPassword" type="password" label="Confirm Password" icon={<LockClosedIcon className="w-5 h-5" />} error={errors.confirmPassword} touched={touched.confirmPassword} />
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full mt-4 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 font-bold rounded-lg text-md px-5 py-3 text-center transition-all disabled:bg-primary-300 flex items-center justify-center"
+                >
+                  {isSubmitting ? <SpinnerIcon /> : 'Sign Up & Continue'}
                 </button>
               </Form>
             )}
           </Formik>
-           <div className="mt-6 text-center">
-            <Link to="/register" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center justify-center">
-                <ChevronLeftIcon className="w-4 h-4 mr-1" />
-                Back to Role Selection
-            </Link>
-          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <Link to="/register" className="text-sm font-medium text-primary-600 hover:underline flex items-center justify-center">
+              <ChevronLeftIcon className="w-4 h-4 mr-1" />
+              Back to account type selection
+          </Link>
         </div>
       </div>
     </div>
