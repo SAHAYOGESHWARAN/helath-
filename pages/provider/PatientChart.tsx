@@ -9,11 +9,10 @@ import {
     PillIcon,
     CalendarIcon,
     DocumentTextIcon,
-    BeakerIcon,
-    FolderIcon,
     UserCircleIcon,
     ExclamationTriangleIcon,
-    HeartIcon
+    HeartIcon,
+    FilterIcon,
 } from '../../components/shared/Icons';
 
 type Tab = 'overview' | 'notes' | 'medications' | 'labs' | 'documents';
@@ -133,13 +132,13 @@ const NotesTab: React.FC<{notes: ProgressNote[]}> = ({notes}) => (
             {notes.map(note => (
                 <details key={note.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <summary className="font-semibold cursor-pointer text-gray-900">
-                        {note.date} - {note.title} <span className="text-gray-500 font-medium text-sm">(Status: {note.status})</span>
+                        {note.date} - Progress Note <span className="text-gray-500 font-medium text-sm">(Status: {note.status})</span>
                     </summary>
                     <div className="mt-3 pt-3 border-t border-gray-300 text-gray-700 whitespace-pre-wrap">
-                        <p><strong>Subjective:</strong> {note.subjective}</p>
-                        <p><strong>Objective:</strong> {note.objective}</p>
-                        <p><strong>Assessment:</strong> {note.assessment}</p>
-                        <p><strong>Plan:</strong> {note.plan}</p>
+                        <p><strong>Subjective:</strong> {note.content.subjective}</p>
+                        <p><strong>Objective:</strong> {note.content.objective}</p>
+                        <p><strong>Assessment:</strong> {note.content.assessment}</p>
+                        <p><strong>Plan:</strong> {note.content.plan}</p>
                     </div>
                 </details>
             ))}

@@ -120,7 +120,7 @@ const ProviderProfile: React.FC = () => {
 
     const handleSave = () => {
         setIsSubmitting(true);
-        updateUser(formData).then(() => {
+        updateUser(currentUser => ({...currentUser, ...formData})).then(() => {
             showToast('Profile updated successfully!', 'success');
             setEditMode(false);
             setIsSubmitting(false);
@@ -133,7 +133,7 @@ const ProviderProfile: React.FC = () => {
     };
 
     const handleAvatarSave = (newAvatar: string) => {
-        updateUser({ avatarUrl: newAvatar }).then(() => {
+        updateUser(currentUser => ({...currentUser, avatarUrl: newAvatar})).then(() => {
              showToast('Profile picture updated!', 'success');
              setIsAvatarModalOpen(false);
         });

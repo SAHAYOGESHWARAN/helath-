@@ -6,7 +6,6 @@ import {
     BellIcon,
     CalendarIcon,
     ChatBubbleLeftRightIcon,
-    ArrowTrendingUpIcon,
     UserGroupIcon,
     ClockIcon,
     CheckCircleIcon,
@@ -64,8 +63,8 @@ const AppointmentStatusChart: React.FC<{appointments: Appointment[]}> = ({appoin
 const getStatusPill = (status: string) => {
     switch (status) {
         case 'Checked-In': return 'bg-emerald-100 text-emerald-800';
-        case 'Waiting': return 'bg-amber-100 text-amber-800';
-        case 'Scheduled': return 'bg-blue-100 text-blue-800';
+        case 'Pending': return 'bg-amber-100 text-amber-800';
+        case 'Confirmed': return 'bg-blue-100 text-blue-800';
         default: return 'bg-gray-100 text-gray-800';
     }
 }
@@ -85,14 +84,14 @@ const ProviderDashboard: React.FC = () => {
     }, [appointments, user]);
 
     const waitingRoom = useMemo(() => {
-        return todaysAppointments.filter(a => a.checkInStatus === 'Waiting');
+        return todaysAppointments.filter(a => a.checkInStatus === 'Pending');
     }, [todaysAppointments]);
 
     const recentActivity = useMemo(() => {
         const activities = [
             ...messages.slice(0, 2).map(m => ({ id: `msg-${m.id}`, type: 'New Message', description: `From ${m.patientName}`, time: '5m ago', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, link: '/messaging' })),
             ...progressNotes.filter(n => n.status === "Signed").slice(0, 1).map(n => ({ id: `note-${n.id}`, type: 'Note Signed', description: `For ${n.patientName}`, time: '45m ago', icon: <CheckCircleIcon className="w-5 h-5 text-emerald-600"/>, link: `/patients/${n.patientId}` })),
-            ...appointments.filter(a => a.status === 'Complete').slice(0, 2).map(a => ({ id: `appt-${a.id}`, type: 'Appointment Complete', description: `${a.patientName} - ${a.reason}`, time: '2h ago', icon: <CalendarIcon className="w-5 h-5 text-gray-500"/>, link: `/patients/${a.patientId}` }))
+            ...appointments.filter(a => a.status === 'Completed').slice(0, 2).map(a => ({ id: `appt-${a.id}`, type: 'Appointment Complete', description: `${a.patientName} - ${a.reason}`, time: '2h ago', icon: <CalendarIcon className="w-5 h-5 text-gray-500"/>, link: `/patients/${a.patientId}` }))
         ];
         return activities.sort(() => Math.random() - 0.5); // Randomize for demo
     }, [messages, progressNotes, appointments]);
@@ -164,10 +163,8 @@ const ProviderDashboard: React.FC = () => {
                     <div className="space-y-3">
                         {waitingRoom.length > 0 ? waitingRoom.map(p => (
                             <div key={p.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                <img src={p.patientAvatar} alt={p.patientName} className="w-10 h-10 rounded-full mr-3" />
                                 <div className="flex-grow">
                                     <p className="font-semibold text-gray-900">{p.patientName}</p>
-                                    <p className="text-xs text-gray-500">Waiting since {p.checkInTime}</p>
                                 </div>
                                 <button className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 flex items-center">
                                     <VideoCameraIcon className="w-4 h-4 mr-1" />

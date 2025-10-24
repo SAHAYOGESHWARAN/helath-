@@ -1,116 +1,63 @@
 
-import React, { useMemo } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import Card from '../../components/shared/Card';
-import PageHeader from '../../components/shared/PageHeader';
-import { UserRole } from '../../types';
-import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon } from '../../components/shared/Icons';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Link } from 'react-router-dom';
+import { User, UserRole, Appointment, Claim, BillingInvoice, Prescription, ProgressNote, Referral, SubscriptionPlan, ClaimStatus, ClaimType } from './types';
 
-const AdminDashboard: React.FC = () => {
-    const { users, invoices, providerSubscriptionPlans } = useAuth();
+export const MOCK_USERS: User[] = [
+  {
+    id: 'admin-1',
+    name: 'Dr. Admin',
+    email: 'admin@novopath.com',
+    role: UserRole.ADMIN,
+    avatarUrl: 'https://i.pravatar.cc/150?u=admin@novopath.com',
+    isVerified: true,
+    status: 'Active',
+  },
+  {
+    id: 'provider-1',
+    name: 'Dr. John Smith',
+    email: 'john.smith@novopath.com',
+    role: UserRole.PROVIDER,
+    avatarUrl: 'https://i.pravatar.cc/150?u=john.smith@novopath.com',
+    isVerified: true,
+    status: 'Active',
+    specialty: 'Cardiology',
+  },
+  {
+    id: 'patient-1',
+    name: 'Jane Doe',
+    email: 'jane.doe@email.com',
+    role: UserRole.PATIENT,
+    avatarUrl: 'https://i.pravatar.cc/150?u=jane.doe@email.com',
+    isVerified: true,
+    status: 'Active',
+  },
+];
 
-    const stats = useMemo(() => {
-        const providers = users.filter(u => u.role === UserRole.PROVIDER);
-        const patients = users.filter(u => u.role === UserRole.PATIENT);
-        
-        const totalRevenue = providers.reduce((acc, provider) => {
-            const plan = providerSubscriptionPlans.find(p => p.id === provider.subscription?.planId);
-            if (plan && plan.price.startsWith('$')) {
-                return acc + parseFloat(plan.price.replace(/[^0-9.-]+/g,""));
-            }
-            return acc;
-        }, 0);
-
-        return {
-            totalUsers: users.length,
-            totalProviders: providers.length,
-            totalPatients: patients.length,
-            pendingVerifications: providers.filter(p => !p.isVerified).length,
-            monthlyRevenue: totalRevenue,
-        };
-    }, [users, invoices, providerSubscriptionPlans]);
-
-    const userRoleData = [
-        { name: 'Patients', value: stats.totalPatients },
-        { name: 'Providers', value: stats.totalProviders },
-        { name: 'Admins', value: users.filter(u => u.role === UserRole.ADMIN).length },
-    ];
-    
-    const revenueData = [
-        { month: 'Mar', revenue: 680 }, { month: 'Apr', revenue: 890 }, { month: 'May', revenue: 1150 },
-        { month: 'Jun', revenue: 1340 }, { month: 'Jul', revenue: 1580 }, { month: 'Aug', revenue: stats.monthlyRevenue },
-    ];
-
-    const COLORS = ['#3b82f6', '#14B8A6', '#6366f1'];
-
-    return (
-        <div className="animate-fade-in-up">
-            <PageHeader 
-                title="Administrator Dashboard"
-                subtitle="Oversee and manage the NovoPath Medical platform."
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="flex items-center p-4">
-                    <div className="p-3 bg-blue-100 rounded-full mr-4"><UsersIcon className="w-6 h-6 text-blue-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">{stats.totalUsers}</p><p className="text-gray-500">Total Users</p></div>
-                </Card>
-                <Card className="flex items-center p-4">
-                    <div className="p-3 bg-teal-100 rounded-full mr-4"><CollectionIcon className="w-6 h-6 text-teal-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">{stats.totalProviders}</p><p className="text-gray-500">Active Providers</p></div>
-                </Card>
-                 <Card className="flex items-center p-4">
-                    <div className="p-3 bg-emerald-100 rounded-full mr-4"><CurrencyDollarIcon className="w-6 h-6 text-emerald-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">${stats.monthlyRevenue.toFixed(2)}</p><p className="text-gray-500">Est. Monthly Revenue</p></div>
-                </Card>
-                <Card className="flex items-center p-4">
-                    <div className="p-3 bg-amber-100 rounded-full mr-4"><ShieldExclamationIcon className="w-6 h-6 text-amber-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">{stats.pendingVerifications}</p><p className="text-gray-500">Pending Verifications</p></div>
-                </Card>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
-                    <Card title="Revenue Growth (Monthly)">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={revenueData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${value}`} />
-                                <Tooltip cursor={{ fill: 'rgba(239, 246, 255, 0.7)' }} />
-                                <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" barSize={30} radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </Card>
-                </div>
-                <div className="lg:col-span-2">
-                    <Card title="User Distribution">
-                         <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={userRoleData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                                    {userRoleData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </Card>
-                </div>
-            </div>
-             <div className="mt-8">
-                <Card title="Quick Actions">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Link to="/users" className="block p-4 text-center bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Manage Users</Link>
-                        <Link to="/subscriptions" className="block p-4 text-center bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">View Subscriptions</Link>
-                        <Link to="/billing" className="block p-4 text-center bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Go to Billing</Link>
-                        <Link to="/reports" className="block p-4 text-center bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Generate Reports</Link>
-                    </div>
-                </Card>
-            </div>
-        </div>
-    );
-};
-
-export default AdminDashboard;
+export const MOCK_APPOINTMENTS: Appointment[] = [
+    { id: 'appt_1', patientId: 'patient-1', patientName: 'Jane Doe', providerId: 'provider-1', providerName: 'Dr. John Smith', date: '2024-10-28', time: '10:00', duration: 30, reason: 'Annual Checkup', type: 'In-Person', status: 'Confirmed' },
+    { id: 'appt_2', patientId: 'patient-1', patientName: 'Jane Doe', providerId: 'provider-1', providerName: 'Dr. John Smith', date: '2024-11-15', time: '14:30', duration: 30, reason: 'Follow-up Consultation', type: 'Virtual', status: 'Pending' },
+];
+export const MOCK_CLAIMS: Claim[] = [
+    { id: 'claim_1', patientId: 'patient-1', serviceDate: '2024-10-28', claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 250.00, status: ClaimStatus.SUBMITTED, provider: 'Dr. John Smith', patientOwes: 50, insurancePaid: 200, lineItems: [{ service: 'Annual physical examination.', charge: 250 }] },
+    { id: 'claim_2', patientId: 'patient-1', serviceDate: '2024-09-12', claimType: ClaimType.PROFESSIONAL, totalClaimChargeAmount: 120.00, status: ClaimStatus.PAID_IN_FULL, provider: 'Dr. John Smith', patientOwes: 0, insurancePaid: 120, lineItems: [{ service: 'Dental cleaning and checkup.', charge: 120 }] },
+];
+export const MOCK_INVOICES: BillingInvoice[] = [
+    { id: 'inv_1', patientId: 'patient-1', totalAmount: 250.00, amountDue: 50.00, date: '2024-10-29', dueDate: '2024-11-29', status: 'Due', description: 'Invoice for annual checkup co-pay.' },
+    { id: 'inv_2', patientId: 'patient-1', totalAmount: 120.00, amountDue: 0.00, date: '2024-09-15', dueDate: '2024-10-15', status: 'Paid', description: 'Invoice for dental cleaning.' },
+];
+export const MOCK_PRESCRIPTIONS: Prescription[] = [
+    { id: 'rx_1', patientId: 'patient-1', patientName: 'Jane Doe', drug: 'Lisinopril 10mg', dosage: '1 tablet daily', frequency: 'Once a day', quantity: 30, refills: 3, pharmacy: 'CVS Pharmacy', datePrescribed: '2024-10-28', status: 'Filled' },
+];
+export const MOCK_PROGRESS_NOTES: ProgressNote[] = [
+    { id: 'note_1', patientId: 'patient-1', patientName: 'Jane Doe', date: '2024-10-28T10:30:00Z', content: { subjective: 'Patient reports feeling well.', objective: 'Vitals stable.', assessment: 'No new issues.', plan: 'Continue current medications.' }, status: 'Signed' },
+];
+export const MOCK_REFERRALS: Referral[] = [
+    { id: 1, patient: 'Jane Doe', referredFrom: 'Dr. John Smith', referredTo: 'Dermatology', reason: 'Suspicious mole on back.', date: '2024-10-28', status: 'Pending', type: 'Outgoing' },
+];
+export const MOCK_PATIENT_PLANS: SubscriptionPlan[] = [
+    { id: 'plan_p1', name: 'Basic Care', price: '$29/month', features: ['Secure Messaging', 'Appointment Booking', 'Health Records Access'], patientLimit: 1 },
+    { id: 'plan_p2', name: 'Premium Care', price: '$59/month', features: ['All Basic Features', 'Telehealth Visits', 'Wellness Tracking'], patientLimit: 1 },
+];
+export const MOCK_PROVIDER_PLANS: SubscriptionPlan[] = [
+    { id: 'plan_d1', name: 'Solo Practitioner', price: '$199/month', features: ['EMR Access', 'Patient Scheduling', 'Basic Billing'], patientLimit: 200 },
+    { id: 'plan_d2', name: 'Clinic Suite', price: '$499/month', features: ['All Solo Features', 'Advanced Analytics', 'Multi-user Support'], patientLimit: 1000 },
+];

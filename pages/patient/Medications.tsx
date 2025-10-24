@@ -92,7 +92,7 @@ const Medications: React.FC = () => {
                 ...newMed
             };
             const updatedMeds = [...(user?.medications || []), newMedication];
-            await updateUser({ medications: updatedMeds });
+            await updateUser(currentUser => ({...currentUser, medications: updatedMeds}));
             showToast('Medication added!', 'success');
             setNewMed({ name: '', dosage: '', frequency: '' });
         } else {
