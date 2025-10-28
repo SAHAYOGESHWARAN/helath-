@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
-import { Allergy, FamilyHistoryEntry, ImmunizationRecord, LifestyleInfo, Surgery, User, VitalsRecord, LabResult } from '../../types';
+import { User, VitalsRecord, LabResult } from '../../types';
 import { SpinnerIcon, PencilAltIcon, TrashIcon, DownloadIcon, PlusIcon, HomeIcon, DocumentTextIcon, ChartBarIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';

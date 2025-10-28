@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus } from '../../types';
 import Modal from '../../components/shared/Modal';

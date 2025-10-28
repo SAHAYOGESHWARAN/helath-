@@ -3,15 +3,12 @@ import { useAuth } from '../../hooks/useAuth';
 import {
     DocumentTextIcon,
     PillIcon,
-    BellIcon,
-    CalendarIcon,
     ChatBubbleLeftRightIcon,
     UserGroupIcon,
-    ClockIcon,
     CheckCircleIcon,
     VideoCameraIcon
 } from '../../components/shared/Icons';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment } from '../../types';

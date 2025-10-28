@@ -7,7 +7,7 @@ import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_INVOICES, MOCK_PRESCRI
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string) => void;
+  login: (email: string, password?: string) => void;
   logout: () => void;
   register: (userData: Partial<User>, role: UserRole) => void;
   updateUser: (updateFn: (currentUser: User) => User) => Promise<void>;
@@ -89,19 +89,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, 1000); // Simulate network delay
   }, []);
   
-  const login = useCallback((email: string) => {
+  const login = useCallback((email: string, password?: string) => {
     setLoading(true);
     setTimeout(() => {
         const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-        if (foundUser) {
+        if (foundUser && (!password || foundUser.password === password)) {
             setUser(foundUser);
             localStorage.setItem('user', JSON.stringify(foundUser));
         } else {
-            alert('User not found!');
+            alert('Invalid credentials!');
         }
         setLoading(false);
     }, 800);
-  }, []);
+}, []);
 
   const logout = useCallback(() => {
     setUser(null);
@@ -115,6 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             id: role === UserRole.PATIENT ? `patient-${Date.now()}` : `provider-${Date.now()}`,
             name: userData.name || '',
             email: userData.email || '',
+            password: userData.password,
             role: role,
             avatarUrl: `https://i.pravatar.cc/150?u=${userData.email}`,
             isVerified: role === UserRole.PATIENT, // Patients are auto-verified
@@ -126,7 +127,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('user', JSON.stringify(newUser));
         setLoading(false);
     }, 1200);
-  }, []);
+}, []);
 
   const updateUser = useCallback(async (updateFn: (currentUser: User) => User) => {
     setUser(prevUser => {

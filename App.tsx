@@ -7,7 +7,6 @@ import { UserRole } from './types';
 import LoginPage from './pages/auth/LoginPage';
 import PatientLayout from './components/layout/PatientLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
-import AdminLayout from './components/layout/AdminLayout'; // Import AdminLayout
 import UniqueLoader from './components/shared/UniqueLoader';
 import RegisterPage from './pages/auth/RegisterPage';
 import PatientRegister from './pages/auth/PatientRegister';

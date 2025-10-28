@@ -15,7 +15,7 @@ const PatientRegisterSchema = Yup.object().shape({
   password: Yup.string()
     .min(8, 'Password must be at least 8 characters long')
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])/,
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/,
       'Password needs a mix of uppercase, lowercase, numbers, and special characters'
     )
     .required('Password is required'),
@@ -65,7 +65,7 @@ const PatientRegister: React.FC = () => {
             initialValues={{ name: '', email: '', dob: '', state: '', password: '', confirmPassword: '' }}
             validationSchema={PatientRegisterSchema}
             onSubmit={(values, { setSubmitting }) => {
-              register({ name: values.name, email: values.email, dob: values.dob, state: values.state }, UserRole.PATIENT);
+              register({ name: values.name, email: values.email, dob: values.dob, state: values.state, password: values.password }, UserRole.PATIENT);
               setSubmitting(false);
             }}
           >

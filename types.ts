@@ -1,6 +1,3 @@
-// FIX: Removed self-import of `UserRole` which was causing a declaration conflict.
-
-// FIX: Added 'ADMIN' to UserRole to support admin-specific functionality.
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -47,6 +44,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string;
   role: UserRole;
   avatarUrl?: string;
   phone?: string;
