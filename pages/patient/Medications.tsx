@@ -6,7 +6,7 @@ import { PillIcon, CheckCircleIcon, PlusIcon, SpinnerIcon } from '../../componen
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';
 import Modal from '../../components/shared/Modal';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const MedicationInfoModal: React.FC<{ medName: string | null; onClose: () => void; }> = ({ medName, onClose }) => {
     const [info, setInfo] = useState('');
@@ -20,12 +20,11 @@ const MedicationInfoModal: React.FC<{ medName: string | null; onClose: () => voi
                 setError('');
                 setInfo('');
                 try {
-                    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-                    const response = await ai.models.generateContent({
-                        model: 'gemini-2.5-flash',
-                        contents: `Provide a brief, patient-friendly summary for the medication "${medName}". Include what it's commonly used for, common side effects, and one important administration instruction. DO NOT provide dosage advice. Start with "### About ${medName}" and use markdown for formatting.`,
-                    });
-                    setInfo(response.text);
+                    const ai = new GoogleGenerativeAI(process.env.API_KEY as string);
+                    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash-latest"});
+                    const result = await model.generateContent(`Provide a brief, patient-friendly summary for the medication "${medName}". Include what it's commonly used for, common side effects, and one important administration instruction. DO NOT provide dosage advice. Start with "### About ${medName}" and use markdown for formatting.`);
+                    const response = await result.response;
+                    setInfo(response.text());
                 } catch (e) {
                     console.error("Failed to fetch medication info", e);
                     setError('Could not retrieve information at this time.');

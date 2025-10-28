@@ -9,7 +9,7 @@ import { useApp } from '../../App';
 import { SpinnerIcon, SparklesIcon } from '../../components/shared/Icons';
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 
 const getStatusPill = (status: ProgressNote['status']) => {
@@ -49,16 +49,16 @@ const NoteSchema = Yup.object().shape({
 
 // --- Note Editor Modal ---
 const NoteEditorModal: React.FC<{ 
-    note: Partial<ProgressNote> & { unstructuredNotes?: string } | null; 
-    onClose: () => void; 
-    onSave: (values: any) => void; 
+    note: Partial<ProgressNote> & { unstructuredNotes?: string } | null;
+    onClose: () => void;
+    onSave: (values: NoteFormValues) => void;
     isSubmitting: boolean;
     patients: User[];
 }> = ({ note, onClose, onSave, isSubmitting, patients }) => {
-
-    if (!note) return null;
     const { showToast } = useApp();
     const [isAiLoading, setIsAiLoading] = useState(false);
+
+    if (!note) return null;
 
     const initialValues: NoteFormValues = {
         id: note.id,
@@ -82,26 +82,14 @@ const NoteEditorModal: React.FC<{
         setIsAiLoading(true);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: `Convert the following clinical notes into a structured SOAP note: "${text}"`,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            subjective: { type: Type.STRING, description: "Patient's subjective complaints." },
-                            objective: { type: Type.STRING, description: "Objective findings from exam/labs." },
-                            assessment: { type: Type.STRING, description: "Assessment or diagnosis." },
-                            plan: { type: Type.STRING, description: "The treatment plan." }
-                        }
-                    }
-                }
+            const ai = new GoogleGenerativeAI(process.env.API_KEY as string);
+            const model = ai.getGenerativeModel({
+                model: "gemini-1.5-flash-latest",
+                generationConfig: { responseMimeType: "application/json" },
             });
-
-            const jsonStr = response.text.trim();
-            const soapNote = JSON.parse(jsonStr);
+            const result = await model.generateContent(`Convert the following clinical notes into a structured SOAP note: "${text}"`);
+            const response = await result.response;
+            const soapNote = JSON.parse(response.text());
 
             setFieldValue('content.subjective', soapNote.subjective || '');
             setFieldValue('content.objective', soapNote.objective || '');
@@ -206,7 +194,7 @@ const ProgressNotes: React.FC = () => {
         return users.filter(u => u.role === UserRole.PATIENT && u.state === user.state);
     }, [users, user]);
 
-    const handleSaveNote = (values: any) => {
+    const handleSaveNote = (values: NoteFormValues) => {
         setIsSubmitting(true);
         setTimeout(() => {
             if (values.id) { // Editing existing note

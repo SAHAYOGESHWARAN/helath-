@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, GroundingChunk } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
@@ -11,7 +11,17 @@ interface Message {
   role: 'user' | 'model';
   parts: { text: string }[];
   suggestions?: string[];
-  groundingChunks?: GroundingChunk[];
+  groundingAttributions?: {
+    sourceId: {
+      semanticRetrieverChunk: {
+        source: string;
+        chunk: string;
+      };
+    };
+    content: {
+      text: string;
+    };
+  }[];
 }
 
 const AIHealthGuide: React.FC = () => {
@@ -20,11 +30,11 @@ const AIHealthGuide: React.FC = () => {
   const [history, setHistory] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ai = useRef<GoogleGenAI | null>(null);
+  const ai = useRef<GoogleGenerativeAI | null>(null);
 
   useEffect(() => {
     if (process.env.API_KEY) {
-      ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      ai.current = new GoogleGenerativeAI(process.env.API_KEY);
     } else {
       console.error("API_KEY environment variable not set.");
     }
@@ -85,37 +95,35 @@ const AIHealthGuide: React.FC = () => {
       - At the end of EVERY single response, without exception, you MUST include a clear, bolded disclaimer on its own line: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
       - Keep your tone empathetic, clear, and helpful.`;
       
-      const contents = historyForApi.map(msg => ({ role: msg.role, parts: msg.parts }));
-      
-      const responseStream = await ai.current.models.generateContentStream({
-        model: 'gemini-2.5-flash',
-        contents: contents,
-        config: {
-          systemInstruction: systemInstruction,
-          tools: [{googleSearch: {}}]
-        }
+      const model = ai.current.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+      const chat = model.startChat({
+        history: [
+            {role: "system", parts: [{text: systemInstruction}]},
+            ...historyForApi.map(msg => ({
+          role: msg.role,
+          parts: msg.parts,
+        }))],
       });
 
+      const result = await chat.sendMessageStream(text);
       let responseReceived = false;
-      for await (const chunk of responseStream) {
-        const chunkText = chunk.text;
-        if (chunkText) {
-          responseReceived = true;
-          const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-          
-          setHistory(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage && lastMessage.role === 'model') {
-              const updatedMessage = {
-                ...lastMessage,
-                parts: [{ text: lastMessage.parts[0].text + chunkText }],
-                groundingChunks: groundingChunks.length > 0 ? groundingChunks : lastMessage.groundingChunks,
-              };
-              return [...prev.slice(0, -1), updatedMessage];
-            }
-            return prev;
-          });
-        }
+      for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          if (chunkText) {
+              responseReceived = true;
+              setHistory(prev => {
+                  const lastMessage = prev[prev.length - 1];
+                  if (lastMessage && lastMessage.role === 'model') {
+                      const updatedMessage = {
+                          ...lastMessage,
+                          parts: [{ text: lastMessage.parts[0].text + chunkText }],
+                          groundingAttributions: chunk.chunk?.groundingAttributions,
+                      };
+                      return [...prev.slice(0, -1), updatedMessage];
+                  }
+                  return prev;
+              });
+          }
       }
       
       if (!responseReceived) {
@@ -173,29 +181,29 @@ const AIHealthGuide: React.FC = () => {
                 )}
                 <div className={`max-w-xl p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
                   <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
-                   {msg.role === 'model' && msg.groundingChunks && msg.groundingChunks.length > 0 && (
-                      <div className="mt-4 pt-3 border-t border-gray-300">
-                        <h4 className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
-                          <GlobeAltIcon className="w-4 h-4 mr-1.5" />
-                          Sources
-                        </h4>
-                        <ol className="list-decimal list-inside space-y-1">
-                          {msg.groundingChunks.map((chunk, i) => (
-                            <li key={i} className="text-xs">
-                              <a 
-                                href={chunk.web.uri} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-600 hover:underline truncate block"
-                                title={chunk.web.title}
-                              >
-                                {chunk.web.title}
-                              </a>
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    )}
+                  {msg.role === 'model' && msg.groundingAttributions && msg.groundingAttributions.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-gray-300">
+                      <h4 className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
+                        <GlobeAltIcon className="w-4 h-4 mr-1.5" />
+                        Sources
+                      </h4>
+                      <ol className="list-decimal list-inside space-y-1">
+                        {msg.groundingAttributions.map((attribution, i) => (
+                          <li key={i} className="text-xs">
+                            <a
+                              href={attribution.sourceId.semanticRetrieverChunk.source}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline truncate block"
+                              title={attribution.sourceId.semanticRetrieverChunk.chunk}
+                            >
+                              {attribution.sourceId.semanticRetrieverChunk.chunk}
+                            </a>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               </div>
               {msg.role === 'model' && msg.suggestions && (
