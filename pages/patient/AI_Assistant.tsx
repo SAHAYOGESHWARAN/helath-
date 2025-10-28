@@ -7,21 +7,13 @@ import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 import PageHeader from '../../components/shared/PageHeader';
 
+import { CitationMetadata } from '@google/generative-ai';
+
 interface Message {
   role: 'user' | 'model';
   parts: { text: string }[];
   suggestions?: string[];
-  groundingAttributions?: {
-    sourceId: {
-      semanticRetrieverChunk: {
-        source: string;
-        chunk: string;
-      };
-    };
-    content: {
-      text: string;
-    };
-  }[];
+  citationMetadata?: CitationMetadata;
 }
 
 const AIHealthGuide: React.FC = () => {
@@ -117,7 +109,7 @@ const AIHealthGuide: React.FC = () => {
                       const updatedMessage = {
                           ...lastMessage,
                           parts: [{ text: lastMessage.parts[0].text + chunkText }],
-                          groundingAttributions: chunk.chunk?.groundingAttributions,
+                          citationMetadata: chunk.candidates[0].citationMetadata,
                       };
                       return [...prev.slice(0, -1), updatedMessage];
                   }
@@ -181,23 +173,23 @@ const AIHealthGuide: React.FC = () => {
                 )}
                 <div className={`max-w-xl p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
                   <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
-                  {msg.role === 'model' && msg.groundingAttributions && msg.groundingAttributions.length > 0 && (
+                  {msg.role === 'model' && msg.citationMetadata && msg.citationMetadata.citationSources.length > 0 && (
                     <div className="mt-4 pt-3 border-t border-gray-300">
                       <h4 className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
                         <GlobeAltIcon className="w-4 h-4 mr-1.5" />
                         Sources
                       </h4>
                       <ol className="list-decimal list-inside space-y-1">
-                        {msg.groundingAttributions.map((attribution, i) => (
+                        {msg.citationMetadata.citationSources.map((source, i) => (
                           <li key={i} className="text-xs">
                             <a
-                              href={attribution.sourceId.semanticRetrieverChunk.source}
+                              href={source.uri}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:underline truncate block"
-                              title={attribution.sourceId.semanticRetrieverChunk.chunk}
+                              title={source.uri}
                             >
-                              {attribution.sourceId.semanticRetrieverChunk.chunk}
+                              {source.uri}
                             </a>
                           </li>
                         ))}

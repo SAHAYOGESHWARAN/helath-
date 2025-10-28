@@ -85,7 +85,6 @@ const NoteEditorModal: React.FC<{
             const ai = new GoogleGenerativeAI(process.env.API_KEY as string);
             const model = ai.getGenerativeModel({
                 model: "gemini-1.5-flash-latest",
-                generationConfig: { responseMimeType: "application/json" },
             });
             const result = await model.generateContent(`Convert the following clinical notes into a structured SOAP note: "${text}"`);
             const response = await result.response;
