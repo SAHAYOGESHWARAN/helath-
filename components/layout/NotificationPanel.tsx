@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
-import { BellIcon, CheckCircleIcon } from '../shared/Icons';
+import { BellIcon } from '../shared/Icons';
 import { Link } from 'react-router-dom';
 
 interface NotificationPanelProps {

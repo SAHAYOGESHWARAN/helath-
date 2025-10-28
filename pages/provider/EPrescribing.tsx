@@ -44,9 +44,9 @@ const EPrescribing: React.FC = () => {
     const [initialFormValues, setInitialFormValues] = useState({ patientName: '', drug: '', dosage: '', frequency: '', quantity: 30, refills: 0, pharmacy: '' });
     
     useEffect(() => {
-        const patientContext = location.state as { patientId: string, patientName: string } | null;
-        if (patientContext?.patientId && patientContext?.patientName) {
-            handleNewPrescription(patientContext.patientId, patientContext.patientName);
+        const patientContext = location.state as { patientId: string } | null;
+        if (patientContext?.patientId) {
+            handleNewPrescription(patientContext.patientId);
              // Clear location state to prevent re-triggering
             window.history.replaceState({}, document.title)
         }
@@ -63,7 +63,7 @@ const EPrescribing: React.FC = () => {
         return users.filter(u => u.role === UserRole.PATIENT && u.state === user.state);
     }, [users, user]);
 
-    const handleNewPrescription = (patientId = '', patientName = '') => {
+    const handleNewPrescription = (patientId = '') => {
         const patient = providerPatients.find(p => p.id === patientId);
         setInitialFormValues({
             patientName: patient ? patient.name : '',

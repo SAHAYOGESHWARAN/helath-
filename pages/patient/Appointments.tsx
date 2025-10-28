@@ -4,7 +4,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, User, UserRole } from '../../types';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../App';
-import { CalendarIcon, ClockIcon, VideoCameraIcon, SpinnerIcon, UsersIcon, ChevronLeftIcon, ArrowLeftIcon, ArrowRightIcon } from '../../components/shared/Icons';
+import { ClockIcon, VideoCameraIcon, SpinnerIcon, UsersIcon, ChevronLeftIcon, ArrowLeftIcon, ArrowRightIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { MEDICAL_SPECIALTIES } from '../../constants';
@@ -152,7 +152,7 @@ const SchedulerModal: React.FC<{onClose: () => void, availableProviders: User[]}
 };
 
 const PatientAppointments: React.FC = () => {
-    const { user: patientUser, users, appointments, cancelAppointment, submitAppointmentFeedback } = useAuth();
+    const { user: patientUser, users, appointments, cancelAppointment } = useAuth();
     const { showToast } = useApp();
 
     const [modal, setModal] = useState<'request' | 'details' | 'cancel' | 'feedback' | null>(null);
@@ -180,17 +180,6 @@ const PatientAppointments: React.FC = () => {
         setTimeout(() => {
             cancelAppointment(selectedAppointment.id);
             showToast('Appointment cancelled successfully.', 'success');
-            setIsSubmitting(false);
-            setModal(null);
-        }, 800);
-    };
-
-    const handleFeedbackSubmit = (values: { summary: string }) => {
-        if (!selectedAppointment) return;
-        setIsSubmitting(true);
-        setTimeout(() => {
-            submitAppointmentFeedback(selectedAppointment.id, values.summary);
-            showToast('Feedback submitted. Thank you!', 'success');
             setIsSubmitting(false);
             setModal(null);
         }, 800);
