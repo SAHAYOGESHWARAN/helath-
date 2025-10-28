@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Medication } from '../../types';
-import { PillIcon, CheckCircleIcon, PlusIcon, SparklesIcon, SpinnerIcon } from '../../components/shared/Icons';
+import { PillIcon, CheckCircleIcon, PlusIcon, SpinnerIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';
 import Modal from '../../components/shared/Modal';

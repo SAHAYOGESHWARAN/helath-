@@ -6,10 +6,7 @@ import {
     DocumentTextIcon,
     CalendarIcon,
     SparklesIcon,
-    ArrowRightIcon,
-    BriefcaseIcon,
-    UserGroupIcon,
-    AcademicCapIcon
+    ArrowRightIcon
 } from '../components/shared/Icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -93,7 +90,7 @@ const HeroSection: React.FC = () => {
     
     return (
         <section className="relative bg-gray-900 text-white pt-32 pb-24 md:pt-48 md:pb-32 flex items-center justify-center text-center">
-            <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{backgroundImage: "url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')"}}></div>
+            <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{backgroundImage: "url('https://images.unsplash.com/photo-1579684385127-6ab18a5d781a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80')"}}></div>
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-900/80 to-transparent"></div>
 
             <div className="container mx-auto px-6 relative z-10">
@@ -217,7 +214,7 @@ const TestimonialsSection: React.FC = () => {
 
 const FinalCtaSection: React.FC = () => (
     <AnimatedSection className="py-24 bg-white">
-        <div className="container mx-auto px-6 text-center bg-primary-600 rounded-2xl py-16 text-white" style={{backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.9), rgba(59, 130, 246, 0.9)), url(https://images.unsplash.com/photo-1556761175-577380e25948?q=80&w=2070&auto=format&fit=crop)'}}>
+        <div className="container mx-auto px-6 text-center bg-primary-600 rounded-2xl py-16 text-white" style={{backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.95), rgba(59, 130, 246, 0.95)), url("/pattern-dark.svg")'}}>
             <h2 className="text-4xl font-bold">Start Your Journey to Better Health Today</h2>
             <p className="mt-4 text-lg text-primary-100 max-w-2xl mx-auto">Create an account in minutes and take the first step towards a more connected and empowered healthcare experience.</p>
             <div className="mt-8">

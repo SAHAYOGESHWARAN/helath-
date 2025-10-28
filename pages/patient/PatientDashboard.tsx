@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { CalendarIcon, SparklesIcon, VideoCameraIcon } from '../../components/shared/Icons';
+import { SparklesIcon, VideoCameraIcon } from '../../components/shared/Icons';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
 import { GoogleGenAI } from '@google/genai';

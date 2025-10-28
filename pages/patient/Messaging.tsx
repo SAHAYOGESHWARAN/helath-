@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { User, ChatMessage, UserRole } from '../../types';
+import { User, UserRole } from '../../types';
 import Card from '../../components/shared/Card';
 import { SearchIcon, MessageSquareIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
@@ -45,7 +45,7 @@ const Messaging: React.FC = () => {
 
     const [selectedProvider, setSelectedProvider] = useState<User | null>(providersInConversations.length > 0 ? providersInConversations[0] : null);
     const [newMessage, setNewMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

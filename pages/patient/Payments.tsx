@@ -5,7 +5,7 @@ import * as Yup from 'yup';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';
-import { SpinnerIcon, DownloadIcon, CreditCardIcon, PhonePeIcon } from '../../components/shared/Icons';
+import { SpinnerIcon, DownloadIcon, CreditCardIcon } from '../../components/shared/Icons';
 import { BillingInvoice } from '../../types';
 import Modal from '../../components/shared/Modal';
 import PageHeader from '../../components/shared/PageHeader';

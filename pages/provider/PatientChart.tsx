@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
 import PageHeader from '../../components/shared/PageHeader';
@@ -7,12 +7,9 @@ import {
     ChevronLeftIcon,
     PencilAltIcon,
     PillIcon,
-    CalendarIcon,
-    DocumentTextIcon,
     UserCircleIcon,
     ExclamationTriangleIcon,
     HeartIcon,
-    FilterIcon,
 } from '../../components/shared/Icons';
 
 type Tab = 'overview' | 'notes' | 'medications' | 'labs' | 'documents';

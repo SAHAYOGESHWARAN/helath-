@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,7 +12,6 @@ const LoginSchema = Yup.object().shape({
 
 const LoginPage: React.FC = () => {
   const { login, loading } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6">
@@ -29,11 +28,7 @@ const LoginPage: React.FC = () => {
             initialValues={{ email: '', password: '' }}
             validationSchema={LoginSchema}
             onSubmit={(values, { setSubmitting }) => {
-                // In a real app, you would pass values.password as well.
-                // For this mock, we only need the email to find the user.
-                login(values.email);
-                // The App.tsx router will handle navigation once user state changes.
-                // No need for navigate() here.
+                login(values.email, values.password);
                 setSubmitting(false);
             }}
           >

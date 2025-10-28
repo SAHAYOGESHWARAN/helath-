@@ -74,7 +74,7 @@ const PatientManagement: React.FC = () => {
     const sortedAndFilteredPatients = useMemo(() => {
         if (!providerUser?.state) return [];
         
-        let filtered = users.filter(p => {
+        const filtered = users.filter(p => {
             const matchesState = p.state === providerUser.state;
             const isPatient = p.role === UserRole.PATIENT;
             const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

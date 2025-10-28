@@ -17,7 +17,7 @@ const getInitials = (name: string) => {
 };
 
 const WaitingRoom: React.FC = () => {
-  const [patients, setPatients] = useState(initialPatients);
+  const [patients] = useState(initialPatients);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {

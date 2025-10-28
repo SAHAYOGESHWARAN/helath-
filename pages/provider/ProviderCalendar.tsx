@@ -3,7 +3,6 @@ import Card from '../../components/shared/Card';
 import { ChevronLeftIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
-import { Appointment as AppointmentType } from '../../types';
 
 interface CalendarAppointment {
   id: string;
@@ -80,7 +79,7 @@ const CalendarHeader: React.FC<{
 }> = ({ currentDate, view, onViewChange, onDateChange }) => {
 
   const handlePrev = () => {
-    let newDate = new Date(currentDate);
+    const newDate = new Date(currentDate);
     if (view === 'month') newDate.setMonth(newDate.getMonth() - 1);
     else if (view === 'week') newDate.setDate(newDate.getDate() - 7);
     else newDate.setDate(newDate.getDate() - 1);
@@ -88,7 +87,7 @@ const CalendarHeader: React.FC<{
   };
 
   const handleNext = () => {
-    let newDate = new Date(currentDate);
+    const newDate = new Date(currentDate);
     if (view === 'month') newDate.setMonth(newDate.getMonth() + 1);
     else if (view === 'week') newDate.setDate(newDate.getDate() + 7);
     else newDate.setDate(newDate.getDate() + 1);
@@ -138,7 +137,7 @@ const MonthView: React.FC<{ currentDate: Date; appointments: CalendarAppointment
         const firstDay = date.getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        let dayCells = [];
+        const dayCells = [];
 
         // Add blank cells for previous month
         for (let i = 0; i < firstDay; i++) {

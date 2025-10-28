@@ -16,7 +16,7 @@ const ProviderRegisterSchema = Yup.object().shape({
   password: Yup.string()
     .min(8, 'Password must be at least 8 characters long')
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])/,
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/,
       'Password needs a mix of uppercase, lowercase, numbers, and special characters'
     )
     .required('Password is required'),
@@ -71,7 +71,8 @@ const ProviderRegister: React.FC = () => {
                 email: values.email, 
                 specialty: values.specialty, 
                 state: values.state,
-                licenseNumber: values.licenseNumber
+                licenseNumber: values.licenseNumber,
+                password: values.password
               }, UserRole.PROVIDER);
               setSubmitting(false);
             }}
