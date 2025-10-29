@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, VideoCameraIcon, DumbbellIcon } from '../../components/shared/Icons';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 
 const GoalProgress: React.FC<{ goal: any }> = ({ goal }) => {
@@ -71,7 +71,7 @@ const PatientDashboard: React.FC = () => {
     setSummaryError('');
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenerativeAI(process.env.API_KEY as string);
 
         const emrData = `
             - Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None listed'}
@@ -94,15 +94,12 @@ const PatientDashboard: React.FC = () => {
         - Your tone should be encouraging and informative, not alarming.
         - You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
         `;
-        
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: `Please summarize this health data for the patient, ${user.name}: ${emrData}`,
-            config: {
-                systemInstruction: systemInstruction,
-            }
-        });
-        setSummary(response.text);
+
+        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const result = await model.generateContent(`${systemInstruction}\n\nPlease summarize this health data for the patient, ${user.name}: ${emrData}`);
+        const response = result.response;
+        const text = response.text();
+        setSummary(text);
 
     } catch (error) {
         console.error("Error generating health summary:", error);

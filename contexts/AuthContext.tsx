@@ -8,7 +8,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password?: string) => void;
   logout: () => void;
-  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => void;
+  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'> & { password?: string }, role: UserRole) => void;
   updateUser: (updater: (currentUser: User) => User) => Promise<void>;
   claims: Claim[];
   addClaim: (newClaim: Omit<Claim, 'id'>) => void;
@@ -91,16 +91,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }, 500);
     }, []);
 
-    const register = useCallback((userData: Partial<Omit<User, 'id' | 'role' | 'avatarUrl'>>, role: UserRole) => {
+    const register = useCallback((userData: Partial<Omit<User, 'id' | 'role' | 'avatarUrl'>> & { password?: string }, role: UserRole) => {
         setLoading(true);
         setTimeout(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { password, ...restUserData } = userData;
             const newUser: User = {
                 id: `user_${Date.now()}`,
-                name: userData.name || '',
-                email: userData.email || '',
-                ...userData,
+                name: restUserData.name || '',
+                email: restUserData.email || '',
+                ...restUserData,
                 role,
-                avatarUrl: `https://picsum.photos/seed/${userData.name}/100`,
+                avatarUrl: `https://picsum.photos/seed/${restUserData.name}/100`,
                 status: 'Active',
                 isVerified: role !== UserRole.PROVIDER,
             };

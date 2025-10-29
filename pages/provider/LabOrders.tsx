@@ -93,7 +93,9 @@ const NewLabOrderModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
                                         ))}
                                     </div>
                                      <button type="button" onClick={() => push('')} className="text-sm text-primary-600 font-semibold">+ Add Custom Test</button>
-                                    <ErrorMessage name="tests" component={props => <div className="text-red-500 text-xs mt-1">{typeof props.children === 'string' ? props.children : ''}</div>} />
+                                    <ErrorMessage name="tests">
+                                        {msg => <div className="text-red-500 text-xs mt-1">{msg}</div>}
+                                    </ErrorMessage>
                                 </div>
                             )}
                         </FieldArray>

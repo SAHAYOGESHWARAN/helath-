@@ -1,11 +1,12 @@
 import React from 'react';
 
-const IconBase: React.FC<{ children: React.ReactNode; className?: string; fill?: string; stroke?: string }> = ({ children, className, fill, stroke }) => (
-    <svg 
-        className={className || "w-6 h-6"} 
-        fill={fill || "none"} 
-        stroke={stroke || "currentColor"} 
-        viewBox="0 0 24 24" 
+const IconBase: React.FC<{ children: React.ReactNode; className?: string; fill?: string; stroke?: string; strokeWidth?: number }> = ({ children, className, fill, stroke, strokeWidth }) => (
+    <svg
+        className={className || "w-6 h-6"}
+        fill={fill || "none"}
+        stroke={stroke || "currentColor"}
+        strokeWidth={strokeWidth || 2}
+        viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
     >
         {children}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat, GroundingMetadata } from '@google/genai';
+import { GoogleGenerativeAI, ChatSession, GenerationConfig } from '@google/generative-ai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
@@ -10,7 +10,7 @@ interface Message {
   role: 'user' | 'model';
   parts: { text: string }[];
   suggestions?: string[];
-  groundingMetadata?: GroundingMetadata;
+  groundingMetadata?: any;
 }
 
 const AIWeightLossCoach: React.FC = () => {
@@ -19,12 +19,12 @@ const AIWeightLossCoach: React.FC = () => {
   const [history, setHistory] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ai = useRef<GoogleGenAI | null>(null);
-  const chat = useRef<Chat | null>(null);
+  const ai = useRef<GoogleGenerativeAI | null>(null);
+  const chat = useRef<ChatSession | null>(null);
 
   useEffect(() => {
     // Per coding guidelines, API_KEY is assumed to be available from process.env.
-    ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    ai.current = new GoogleGenerativeAI(process.env.API_KEY as string);
   }, []);
 
   useEffect(() => {
@@ -97,12 +97,8 @@ const AIWeightLossCoach: React.FC = () => {
       - Keep your tone empathetic, clear, and helpful.`;
       
       if (!chat.current) {
-        chat.current = ai.current.chats.create({
-            model: "gemini-2.5-flash",
-            config: {
-                systemInstruction: systemInstruction,
-                tools: [{googleSearch: {}}],
-            },
+        const model = ai.current.getGenerativeModel({ model: "gemini-2.5-flash" });
+        chat.current = model.startChat({
             history: historyForApi.map(msg => ({
               role: msg.role,
               parts: msg.parts,
@@ -110,10 +106,10 @@ const AIWeightLossCoach: React.FC = () => {
         });
       }
 
-      const resultStream = await chat.current.sendMessageStream({ message: text });
+      const result = await chat.current.sendMessageStream(`${systemInstruction}\n\n${text}`);
       let responseReceived = false;
-      for await (const chunk of resultStream) {
-          const chunkText = chunk.text;
+      for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
           if (chunkText) {
               responseReceived = true;
               setHistory(prev => {
@@ -122,7 +118,6 @@ const AIWeightLossCoach: React.FC = () => {
                       const updatedMessage = {
                           ...lastMessage,
                           parts: [{ text: lastMessage.parts[0].text + chunkText }],
-                          groundingMetadata: chunk.candidates?.[0]?.groundingMetadata,
                       };
                       return [...prev.slice(0, -1), updatedMessage];
                   }
