@@ -1,75 +1,21 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { ChevronLeftIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
+import Modal from '../../components/shared/Modal';
+import { useNavigate } from 'react-router-dom';
 
 interface CalendarAppointment {
   id: string;
+  patientId: string;
   title: string;
   start: Date;
   end: Date;
 }
 
 type CalendarView = 'month' | 'week' | 'day';
-
-const AppointmentDetailModal: React.FC<{
-  appointment: CalendarAppointment | null;
-  onClose: () => void;
-}> = ({ appointment, onClose }) => {
-    if (!appointment) return null;
-
-    const [patientName, reason] = appointment.title.includes(' - ') 
-      ? appointment.title.split(' - ') 
-      : [appointment.title, 'General Visit'];
-
-    const handleViewChart = () => {
-        alert(`Viewing chart for ${patientName}... (mock)`);
-        onClose();
-    };
-
-    const handleReschedule = () => {
-        alert(`Rescheduling appointment for ${patientName}... (mock)`);
-        onClose();
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 animate-slide-in-up" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center pb-3 border-b border-gray-200">
-                    <h3 className="text-xl font-bold text-gray-800">Appointment Details</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                </div>
-                
-                <div className="mt-4 space-y-4">
-                    <div>
-                        <p className="text-sm text-gray-500">Patient</p>
-                        <p className="font-semibold text-lg text-gray-800">{patientName}</p>
-                    </div>
-                     <div>
-                        <p className="text-sm text-gray-500">Reason for Visit</p>
-                        <p className="font-semibold text-lg text-gray-800">{reason}</p>
-                    </div>
-                     <div>
-                        <p className="text-sm text-gray-500">Time</p>
-                        <p className="font-semibold text-lg text-gray-800">
-                            {appointment.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {appointment.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                    <button onClick={handleReschedule} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">
-                        Reschedule
-                    </button>
-                    <button onClick={handleViewChart} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">
-                        View Patient Chart
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const CalendarHeader: React.FC<{
   currentDate: Date;
@@ -129,7 +75,11 @@ const CalendarHeader: React.FC<{
   );
 };
 
-const MonthView: React.FC<{ currentDate: Date; appointments: CalendarAppointment[]; onAppointmentClick: (appointment: CalendarAppointment) => void; }> = ({ currentDate, appointments, onAppointmentClick }) => {
+const MonthView: React.FC<{
+    currentDate: Date;
+    appointments: CalendarAppointment[];
+    onAppointmentClick: (appt: CalendarAppointment) => void;
+}> = ({ currentDate, appointments, onAppointmentClick }) => {
     const days = useMemo(() => {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const month = date.getMonth();
@@ -186,8 +136,8 @@ const MonthView: React.FC<{ currentDate: Date; appointments: CalendarAppointment
                                 {dayAppointments.map(appt => (
                                     <div 
                                       key={appt.id} 
-                                      className="bg-primary-100 text-primary-800 p-1.5 rounded-md text-xs truncate cursor-pointer hover:bg-primary-200 transition-colors"
                                       onClick={() => onAppointmentClick(appt)}
+                                      className="bg-primary-100 text-primary-800 p-1.5 rounded-md text-xs truncate cursor-pointer hover:bg-primary-200 transition-colors"
                                     >
                                         {appt.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })} {appt.title}
                                     </div>
@@ -201,7 +151,11 @@ const MonthView: React.FC<{ currentDate: Date; appointments: CalendarAppointment
     );
 };
 
-const TimeGridView: React.FC<{ dates: Date[]; appointments: CalendarAppointment[]; onAppointmentClick: (appointment: CalendarAppointment) => void; }> = ({ dates, appointments, onAppointmentClick }) => {
+const TimeGridView: React.FC<{
+    dates: Date[];
+    appointments: CalendarAppointment[];
+    onAppointmentClick: (appointment: CalendarAppointment) => void;
+}> = ({ dates, appointments, onAppointmentClick }) => {
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
     const getPositionAndHeight = (start: Date, end: Date) => {
@@ -233,7 +187,7 @@ const TimeGridView: React.FC<{ dates: Date[]; appointments: CalendarAppointment[
                                 return (
                                     <div
                                         key={appt.id}
-                                        className="absolute left-2 right-2 p-2 bg-primary-100 border-l-4 border-primary-500 rounded-r-md cursor-pointer hover:bg-primary-200 transition-colors flex flex-col overflow-hidden"
+                                        className="absolute left-2 right-2 p-2 bg-primary-100 border-l-4 border-primary-500 rounded-r-md flex flex-col overflow-hidden cursor-pointer hover:bg-primary-200 transition-colors"
                                         style={{ top, height, minHeight: '24px' }}
                                         onClick={() => onAppointmentClick(appt)}
                                     >
@@ -252,6 +206,31 @@ const TimeGridView: React.FC<{ dates: Date[]; appointments: CalendarAppointment[
     );
 };
 
+const AppointmentDetailsModal: React.FC<{ appointment: CalendarAppointment | null; onClose: () => void }> = ({ appointment, onClose }) => {
+    const navigate = useNavigate();
+
+    if (!appointment) return null;
+    const [patientName, reason] = appointment.title.includes(' - ') ? appointment.title.split(' - ') : [appointment.title, 'General Visit'];
+    
+    const viewChart = () => {
+        onClose();
+        navigate(`/patients/${appointment.patientId}`);
+    };
+
+    return (
+        <Modal isOpen={!!appointment} onClose={onClose} title="Appointment Details">
+             <div className="space-y-4">
+                <p><strong>Patient:</strong> <span className="font-semibold text-gray-800">{patientName}</span></p>
+                <p><strong>Reason for Visit:</strong> <span className="font-semibold text-gray-800">{reason}</span></p>
+                <p><strong>Time:</strong> <span className="font-semibold text-gray-800">{appointment.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {appointment.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Close</button>
+                <button onClick={viewChart} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">View Patient Chart</button>
+            </div>
+        </Modal>
+    );
+};
 
 const ProviderCalendar: React.FC = () => {
     const { appointments: rawAppointments } = useAuth();
@@ -267,16 +246,13 @@ const ProviderCalendar: React.FC = () => {
                 const end = new Date(start.getTime() + appt.duration * 60000);
                 return {
                     id: appt.id,
+                    patientId: appt.patientId,
                     title: `${appt.patientName} - ${appt.reason}`,
                     start,
                     end,
                 };
             })
     , [rawAppointments]);
-
-    const handleAppointmentClick = (appointment: CalendarAppointment) => {
-        setSelectedAppointment(appointment);
-    };
 
     const weekDates = useMemo(() => {
         const startOfWeek = new Date(currentDate);
@@ -291,12 +267,12 @@ const ProviderCalendar: React.FC = () => {
     const renderView = () => {
         switch(view) {
             case 'week':
-                return <TimeGridView dates={weekDates} appointments={appointments} onAppointmentClick={handleAppointmentClick} />;
+                return <TimeGridView dates={weekDates} appointments={appointments} onAppointmentClick={setSelectedAppointment} />;
             case 'day':
-                return <TimeGridView dates={[currentDate]} appointments={appointments} onAppointmentClick={handleAppointmentClick} />;
+                return <TimeGridView dates={[currentDate]} appointments={appointments} onAppointmentClick={setSelectedAppointment} />;
             case 'month':
             default:
-                return <MonthView currentDate={currentDate} appointments={appointments} onAppointmentClick={handleAppointmentClick} />;
+                return <MonthView currentDate={currentDate} appointments={appointments} onAppointmentClick={setSelectedAppointment} />;
         }
     };
     
@@ -316,10 +292,7 @@ const ProviderCalendar: React.FC = () => {
                     </div>
                 )}
             </Card>
-            <AppointmentDetailModal
-                appointment={selectedAppointment}
-                onClose={() => setSelectedAppointment(null)}
-            />
+            <AppointmentDetailsModal appointment={selectedAppointment} onClose={() => setSelectedAppointment(null)} />
         </div>
     );
 };

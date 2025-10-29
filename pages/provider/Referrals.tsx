@@ -1,112 +1,94 @@
-import React, { useState, useMemo } from 'react';
-import Card from '../../components/shared/Card';
+import React, { useState } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
-import Modal from '../../components/shared/Modal';
-import { Formik, Form, Field } from 'formik';
-import { useApp } from '../../App';
-import { SpinnerIcon } from '../../components/shared/Icons';
+import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { Referral } from '../../types';
+import { Referral, ReferralStatus } from '../../types';
+import { useTable } from '../../hooks/useTable';
+import PaginationControls from '../../components/shared/PaginationControls';
 
-type Status = 'Pending' | 'Approved' | 'Declined';
-
-const getStatusColor = (status: Status) => {
-  switch (status) {
-    case 'Approved': return 'bg-green-100 text-green-800';
-    case 'Pending': return 'bg-yellow-100 text-yellow-800';
-    case 'Declined': return 'bg-red-100 text-red-800';
-  }
+const getReferralStatusPill = (status: ReferralStatus) => {
+    const baseClasses = 'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full';
+    switch (status) {
+        case 'Pending': return `${baseClasses} bg-yellow-100 text-yellow-800`;
+        case 'Sent': return `${baseClasses} bg-emerald-100 text-emerald-800`;
+        case 'Completed': return `${baseClasses} bg-blue-100 text-blue-800`;
+        case 'Cancelled': return `${baseClasses} bg-red-100 text-red-800`;
+        default: return `${baseClasses} bg-gray-100 text-gray-800`;
+    }
 };
 
 const Referrals: React.FC = () => {
-  const { referrals, addReferral } = useAuth();
-  const [filter, setFilter] = useState('All');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { showToast } = useApp();
+    const { referrals } = useAuth();
+    
+    const { paginatedItems, paginationProps, setColumnFilters, getSortArrow, requestSort } = useTable<Referral>(
+        referrals, 
+        10, 
+        { 
+            initialSort: { key: 'createdAt', direction: 'desc' },
+            dateRangeFilterKey: 'createdAt',
+        }
+    );
+    
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setColumnFilters(prev => ({ ...prev, [name]: value }));
+    };
 
-  const filteredReferrals = useMemo(() => {
-    if (filter === 'All') return referrals;
-    return referrals.filter(r => r.type === filter);
-  }, [filter, referrals]);
-
-  return (
-    <div>
-        <PageHeader title="Referral Management" buttonText="Create New Referral" onButtonClick={() => setIsModalOpen(true)} />
-
-      <Card>
-        <div className="mb-4">
-          <div className="flex space-x-4 border-b">
-            <button onClick={() => setFilter('All')} className={`py-2 px-4 font-medium ${filter === 'All' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}>All</button>
-            <button onClick={() => setFilter('Incoming')} className={`py-2 px-4 font-medium ${filter === 'Incoming' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}>Incoming</button>
-            <button onClick={() => setFilter('Outgoing')} className={`py-2 px-4 font-medium ${filter === 'Outgoing' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}>Outgoing</button>
-          </div>
+    return (
+        <div>
+            <PageHeader title="Referrals" buttonText="New Referral" onButtonClick={() => {}} />
+            <Card>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-top">
+                                    <div onClick={() => requestSort('patientName')} className="flex items-center cursor-pointer mb-1"><span>Patient</span>{getSortArrow('patientName')}</div>
+                                    <input name="patientName" onChange={handleFilterChange} className="w-full text-sm p-1 border rounded bg-white" placeholder="Filter..." onClick={e => e.stopPropagation()}/>
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-top">
+                                    <div onClick={() => requestSort('referredTo')} className="flex items-center cursor-pointer mb-1"><span>Referred To</span>{getSortArrow('referredTo')}</div>
+                                    <input name="referredTo" onChange={handleFilterChange} className="w-full text-sm p-1 border rounded bg-white" placeholder="Filter..." onClick={e => e.stopPropagation()}/>
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-top">
+                                    <div onClick={() => requestSort('createdAt')} className="flex items-center cursor-pointer mb-1"><span>Date</span>{getSortArrow('createdAt')}</div>
+                                     <div className="flex items-center gap-1">
+                                        <input type="date" name="startDate" onChange={handleFilterChange} className="w-full text-sm p-1 border rounded bg-white" onClick={e => e.stopPropagation()} />
+                                        <span className="text-gray-500">-</span>
+                                        <input type="date" name="endDate" onChange={handleFilterChange} className="w-full text-sm p-1 border rounded bg-white" onClick={e => e.stopPropagation()} />
+                                    </div>
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-top">
+                                     <div onClick={() => requestSort('status')} className="flex items-center cursor-pointer mb-1"><span>Status</span>{getSortArrow('status')}</div>
+                                    <select name="status" onChange={handleFilterChange} className="w-full text-sm p-1 border rounded bg-white" onClick={e => e.stopPropagation()}>
+                                        <option value="">All</option>
+                                        {[ReferralStatus.PENDING, ReferralStatus.SENT, ReferralStatus.COMPLETED, ReferralStatus.CANCELLED].map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-top">
+                                    <div className="mb-1">Actions</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                           {paginatedItems.map(referral => (
+                                <tr key={referral.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium">{referral.patientName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{referral.referredTo}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{new Date(referral.createdAt).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap"><span className={getReferralStatusPill(referral.status)}>{referral.status}</span></td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <button className="text-primary-600 hover:underline text-sm">View</button>
+                                    </td>
+                                </tr>
+                           ))}
+                        </tbody>
+                    </table>
+                </div>
+                 <PaginationControls {...paginationProps} />
+            </Card>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-white">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred To/From</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReferrals.length > 0 ? filteredReferrals.map((ref) => (
-                <tr key={ref.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{ref.patient}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ref.type === 'Incoming' ? ref.referredFrom : ref.referredTo}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ref.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ref.reason}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(ref.status)}`}>
-                      {ref.status}
-                    </span>
-                  </td>
-                </tr>
-              )) : (
-                <tr><td colSpan={5} className="text-center py-10 text-gray-500">No referrals found.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-      
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Referral">
-          <Formik
-            initialValues={{ patient: '', specialist: '', reason: '' }}
-            onSubmit={(values, { setSubmitting, resetForm }) => {
-                const newReferral: Omit<Referral, 'id' | 'status'> = {
-                    patient: values.patient,
-                    referredTo: values.specialist,
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Outgoing',
-                    reason: values.reason,
-                };
-                addReferral(newReferral);
-                setSubmitting(false);
-                resetForm();
-                setIsModalOpen(false);
-                showToast("Referral submitted successfully!", "success");
-            }}
-          >
-            {({ isSubmitting }) => (
-                <Form className="space-y-4">
-                    <Field name="patient" placeholder="Patient Name" className="w-full p-2 border bg-white rounded"/>
-                    <Field name="specialist" placeholder="Specialist Name & Department" className="w-full p-2 border bg-white rounded"/>
-                    <Field as="textarea" name="reason" placeholder="Reason for referral" className="w-full p-2 border bg-white rounded"/>
-                    <div className="flex justify-end pt-4 border-t">
-                        <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-36 flex justify-center items-center">
-                            {isSubmitting ? <SpinnerIcon/> : "Submit Referral"}
-                        </button>
-                    </div>
-                </Form>
-            )}
-          </Formik>
-      </Modal>
-    </div>
-  );
+    );
 };
 
 export default Referrals;

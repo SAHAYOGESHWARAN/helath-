@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus, ClaimType, User, UserRole } from '../../types';
-import { CurrencyDollarIcon, SpinnerIcon } from '../../components/shared/Icons';
-import Modal from '../../components/shared/Modal';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
-import { Formik, Form, Field, ErrorMessage, FieldArray } from 'formik';
+import Modal from '../../components/shared/Modal';
+import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { TrashIcon } from '../../components/shared/Icons';
 import { useApp } from '../../App';
 
 const getStatusColor = (status: ClaimStatus) => {
@@ -23,108 +23,110 @@ const getStatusColor = (status: ClaimStatus) => {
   }
 };
 
-const ClaimSchema = Yup.object().shape({
+const SuperbillSchema = Yup.object().shape({
     patientId: Yup.string().required('Patient is required'),
-    serviceDate: Yup.date().required('Service date is required'),
+    serviceDate: Yup.date().required('Service date is required').max(new Date(), 'Service date cannot be in the future'),
     lineItems: Yup.array().of(
         Yup.object().shape({
-            service: Yup.string().required('Service description is required'),
+            service: Yup.string().required('Description is required'),
             charge: Yup.number().positive('Charge must be positive').required('Charge is required'),
         })
     ).min(1, 'At least one line item is required'),
 });
 
-const SuperbillModal: React.FC<{ 
-    isOpen: boolean; 
-    onClose: () => void; 
-    patients: User[]; 
-}> = ({ isOpen, onClose, patients }) => {
-    const { user, addClaim } = useAuth();
+const NewSuperbillModal: React.FC<{ isOpen: boolean; onClose: () => void; }> = ({ isOpen, onClose }) => {
+    const { users, addClaim, addInvoice } = useAuth();
     const { showToast } = useApp();
-
+    const patients = useMemo(() => users.filter(u => u.role === UserRole.PATIENT), [users]);
+    
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Create New Superbill" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title="Create New Superbill" size="xl">
             <Formik
                 initialValues={{ patientId: '', serviceDate: new Date().toISOString().split('T')[0], lineItems: [{ service: '', charge: '' }] }}
-                validationSchema={ClaimSchema}
+                validationSchema={SuperbillSchema}
                 onSubmit={(values, { setSubmitting, resetForm }) => {
-                    const totalClaimChargeAmount = values.lineItems.reduce((sum, item) => sum + Number(item.charge), 0);
+                    const patient = patients.find(p => p.id === values.patientId);
+                    if (!patient) return;
+
+                    const totalCharge = values.lineItems.reduce((sum, item) => sum + parseFloat(item.charge || '0'), 0);
+                    
+                    // This would normally be sent to a real billing API (e.g., Stripe)
                     const newClaim: Omit<Claim, 'id'> = {
                         patientId: values.patientId,
+                        provider: 'Dr. John Smith', // Logged in provider
+                        serviceDate: values.serviceDate,
                         status: ClaimStatus.DRAFT,
                         claimType: ClaimType.PROFESSIONAL,
-                        totalClaimChargeAmount,
-                        serviceDate: values.serviceDate,
-                        provider: user?.name || 'Unknown Provider',
-                        patientOwes: totalClaimChargeAmount, // Initially, patient owes full amount
+                        totalClaimChargeAmount: totalCharge,
+                        patientOwes: totalCharge, // Assuming no insurance for now
                         insurancePaid: 0,
-                        lineItems: values.lineItems.map(item => ({ service: item.service, charge: Number(item.charge) })),
+                        lineItems: values.lineItems.map(li => ({ service: li.service, charge: parseFloat(li.charge) })),
+                        createdAt: new Date().toISOString().split('T')[0],
                     };
                     addClaim(newClaim);
-                    showToast('Superbill created as a draft.', 'success');
+                    
+                    addInvoice({
+                        patientId: values.patientId,
+                        date: new Date().toISOString().split('T')[0],
+                        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        totalAmount: totalCharge,
+                        amountDue: totalCharge,
+                        status: 'Due',
+                        description: `Services on ${values.serviceDate}`,
+                    });
+
                     setSubmitting(false);
                     resetForm();
                     onClose();
+                    showToast('Superbill created successfully as a draft.', 'success');
                 }}
             >
-            {({ values, isSubmitting, errors, touched }) => (
-                <Form>
-                    <div className="space-y-4">
-                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium">Patient</label>
-                                <Field as="select" name="patientId" className={`w-full p-2 border rounded bg-white ${errors.patientId && touched.patientId ? 'border-red-500' : 'border-gray-300'}`}>
-                                    <option value="">Select a patient</option>
-                                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </Field>
-                                <ErrorMessage name="patientId" component="p" className="text-red-500 text-xs mt-1"/>
-                            </div>
-                             <div>
-                                <label className="block text-sm font-medium">Service Date</label>
-                                <Field type="date" name="serviceDate" className={`w-full p-2 border rounded ${errors.serviceDate && touched.serviceDate ? 'border-red-500' : 'border-gray-300'}`} />
-                                <ErrorMessage name="serviceDate" component="p" className="text-red-500 text-xs mt-1"/>
-                            </div>
+                {({ values, isSubmitting }) => (
+                    <Form>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <Field as="select" name="patientId" className="w-full p-2 border rounded">
+                                <option value="">Select Patient</option>
+                                {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </Field>
+                             <Field type="date" name="serviceDate" className="w-full p-2 border rounded" />
                         </div>
+                        <ErrorMessage name="patientId" component="div" className="text-red-500 text-xs" />
+                        <ErrorMessage name="serviceDate" component="div" className="text-red-500 text-xs" />
 
+                        <h3 className="font-semibold mt-4 mb-2">Line Items</h3>
                         <FieldArray name="lineItems">
-                        {({ push, remove }) => (
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium">Line Items</label>
-                                {values.lineItems.map((_, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <Field name={`lineItems.${index}.service`} placeholder="Service Description" className="w-full p-2 border rounded"/>
-                                        <Field name={`lineItems.${index}.charge`} type="number" placeholder="Charge" className="w-1/3 p-2 border rounded"/>
-                                        <button type="button" onClick={() => remove(index)} className="p-2 text-red-500">&times;</button>
-                                    </div>
-                                ))}
-                                <button type="button" onClick={() => push({ service: '', charge: '' })} className="text-sm text-primary-600">+ Add Item</button>
-                            </div>
-                        )}
+                            {({ push, remove }) => (
+                                <div className="space-y-2">
+                                    {values.lineItems.map((_, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <Field name={`lineItems.${index}.service`} placeholder="Service Description (e.g., Office Visit)" className="w-full p-2 border rounded" />
+                                            <Field name={`lineItems.${index}.charge`} type="number" placeholder="Charge" className="w-32 p-2 border rounded" />
+                                            <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 hover:bg-red-100 rounded-full"><TrashIcon className="w-5 h-5"/></button>
+                                        </div>
+                                    ))}
+                                    <button type="button" onClick={() => push({ service: '', charge: '' })} className="text-sm text-primary-600 font-semibold">+ Add Line Item</button>
+                                </div>
+                            )}
                         </FieldArray>
+                        <ErrorMessage name="lineItems" component="div" className="text-red-500 text-xs" />
 
-                        <div className="flex justify-end space-x-2 pt-4 border-t">
-                            <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
-                            <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-36 flex justify-center items-center">
-                                {isSubmitting ? <SpinnerIcon /> : 'Save Draft'}
-                            </button>
+
+                        <div className="flex justify-end space-x-2 mt-6">
+                            <button type="button" onClick={onClose} className="bg-gray-200 py-2 px-4 rounded-lg">Cancel</button>
+                            <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white py-2 px-4 rounded-lg">Save Superbill</button>
                         </div>
-                    </div>
-                </Form>
-            )}
+                    </Form>
+                )}
             </Formik>
         </Modal>
     );
 };
 
-const Billing: React.FC = () => {
-    const { user, users, claims } = useAuth();
-    const [filter, setFilter] = useState<ClaimStatus | 'All'>('All');
-    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const providerPatients = useMemo(() => {
-        if (!user) return [];
-        return users.filter(u => u.role === UserRole.PATIENT && u.state === user.state);
-    }, [users, user]);
+const Billing: React.FC = () => {
+    const { claims } = useAuth();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [filter, setFilter] = useState<ClaimStatus | 'All'>('All');
 
     const filteredClaims = useMemo(() => {
         if (filter === 'All') return claims;
@@ -138,12 +140,7 @@ const Billing: React.FC = () => {
 
   return (
     <div>
-        <PageHeader title="Billing & Coding" onButtonClick={() => setIsModalOpen(true)}>
-            <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
-                <CurrencyDollarIcon className="w-5 h-5"/>
-                <span>Create Superbill</span>
-            </button>
-        </PageHeader>
+        <PageHeader title="Billing & Coding" buttonText="Create Superbill" onButtonClick={() => setIsModalOpen(true)} />
       
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
@@ -208,7 +205,7 @@ const Billing: React.FC = () => {
                 </table>
             </div>
         </Card>
-        <SuperbillModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} patients={providerPatients} />
+        <NewSuperbillModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

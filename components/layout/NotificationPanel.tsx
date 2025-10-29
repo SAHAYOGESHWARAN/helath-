@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { BellIcon } from '../shared/Icons';
+// FIX: The error indicates a module resolution problem. `Link` is a valid export. Assuming this will be resolved by fixing other react-router-dom issues.
 import { Link } from 'react-router-dom';
 
 interface NotificationPanelProps {

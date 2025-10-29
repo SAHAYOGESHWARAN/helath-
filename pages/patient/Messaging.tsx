@@ -118,29 +118,41 @@ const Messaging: React.FC = () => {
                          <div className="relative"><input type="text" placeholder="Search contacts..." className="w-full pl-10 pr-4 py-2 border rounded-full bg-white focus:ring-2 focus:ring-primary-300" /><SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /></div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {providersInConversations.map(provider => {
-                            const thread = messages[provider.id] || [];
-                            const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
-                            const unreadCount = thread.filter(msg => !msg.isRead && msg.senderId === provider.id).length;
-                            return (
-                                <div key={provider.id} onClick={() => setSelectedProvider(provider)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedProvider?.id === provider.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
-                                    <div className="relative flex-shrink-0"><img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full" /><div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div></div>
-                                    <div className="ml-3 flex-grow overflow-hidden">
-                                        <div className="flex justify-between items-center"><p className="font-semibold text-gray-800 truncate">{provider.name}</p>{lastMessage && <p className="text-xs text-gray-400 flex-shrink-0 ml-2">{timeSince(lastMessage.timestamp)}</p>}</div>
-                                        <div className="flex justify-between items-center">
-                                            <p className={`text-sm text-gray-500 truncate ${unreadCount > 0 ? 'font-bold text-gray-800' : ''}`}>
-                                                {lastMessage?.text || provider.specialty}
-                                            </p>
-                                            {unreadCount > 0 && (
-                                                <span className="bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 ml-2">
-                                                    {unreadCount}
-                                                </span>
-                                            )}
+                        {providersInConversations.length > 0 ? (
+                            providersInConversations.map(provider => {
+                                const thread = messages[provider.id] || [];
+                                const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
+                                const unreadCount = thread.filter(msg => !msg.isRead && msg.senderId === provider.id).length;
+                                return (
+                                    <div key={provider.id} onClick={() => setSelectedProvider(provider)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedProvider?.id === provider.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
+                                        <div className="relative flex-shrink-0"><img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full" /><div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div></div>
+                                        <div className="ml-3 flex-grow overflow-hidden">
+                                            <div className="flex justify-between items-center"><p className="font-semibold text-gray-800 truncate">{provider.name}</p>{lastMessage && <p className="text-xs text-gray-400 flex-shrink-0 ml-2">{timeSince(lastMessage.timestamp)}</p>}</div>
+                                            <div className="flex justify-between items-center">
+                                                <p className={`text-sm text-gray-500 truncate ${unreadCount > 0 ? 'font-bold text-gray-800' : ''}`}>
+                                                    {lastMessage?.text || provider.specialty}
+                                                </p>
+                                                {unreadCount > 0 && (
+                                                    <span className="bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 ml-2">
+                                                        {unreadCount}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        ) : (
+                            <div className="p-4 text-center text-gray-500 text-sm h-full flex flex-col justify-center items-center">
+                                <MessageSquareIcon className="w-12 h-12 text-gray-300 mb-2" />
+                                <p className="font-semibold">No Conversations Yet</p>
+                                <p>
+                                    <button onClick={() => setIsNewMessageModalOpen(true)} className="text-primary-600 font-semibold hover:underline">
+                                        Start a new message
+                                    </button> to contact a provider.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
                 {/* Chat Area */}

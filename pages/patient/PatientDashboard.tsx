@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { SparklesIcon, VideoCameraIcon } from '../../components/shared/Icons';
+import { SparklesIcon, VideoCameraIcon, DumbbellIcon } from '../../components/shared/Icons';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 
 const GoalProgress: React.FC<{ goal: any }> = ({ goal }) => {
@@ -61,8 +61,8 @@ const PatientDashboard: React.FC = () => {
   }, []);
 
   const generateSummary = async () => {
-    if (!user || !process.env.API_KEY) {
-        setSummaryError('AI service is not available. Please try again later.');
+    if (!user) {
+        setSummaryError('User data is not available to generate a summary.');
         return;
     }
 
@@ -71,7 +71,7 @@ const PatientDashboard: React.FC = () => {
     setSummaryError('');
 
     try {
-        const ai = new GoogleGenerativeAI(process.env.API_KEY as string);
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
         const emrData = `
             - Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None listed'}
@@ -94,15 +94,15 @@ const PatientDashboard: React.FC = () => {
         - Your tone should be encouraging and informative, not alarming.
         - You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
         `;
-        const model = ai.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-        const result = await model.generateContent({
-            contents: [
-                {role: "system", parts: [{text: systemInstruction}]},
-                {role: "user", parts: [{text: `Please summarize this health data for the patient, ${user.name}: ${emrData}`}]}
-            ],
+        
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: `Please summarize this health data for the patient, ${user.name}: ${emrData}`,
+            config: {
+                systemInstruction: systemInstruction,
+            }
         });
-        const response = await result.response;
-        setSummary(response.text());
+        setSummary(response.text);
 
     } catch (error) {
         console.error("Error generating health summary:", error);
@@ -220,10 +220,28 @@ const PatientDashboard: React.FC = () => {
                         )}
                     </div>
                 </Card>
-                 <Card>
-                     <h3 className="font-bold text-xl text-gray-800 mb-4">Quick Links</h3>
-                    <div className="space-y-3">
-                        <Link to="/emr" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Update My EMR</Link>
+                {user?.gymMembership && (
+                    <Card title="Connected Partners">
+                        <div className="flex items-center">
+                            <div className="bg-gray-100 text-gray-600 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                                <DumbbellIcon className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-gray-800">{user.gymMembership.gymName}</p>
+                                <p className={`text-sm font-semibold ${user.gymMembership.status === 'Active' ? 'text-emerald-600' : 'text-gray-500'}`}>{user.gymMembership.status}</p>
+                                {user.gymMembership.lastCheckIn && (
+                                    <p className="text-xs text-gray-500 mt-1">Last Check-in: {new Date(user.gymMembership.lastCheckIn).toLocaleDateString()}</p>
+                                )}
+                            </div>
+                        </div>
+                        <button className="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm">
+                            Sync Activity
+                        </button>
+                    </Card>
+                 )}
+                 <Card title="Quick Links">
+                     <div className="space-y-3">
+                        <Link to="/emr" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">View Health Records</Link>
                         <Link to="/appointments" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Schedule Appointment</Link>
                         <Link to="/messaging" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Message My Provider</Link>
                          <Link to="/payments" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Pay My Bill</Link>

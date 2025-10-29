@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -13,7 +14,7 @@ import VideoConsults from '../../pages/patient/VideoConsults';
 import Claims from '../../pages/patient/Claims';
 import Payments from '../../pages/patient/Payments';
 import Subscription from '../../pages/patient/Subscription';
-import AIHealthGuide from '../../pages/patient/AI_Assistant';
+import AIWeightLossCoach from '../../pages/patient/AI_Assistant';
 import Profile from '../../pages/patient/Profile';
 import Settings from '../../pages/patient/Settings';
 import VisitHistory from '../../pages/patient/VisitHistory';
@@ -39,7 +40,7 @@ const PatientLayout: React.FC = () => {
               <Route path="/claims" element={<Claims />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/subscription" element={<Subscription />} />
-              <Route path="/ai-assistant" element={<AIHealthGuide />} />
+              <Route path="/ai-assistant" element={<AIWeightLossCoach />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

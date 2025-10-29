@@ -15,15 +15,24 @@ import PageHeader from '../../components/shared/PageHeader';
 import { Appointment } from '../../types';
 import { Link } from 'react-router-dom';
 
-const MetricCard: React.FC<{icon: React.ReactNode, title: string, value: string | number, change?: string, link: string}> = ({icon, title, value, link}) => (
-    <Link to={link} className="bg-white p-5 rounded-xl shadow-md border border-gray-100 hover:shadow-lg hover:border-primary-200 transition-all flex items-start">
-        <div className="bg-primary-100 text-primary-600 w-12 h-12 rounded-lg flex items-center justify-center mr-4">{icon}</div>
-        <div>
-            <p className="text-sm text-gray-500 font-medium">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-        </div>
-    </Link>
-);
+const MetricCard: React.FC<{icon: React.ReactNode, title: string, value: string | number, link: string, color: 'primary' | 'teal' | 'amber' | 'indigo'}> = ({icon, title, value, link, color}) => {
+    const colorClasses = {
+        primary: { bg: 'bg-primary-100', text: 'text-primary-600', border: 'hover:border-primary-200' },
+        teal: { bg: 'bg-teal-100', text: 'text-teal-600', border: 'hover:border-teal-200' },
+        amber: { bg: 'bg-amber-100', text: 'text-amber-600', border: 'hover:border-amber-200' },
+        indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'hover:border-indigo-200' },
+    }[color];
+
+    return (
+        <Link to={link} className={`bg-white p-5 rounded-xl shadow-md border border-gray-100 hover:shadow-lg ${colorClasses.border} transition-all flex items-start`}>
+            <div className={`${colorClasses.bg} ${colorClasses.text} w-12 h-12 rounded-lg flex items-center justify-center mr-4`}>{icon}</div>
+            <div>
+                <p className="text-sm text-gray-500 font-medium">{title}</p>
+                <p className="text-2xl font-bold text-gray-900">{value}</p>
+            </div>
+        </Link>
+    );
+};
 
 const AppointmentStatusChart: React.FC<{appointments: Appointment[]}> = ({appointments}) => {
     const data = useMemo(() => {
@@ -40,6 +49,8 @@ const AppointmentStatusChart: React.FC<{appointments: Appointment[]}> = ({appoin
         'Checked-In': '#10b981',
         'Complete': '#6b7281',
         'Waiting': '#f59e0b',
+        'Confirmed': '#3b82f6',
+        'Pending': '#f59e0b',
     };
 
     return (
@@ -68,7 +79,7 @@ const getStatusPill = (status: string) => {
 }
 
 const ProviderDashboard: React.FC = () => {
-    const { user, appointments, progressNotes, prescriptions, messages } = useAuth();
+    const { user, appointments, progressNotes, prescriptions, messages, users } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -82,17 +93,27 @@ const ProviderDashboard: React.FC = () => {
     }, [appointments, user]);
 
     const waitingRoom = useMemo(() => {
-        return todaysAppointments.filter(a => a.checkInStatus === 'Pending');
+        return todaysAppointments.filter(a => a.checkInStatus === 'Waiting');
     }, [todaysAppointments]);
 
     const recentActivity = useMemo(() => {
+        const allMessages = [].concat(...Object.values(messages))
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .map(m => {
+                const patient = users.find(u => u.id === m.senderId);
+                return {
+                    ...m,
+                    patientName: patient ? patient.name : 'Unknown Patient',
+                };
+            });
+
         const activities = [
-            ...messages.slice(0, 2).map(m => ({ id: `msg-${m.id}`, type: 'New Message', description: `From ${m.patientName}`, time: '5m ago', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, link: '/messaging' })),
+            ...allMessages.slice(0, 2).map(m => ({ id: `msg-${m.id}`, type: 'New Message', description: `From ${m.patientName}`, time: '5m ago', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, link: '/messaging' })),
             ...progressNotes.filter(n => n.status === "Signed").slice(0, 1).map(n => ({ id: `note-${n.id}`, type: 'Note Signed', description: `For ${n.patientName}`, time: '45m ago', icon: <CheckCircleIcon className="w-5 h-5 text-emerald-600"/>, link: `/patients/${n.patientId}` })),
             ...appointments.filter(a => a.status === 'Completed').slice(0, 2).map(a => ({ id: `appt-${a.id}`, type: 'Appointment Complete', description: `${a.patientName} - ${a.reason}`, time: '2h ago', icon: <CalendarIcon className="w-5 h-5 text-gray-500"/>, link: `/patients/${a.patientId}` }))
         ];
         return activities.sort(() => Math.random() - 0.5); // Randomize for demo
-    }, [messages, progressNotes, appointments]);
+    }, [messages, progressNotes, appointments, users]);
 
     if (isLoading) {
         return (
@@ -110,9 +131,9 @@ const ProviderDashboard: React.FC = () => {
         );
     }
 
-    const unreadMessages = messages.filter(m => m.status === 'Unread').length;
+    const unreadMessages = [].concat(...Object.values(messages)).filter(m => !m.isRead && m.senderId !== user?.id).length;
     const unsignedNotes = progressNotes.filter(n => n.status === 'Pending Signature').length;
-    const pendingRefills = prescriptions.filter(p => p.status === 'Pending').length;
+    const draftPrescriptions = prescriptions.filter(p => p.status === 'Draft').length;
 
   return (
     <div>
@@ -122,10 +143,10 @@ const ProviderDashboard: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <MetricCard icon={<ChatBubbleLeftRightIcon className="w-6 h-6"/>} title="Unread Messages" value={unreadMessages} link="/messaging" />
-        <MetricCard icon={<DocumentTextIcon className="w-6 h-6"/>} title="Unsigned Notes" value={unsignedNotes} link="/progress-notes" />
-        <MetricCard icon={<PillIcon className="w-6 h-6"/>} title="Pending Refills" value={pendingRefills} link="/e-prescribing" />
-        <MetricCard icon={<UserGroupIcon className="w-6 h-6"/>} title="Patients Today" value={todaysAppointments.length} link="/calendar" />
+        <MetricCard icon={<ChatBubbleLeftRightIcon className="w-6 h-6"/>} title="Unread Messages" value={unreadMessages} link="/messaging" color="primary" />
+        <MetricCard icon={<DocumentTextIcon className="w-6 h-6"/>} title="Unsigned Notes" value={unsignedNotes} link="/progress-notes" color="amber" />
+        <MetricCard icon={<PillIcon className="w-6 h-6"/>} title="Draft Prescriptions" value={draftPrescriptions} link="/e-prescribing" color="teal" />
+        <MetricCard icon={<UserGroupIcon className="w-6 h-6"/>} title="Patients Today" value={todaysAppointments.length} link="/calendar" color="indigo" />
       </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,8 +1,10 @@
+
 import React, { useState, ReactElement } from 'react';
 
 interface Tab {
     name: string;
-    icon: ReactElement;
+    // FIX: Changed type from ReactElement to ReactElement<any> to allow adding className prop via cloneElement.
+    icon: ReactElement<any>;
     content: ReactElement;
 }
 

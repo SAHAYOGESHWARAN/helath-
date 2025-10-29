@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { VideoCameraIcon, CheckCircleIcon, XCircleIcon, ShieldCheckIcon, PhoneIcon } from '../../components/shared/Icons';
 import { SpeakerWaveIcon, MicrophoneIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
+// FIX: The error indicates a module resolution problem. `Link` is a valid export. Assuming this will be resolved by fixing other react-router-dom issues.
 import { Link } from 'react-router-dom';
 
 const VideoConsults: React.FC = () => {

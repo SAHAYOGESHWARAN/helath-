@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { NovoPathLogoIcon, UserIcon, BriefcaseIcon } from '../../components/shared/Icons';
+import { NovoPathLogoIcon, UserIcon, BriefcaseIcon, CogIcon } from '../../components/shared/Icons';
 
 const RoleSelectionCard: React.FC<{ to: string, icon: React.ReactNode, title: string, description: string, buttonText: string }> =
 ({ to, icon, title, description, buttonText }) => {
@@ -24,29 +24,36 @@ const RoleSelectionCard: React.FC<{ to: string, icon: React.ReactNode, title: st
 const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6" style={{backgroundImage: "url('/pattern-light.svg')"}}>
-      <div className="w-full max-w-5xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
         <div className="text-center mb-12">
             <Link to="/" className="inline-block mb-6">
                 <NovoPathLogoIcon className="w-12 h-12 text-primary-600" />
             </Link>
             <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Join NovoPath</h1>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Choose your account type to get started on your personalized healthcare journey.</p>
+            <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Choose your account type to get started on your personalized healthcare journey.</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-10">
+        <div className="grid md:grid-cols-3 gap-8">
             <RoleSelectionCard
                 to="/register/patient"
                 icon={<UserIcon className="w-10 h-10" />}
                 title="For Patients"
-                description="Create an account to manage your health records, schedule appointments with top providers, and access AI-powered health insights."
+                description="Manage your health records, schedule appointments, and access AI-powered health insights."
                 buttonText="Create Patient Account"
             />
             <RoleSelectionCard
                 to="/register/provider"
                 icon={<BriefcaseIcon className="w-10 h-10" />}
                 title="For Providers"
-                description="Join our network to streamline your practice, connect with patients, and utilize our state-of-the-art EMR system."
+                description="Join our network to streamline your practice, connect with patients, and utilize our modern EMR system."
                 buttonText="Create Provider Account"
+            />
+             <RoleSelectionCard
+                to="/register/admin"
+                icon={<CogIcon className="w-10 h-10" />}
+                title="For Admins"
+                description="Manage users, subscriptions, and system settings for the NovoPath platform."
+                buttonText="Create Admin Account"
             />
         </div>
 

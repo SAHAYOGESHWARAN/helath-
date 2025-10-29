@@ -41,33 +41,40 @@ const WaitingRoom: React.FC = () => {
           <span className="ml-2">{patients.length} Patient(s) Waiting</span>
         </div>
         <div className="space-y-4">
-          {patients.map((patient) => (
-            <div key={patient.id} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xl flex-shrink-0">
-                  {getInitials(patient.name)}
+          {patients.length > 0 ? (
+            patients.map((patient) => (
+                <div key={patient.id} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xl flex-shrink-0">
+                    {getInitials(patient.name)}
+                    </div>
+                    <div>
+                    <p className="font-bold text-lg text-gray-800">{patient.name}</p>
+                    <p className="text-sm text-gray-600">{patient.reason}</p>
+                    </div>
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-gray-800">{patient.name}</p>
-                  <p className="text-sm text-gray-600">{patient.reason}</p>
+                <div className="flex items-center space-x-6">
+                    <div className="flex items-center text-gray-600">
+                    <ClockIcon />
+                    <span className="ml-2 font-mono text-lg">{calculateWaitTime(patient.checkInTime)}</span>
+                    </div>
+                    <div className="space-x-2">
+                    <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm">
+                        Notify
+                        </button>
+                        <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
+                        Start Session
+                        </button>
+                    </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center text-gray-600">
-                  <ClockIcon />
-                  <span className="ml-2 font-mono text-lg">{calculateWaitTime(patient.checkInTime)}</span>
                 </div>
-                <div className="space-x-2">
-                   <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm">
-                      Notify
-                    </button>
-                    <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
-                      Start Session
-                    </button>
-                </div>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+                <UsersIcon className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                <p className="font-semibold">The waiting room is empty.</p>
             </div>
-          ))}
+          )}
         </div>
       </Card>
     </div>

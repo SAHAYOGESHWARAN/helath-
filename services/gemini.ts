@@ -1,12 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY is not set in environment variables.");
-}
-
-const genAI = new GoogleGenerativeAI(apiKey);
-
-export const generativeModel = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-});
+// Per coding guidelines, API_KEY is assumed to be available from process.env.
+export const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });

@@ -1,13 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { useTable } from '../../hooks/useTable';
 import PaginationControls from '../../components/shared/PaginationControls';
-import { SearchIcon, SpinnerIcon } from '../../components/shared/Icons';
-import Modal from '../../components/shared/Modal';
+import { SearchIcon } from '../../components/shared/Icons';
 import { useApp } from '../../App';
 
 const getRolePill = (role: UserRole) => {
@@ -18,17 +16,21 @@ const getRolePill = (role: UserRole) => {
     }
 };
 
-const getStatusPill = (status: 'Active' | 'Suspended') => {
-    return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+const getStatusPill = (status: 'Active' | 'Suspended' | 'Inactive') => {
+    switch (status) {
+        case 'Active':
+            return 'bg-green-100 text-green-800';
+        case 'Suspended':
+            return 'bg-red-100 text-red-800';
+        case 'Inactive':
+            return 'bg-gray-100 text-gray-800';
+    }
 };
 
 const UserManagement: React.FC = () => {
     const { users, verifyUser, updateUserStatus } = useAuth();
     const { showToast } = useApp();
-    const [actionUser, setActionUser] = useState<User | null>(null);
-    const [modalType, setModalType] = useState<'verify' | 'suspend' | 'activate' | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
+    
     const { 
         paginatedItems, 
         requestSort, 
@@ -38,33 +40,19 @@ const UserManagement: React.FC = () => {
         paginationProps 
     } = useTable<User>(users, 10);
     
-    const handleAction = (user: User, action: 'verify' | 'suspend' | 'activate') => {
-        setActionUser(user);
-        setModalType(action);
+    const handleVerify = (user: User) => {
+        verifyUser(user.id);
+        showToast(`${user.name} has been verified.`, 'success');
     };
-    
-    const confirmAction = () => {
-        if (!actionUser || !modalType) return;
-        setIsSubmitting(true);
-        setTimeout(() => {
-            switch (modalType) {
-                case 'verify':
-                    verifyUser(actionUser.id);
-                    showToast(`${actionUser.name} has been verified.`, 'success');
-                    break;
-                case 'suspend':
-                    updateUserStatus(actionUser.id, 'Suspended');
-                    showToast(`${actionUser.name} has been suspended.`, 'success');
-                    break;
-                case 'activate':
-                    updateUserStatus(actionUser.id, 'Active');
-                    showToast(`${actionUser.name} has been activated.`, 'success');
-                    break;
-            }
-            setIsSubmitting(false);
-            setActionUser(null);
-            setModalType(null);
-        }, 800);
+
+    const handleSuspend = (user: User) => {
+        updateUserStatus(user.id, 'Suspended');
+        showToast(`${user.name} has been suspended.`, 'success');
+    };
+
+    const handleActivate = (user: User) => {
+        updateUserStatus(user.id, 'Active');
+        showToast(`${user.name} has been activated.`, 'success');
     };
 
     return (
@@ -94,6 +82,7 @@ const UserManagement: React.FC = () => {
                             <option value="All">All Statuses</option>
                             <option value="Active">Active</option>
                             <option value="Suspended">Suspended</option>
+                            <option value="Inactive">Inactive</option>
                         </select>
                     </div>
                 </div>
@@ -111,39 +100,33 @@ const UserManagement: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {paginatedItems.map(user => (
-                                <tr key={user.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRolePill(user.role)}`}>{user.role}</span></td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusPill(user.status || 'Active')}`}>{user.status}</span></td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{user.isVerified ? 'Yes' : 'No'}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                        {!user.isVerified && user.role === UserRole.PROVIDER && <button onClick={() => handleAction(user, 'verify')} className="text-green-600 hover:underline">Verify</button>}
-                                        {user.status === 'Active' && <button onClick={() => handleAction(user, 'suspend')} className="text-red-600 hover:underline">Suspend</button>}
-                                        {user.status === 'Suspended' && <button onClick={() => handleAction(user, 'activate')} className="text-blue-600 hover:underline">Activate</button>}
+                            {paginatedItems.length > 0 ? (
+                                paginatedItems.map(user => (
+                                    <tr key={user.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRolePill(user.role)}`}>{user.role}</span></td>
+                                        <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusPill(user.status || 'Active')}`}>{user.status}</span></td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">{user.isVerified ? 'Yes' : 'No'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                            {!user.isVerified && user.role === UserRole.PROVIDER && <button onClick={() => handleVerify(user)} className="text-green-600 hover:underline">Verify</button>}
+                                            {user.status === 'Active' && <button onClick={() => handleSuspend(user)} className="text-red-600 hover:underline">Suspend</button>}
+                                            {user.status === 'Suspended' && <button onClick={() => handleActivate(user)} className="text-blue-600 hover:underline">Activate</button>}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="text-center py-10 text-gray-500">
+                                        <p>No users found matching your criteria.</p>
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
                 <PaginationControls {...paginationProps} />
             </Card>
-
-            <Modal
-                isOpen={!!modalType}
-                onClose={() => setModalType(null)}
-                title={`Confirm ${modalType}`}
-                footer={<>
-                    <button onClick={() => setModalType(null)} className="bg-gray-200 font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button onClick={confirmAction} disabled={isSubmitting} className={`font-bold py-2 px-4 rounded-lg text-white w-32 flex justify-center ${modalType === 'verify' ? 'bg-green-600' : 'bg-red-600'}`}>
-                        {isSubmitting ? <SpinnerIcon/> : 'Confirm'}
-                    </button>
-                </>}
-            >
-                <p>Are you sure you want to {modalType} the account for <strong>{actionUser?.name}</strong>?</p>
-            </Modal>
         </div>
     );
 };

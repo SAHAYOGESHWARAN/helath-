@@ -111,6 +111,15 @@ const SummaryTab: React.FC<{ user: User | null; onEdit: (tab: EmrTab, item: any)
 );
 
 const VitalsTab: React.FC<{ vitals: VitalsRecord[] }> = ({ vitals }) => {
+    if (!vitals || vitals.length === 0) {
+        return (
+            <div className="text-center py-10 text-gray-500">
+                <ChartBarIcon className="w-12 h-12 mx-auto text-gray-300 mb-2"/>
+                <p className="font-semibold">No Vitals Data</p>
+                <p className="text-sm">Your vitals history will be charted here as it is recorded.</p>
+            </div>
+        );
+    }
     const chartData = vitals.map(v => ({
         date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         systolic: parseInt(v.bloodPressure.split('/')[0]),
@@ -154,30 +163,38 @@ const VitalsTab: React.FC<{ vitals: VitalsRecord[] }> = ({ vitals }) => {
 
 const LabResultsTab: React.FC<{ labResults: LabResult[] }> = ({ labResults }) => (
     <div className="space-y-8">
-        {labResults.map(result => (
-            <Card key={result.id} title={`${result.testName} - ${result.date}`}>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Component</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Range</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {result.components.map(comp => (
-                                <tr key={comp.name} className={comp.isAbnormal ? 'bg-red-50' : ''}>
-                                    <td className={`px-4 py-3 text-sm ${comp.isAbnormal ? 'font-bold text-red-800' : 'font-medium text-gray-800'}`}>{comp.name}</td>
-                                    <td className={`px-4 py-3 text-sm ${comp.isAbnormal ? 'font-bold text-red-800' : 'text-gray-600'}`}>{comp.value}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{comp.referenceRange}</td>
+        {labResults.length > 0 ? (
+            labResults.map(result => (
+                <Card key={result.id} title={`${result.testName} - ${result.date}`}>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Component</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Range</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
-        ))}
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {result.components.map(comp => (
+                                    <tr key={comp.name} className={comp.isAbnormal ? 'bg-red-50' : ''}>
+                                        <td className={`px-4 py-3 text-sm ${comp.isAbnormal ? 'font-bold text-red-800' : 'font-medium text-gray-800'}`}>{comp.name}</td>
+                                        <td className={`px-4 py-3 text-sm ${comp.isAbnormal ? 'font-bold text-red-800' : 'text-gray-600'}`}>{comp.value}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-500">{comp.referenceRange}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            ))
+        ) : (
+            <div className="text-center py-10 text-gray-500">
+                <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300 mb-2"/>
+                <p className="font-semibold">No Lab Results Found</p>
+                <p className="text-sm">Your lab results will appear here once they are available.</p>
+            </div>
+        )}
     </div>
 );
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
@@ -20,7 +20,7 @@ const PatientChart: React.FC = () => {
     const [patient, setPatient] = useState<User | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
 
-    useEffect(() => {
+    useMemo(() => {
         const foundPatient = users.find(u => u.id === patientId && u.role === UserRole.PATIENT);
         setPatient(foundPatient || null);
     }, [patientId, users]);

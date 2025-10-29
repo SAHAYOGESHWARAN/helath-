@@ -115,29 +115,37 @@ const Messaging: React.FC = () => {
                          <div className="relative"><input type="text" placeholder="Search patients..." className="w-full pl-10 pr-4 py-2 border rounded-full bg-white focus:ring-2 focus:ring-primary-300" /><SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /></div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {patientsInConversations.map(patient => {
-                            const thread = messages[patient.id] || [];
-                            const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
-                            const unreadCount = thread.filter(msg => !msg.isRead && msg.senderId === patient.id).length;
-                             return (
-                                <div key={patient.id} onClick={() => setSelectedPatient(patient)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedPatient?.id === patient.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
-                                    <img src={patient.avatarUrl} alt={patient.name} className="w-12 h-12 rounded-full flex-shrink-0" />
-                                    <div className="ml-3 flex-grow overflow-hidden">
-                                        <div className="flex justify-between items-center"><p className="font-semibold text-gray-800 truncate">{patient.name}</p>{lastMessage && <p className="text-xs text-gray-400 flex-shrink-0 ml-2">{timeSince(lastMessage.timestamp)}</p>}</div>
-                                        <div className="flex justify-between items-center">
-                                            <p className={`text-sm text-gray-500 truncate ${unreadCount > 0 ? 'font-bold text-gray-800' : ''}`}>
-                                                {lastMessage?.text || `DOB: ${patient.dob}`}
-                                            </p>
-                                            {unreadCount > 0 && (
-                                                <span className="bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 ml-2">
-                                                    {unreadCount}
-                                                </span>
-                                            )}
+                        {patientsInConversations.length > 0 ? (
+                            patientsInConversations.map(patient => {
+                                const thread = messages[patient.id] || [];
+                                const lastMessage = thread.length > 0 ? thread[thread.length - 1] : null;
+                                const unreadCount = thread.filter(msg => !msg.isRead && msg.senderId === patient.id).length;
+                                 return (
+                                    <div key={patient.id} onClick={() => setSelectedPatient(patient)} className={`flex items-center p-4 cursor-pointer border-l-4 transition-colors duration-150 ${selectedPatient?.id === patient.id ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-gray-50'}`}>
+                                        <img src={patient.avatarUrl} alt={patient.name} className="w-12 h-12 rounded-full flex-shrink-0" />
+                                        <div className="ml-3 flex-grow overflow-hidden">
+                                            <div className="flex justify-between items-center"><p className="font-semibold text-gray-800 truncate">{patient.name}</p>{lastMessage && <p className="text-xs text-gray-400 flex-shrink-0 ml-2">{timeSince(lastMessage.timestamp)}</p>}</div>
+                                            <div className="flex justify-between items-center">
+                                                <p className={`text-sm text-gray-500 truncate ${unreadCount > 0 ? 'font-bold text-gray-800' : ''}`}>
+                                                    {lastMessage?.text || `DOB: ${patient.dob}`}
+                                                </p>
+                                                {unreadCount > 0 && (
+                                                    <span className="bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 ml-2">
+                                                        {unreadCount}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        ) : (
+                            <div className="p-4 text-center text-gray-500 text-sm h-full flex flex-col justify-center items-center">
+                                <MessageSquareIcon className="w-12 h-12 text-gray-300 mb-2" />
+                                <p className="font-semibold">No Conversations</p>
+                                <p>Your conversations with patients will appear here.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
                 {/* Chat Area */}

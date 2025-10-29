@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Appointment } from '../../types';
@@ -104,21 +103,29 @@ const ProviderAppointments: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAppointments.map((appt) => (
-                <tr key={appt.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{appt.patientName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC' })} at {appt.time}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{appt.reason}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(appt.status)}`}>
-                      {appt.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => openModal('details', appt)} className="text-primary-600 hover:text-primary-900">View</button>
-                  </td>
+              {filteredAppointments.length > 0 ? (
+                filteredAppointments.map((appt) => (
+                  <tr key={appt.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{appt.patientName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC' })} at {appt.time}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{appt.reason}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(appt.status)}`}>
+                        {appt.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button onClick={() => openModal('details', appt)} className="text-primary-600 hover:text-primary-900">View</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                    <td colSpan={5} className="text-center py-10 text-gray-500">
+                        No appointments found for the selected filters.
+                    </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

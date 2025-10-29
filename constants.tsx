@@ -1,71 +1,87 @@
-
 import React from 'react';
 import { 
-    HomeIcon, CalendarIcon, DocumentTextIcon, UsersIcon, CogIcon, ShieldCheckIcon, ProfileIcon as ProfileNavIcon,
-    CreditCardIcon, SparklesIcon, VideoCameraIcon, ClipboardListIcon, PillIcon, ShareIcon,
-    CurrencyDollarIcon, ChartBarIcon, CollectionIcon, PencilAltIcon, MessageSquareIcon, ClockIcon
+    HomeIcon, 
+    CalendarIcon, 
+    DocumentTextIcon,
+    PillIcon, 
+    ChatBubbleLeftRightIcon,
+    VideoCameraIcon,
+    ShieldCheckIcon,
+    CurrencyDollarIcon,
+    UserCircleIcon,
+    CogIcon,
+    SparklesIcon,
+    UsersIcon,
+    BriefcaseIcon,
+    AcademicCapIcon,
+    DocumentDuplicateIcon,
+    ChartBarIcon,
+    InboxIcon,
+    ArrowRightOnRectangleIcon,
+    CubeIcon,
+    BuildingOfficeIcon,
+    ShieldExclamationIcon,
+    UserGroupIcon,
+    PencilAltIcon
 } from './components/shared/Icons';
 
-// Using CollectionIcon and aliasing for semantic clarity
-const SubscriptionIcon = CollectionIcon;
-const EMR_Icon = DocumentTextIcon;
+export interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ReactElement;
+}
 
-export const PATIENT_NAV = [
+export const PATIENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon /> },
   { name: 'Appointments', href: '/appointments', icon: <CalendarIcon /> },
-  { name: 'My EMR', href: '/emr', icon: <EMR_Icon /> },
+  { name: 'Health Records', href: '/emr', icon: <DocumentTextIcon /> },
   { name: 'Medications', href: '/medications', icon: <PillIcon /> },
-  { name: 'Visit History', href: '/history', icon: <ClockIcon /> },
-  { name: 'Messaging', href: '/messaging', icon: <MessageSquareIcon /> },
+  { name: 'Visit History', href: '/history', icon: <DocumentDuplicateIcon /> },
+  { name: 'Messaging', href: '/messaging', icon: <ChatBubbleLeftRightIcon /> },
   { name: 'Video Consults', href: '/video-consults', icon: <VideoCameraIcon /> },
-  { name: 'Claims', href: '/claims', icon: <ClipboardListIcon /> },
-  { name: 'Payments', href: '/payments', icon: <CreditCardIcon /> },
-  { name: 'Subscription', href: '/subscription', icon: <SubscriptionIcon /> },
-  { name: 'AI Health Guide', href: '/ai-assistant', icon: <SparklesIcon /> },
-  { name: 'Profile', href: '/profile', icon: <ProfileNavIcon /> },
+  { name: 'Claims', href: '/claims', icon: <ShieldCheckIcon /> },
+  { name: 'Payments', href: '/payments', icon: <CurrencyDollarIcon /> },
+  { name: 'Subscription', href: '/subscription', icon: <SparklesIcon /> },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: <SparklesIcon /> },
+  { name: 'Profile', href: '/profile', icon: <UserCircleIcon /> },
   { name: 'Settings', href: '/settings', icon: <CogIcon /> },
 ];
 
-export const PROVIDER_NAV = [
+export const PROVIDER_NAV: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon /> },
-  { name: 'My Calendar', href: '/calendar', icon: <CalendarIcon /> },
-  { name: 'Appointments', href: '/appointments', icon: <ClipboardListIcon /> },
+  { name: 'Calendar', href: '/calendar', icon: <CalendarIcon /> },
+  { name: 'Appointments', href: '/appointments', icon: <CalendarIcon /> },
   { name: 'Waiting Room', href: '/waiting-room', icon: <UsersIcon /> },
-  { name: 'Patient Management', href: '/patients', icon: <UsersIcon /> },
-  { name: 'Messaging', href: '/messaging', icon: <MessageSquareIcon /> },
+  { name: 'Patients', href: '/patients', icon: <UserGroupIcon /> },
   { name: 'Progress Notes', href: '/progress-notes', icon: <PencilAltIcon /> },
   { name: 'E-Prescribing', href: '/e-prescribing', icon: <PillIcon /> },
-  { name: 'Referrals', href: '/referrals', icon: <ShareIcon /> },
+  { name: 'Lab Orders', href: '/lab-orders', icon: <DocumentTextIcon /> },
+  { name: 'Referrals', href: '/referrals', icon: <ArrowRightOnRectangleIcon /> },
+  { name: 'Messaging', href: '/messaging', icon: <ChatBubbleLeftRightIcon /> },
   { name: 'Billing', href: '/billing', icon: <CurrencyDollarIcon /> },
-  { name: 'Subscription', href: '/subscription', icon: <SubscriptionIcon /> },
+  { name: 'Subscription', href: '/subscription', icon: <SparklesIcon /> },
   { name: 'Reports', href: '/reports', icon: <ChartBarIcon /> },
-  { name: 'Profile', href: '/profile', icon: <ProfileNavIcon /> },
+  { name: 'Inbox', href: '/inbox', icon: <InboxIcon /> },
+  { name: 'Profile', href: '/profile', icon: <UserCircleIcon /> },
   { name: 'Settings', href: '/settings', icon: <CogIcon /> },
 ];
 
-export const ADMIN_NAV = [
+export const ADMIN_NAV: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon /> },
-  { name: 'User Management', href: '/users', icon: <UsersIcon /> },
-  { name: 'Subscriptions', href: '/subscriptions', icon: <CollectionIcon /> },
-  { name: 'Product Management', href: '/products', icon: <PillIcon /> }, // Placeholder icon
+  { name: 'Users', href: '/users', icon: <UsersIcon /> },
+  { name: 'Subscriptions', href: '/subscriptions', icon: <SparklesIcon /> },
+  { name: 'Products', href: '/products', icon: <CubeIcon /> },
   { name: 'Billing', href: '/billing', icon: <CurrencyDollarIcon /> },
   { name: 'Reports', href: '/reports', icon: <ChartBarIcon /> },
   { name: 'Compliance', href: '/compliance', icon: <ShieldCheckIcon /> },
-  { name: 'Enterprise', href: '/enterprise', icon: <HomeIcon /> }, // Placeholder icon
-  { name: 'System Settings', href: '/settings', icon: <CogIcon /> },
+  { name: 'Enterprise', href: '/enterprise', icon: <BuildingOfficeIcon /> },
+  { name: 'Settings', href: '/settings', icon: <CogIcon /> },
 ];
 
 export const US_STATES = [
-  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 
-  'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 
-  'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 
-  'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 
-  'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 
-  'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 
-  'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
 ];
 
 export const MEDICAL_SPECIALTIES = [
-  'Cardiology', 'Dermatology', 'Endocrinology', 'Gastroenterology', 'General Practice',
-  'Neurology', 'Oncology', 'Orthopedics', 'Pediatrics', 'Psychiatry', 'Pulmonology', 'Radiology'
+    'Cardiology', 'Dermatology', 'Endocrinology', 'Gastroenterology', 'Hematology', 'Infectious Disease', 'Neurology', 'Oncology', 'Pediatrics', 'Primary Care', 'Psychiatry', 'Pulmonology', 'Rheumatology', 'Urology'
 ];

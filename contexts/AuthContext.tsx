@@ -1,272 +1,277 @@
+import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo } from '../types';
+import { MOCK_USERS, MOCK_CLAIMS, MOCK_APPOINTMENTS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS, MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS, MOCK_REFERRALS } from '../mockData';
 
-import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User, UserRole, Appointment, Medication, LabResult, HealthGoal, Allergy, Surgery, FamilyHistoryEntry, ImmunizationRecord, LifestyleInfo, VitalsRecord, InsuranceInfo, Claim, ProgressNote, Prescription, Referral, SubscriptionPlan, BillingInvoice, ClaimStatus, ClaimType } from '../types';
-import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_INVOICES, MOCK_PRESCRIPTIONS, MOCK_PROGRESS_NOTES, MOCK_REFERRALS, MOCK_PATIENT_PLANS, MOCK_PROVIDER_PLANS } from '../mockData'; // Using a separate mock data file for cleanliness
-
-// --- Context Type Definition ---
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
+  users: User[];
   loading: boolean;
   login: (email: string, password?: string) => void;
   logout: () => void;
-  register: (userData: Partial<User>, role: UserRole) => void;
-  updateUser: (updateFn: (currentUser: User) => User) => Promise<void>;
-  
-  // Data for the whole app
-  users: User[];
-  appointments: Appointment[];
+  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => void;
+  updateUser: (updater: (currentUser: User) => User) => Promise<void>;
   claims: Claim[];
-  invoices: BillingInvoice[];
-  prescriptions: Prescription[];
-  progressNotes: ProgressNote[];
-  referrals: Referral[];
-  insurance: InsuranceInfo | null;
-  currentSubscription: SubscriptionPlan | null;
-  patientSubscriptionPlans: SubscriptionPlan[];
-  providerSubscriptionPlans: SubscriptionPlan[];
-
-  // Functions to modify data
-  addAppointment: (appt: Omit<Appointment, 'id' | 'status' | 'patientName'>) => boolean;
-  cancelAppointment: (id: string) => void;
+  addClaim: (newClaim: Omit<Claim, 'id'>) => void;
+  appointments: Appointment[];
   confirmAppointment: (id: string) => void;
-  submitAppointmentFeedback: (id: string, summary: string) => void;
-  addClaim: (claim: Omit<Claim, 'id'>) => void;
-  makePayment: (invoiceId: string, amount: number) => void;
-  addPrescription: (rx: Omit<Prescription, 'id' | 'status'>) => void;
-  addNote: (note: Omit<ProgressNote, 'id' | 'status'>) => void;
-  updateNote: (note: ProgressNote) => void;
-  addReferral: (ref: Omit<Referral, 'id' | 'status'>) => void;
-  updateInsurance: (info: InsuranceInfo) => Promise<void>;
+  cancelAppointment: (id: string) => void;
+  providerSubscriptionPlans: SubscriptionPlan[];
+  patientSubscriptionPlans: SubscriptionPlan[];
+  currentSubscription: SubscriptionPlan | undefined;
   changeSubscription: (planId: string) => void;
+  progressNotes: ProgressNote[];
+  prescriptions: Prescription[];
+  addPrescription: (newPrescription: Omit<Prescription, 'id' | 'status'>) => void;
+  messages: Record<string, Message[]>; // Thread ID (patientId or providerId) to messages
+  sendMessage: (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>) => void;
+  markMessagesAsRead: (threadId: string) => void;
+  invoices: BillingInvoice[];
+  addInvoice: (newInvoice: Omit<BillingInvoice, 'id'>) => void;
+  makePayment: (invoiceId: string, amount: number) => void;
+  labOrders: LabOrder[];
+  addLabOrder: (newOrder: Omit<LabOrder, 'id'>) => void;
+  insurance: InsuranceInfo | undefined;
+  updateInsurance: (info: InsuranceInfo) => Promise<void>;
   changePassword: (current: string, newPass: string) => Promise<boolean>;
-  markMessagesAsRead: (contactId: string) => void;
-  sendMessage: (message: any) => void;
-  messages: any;
-
-  // Admin functions
   verifyUser: (userId: string) => void;
-  updateUserStatus: (userId: string, status: 'Active' | 'Suspended') => void;
+  updateUserStatus: (userId: string, status: 'Active' | 'Suspended' | 'Inactive') => void;
+  referrals: Referral[];
+  addReferral: (newReferral: Omit<Referral, 'id' | 'status' | 'createdAt' | 'type' | 'auditLog'>) => void;
+  updateReferral: (referralId: string, updates: Partial<Referral>, auditLogAction?: string) => Promise<void>;
 }
 
-// --- Create Context ---
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- Auth Provider Component ---
+const USER_STORAGE_KEY = 'novopath-user';
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  // App-wide data state
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
-  const [claims, setClaims] = useState<Claim[]>(MOCK_CLAIMS);
-  const [invoices, setInvoices] = useState<BillingInvoice[]>(MOCK_INVOICES);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
-  const [progressNotes, setProgressNotes] = useState<ProgressNote[]>(MOCK_PROGRESS_NOTES);
-  const [referrals, setReferrals] = useState<Referral[]>(MOCK_REFERRALS);
-  const [insurance, setInsurance] = useState<InsuranceInfo | null>({ provider: 'Blue Cross', planName: 'PPO Gold', memberId: 'XG123456789', groupId: 'GRP9876' });
-  
-  // Mock messages
-   const [messages, setMessages] = useState<Record<string, any>>({
-    'provider-1': [
-      { id: 'msg1', senderId: 'provider-1', receiverId: 'patient-1', text: 'Hello Jane, just following up on your recent lab results.', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), isRead: false },
-      { id: 'msg2', senderId: 'patient-1', receiverId: 'provider-1', text: 'Hi Dr. Smith! Thanks for reaching out. Is everything okay?', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), isRead: true },
-    ]
-  });
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [users, setUsers] = useState<User[]>(MOCK_USERS);
+    const [claims, setClaims] = useState<Claim[]>(MOCK_CLAIMS);
+    const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+    const [progressNotes, setProgressNotes] = useState<ProgressNote[]>(MOCK_PROGRESS_NOTES);
+    const [prescriptions, setPrescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
+    const [messages, setMessages] = useState<Record<string, Message[]>>(MOCK_MESSAGES);
+    const [invoices, setInvoices] = useState<BillingInvoice[]>(MOCK_INVOICES);
+    const [labOrders, setLabOrders] = useState<LabOrder[]>(MOCK_LAB_ORDERS);
+    const [referrals, setReferrals] = useState<Referral[]>(MOCK_REFERRALS);
 
-  // Load user from localStorage on initial render
-  useEffect(() => {
-    setTimeout(() => {
-      try {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+    useEffect(() => {
+        try {
+            const storedUser = sessionStorage.getItem(USER_STORAGE_KEY);
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                const fullUser = MOCK_USERS.find(u => u.id === parsedUser.id) || parsedUser;
+                setUser(fullUser);
+            }
+        } catch (error) {
+            console.error("Failed to parse user from session storage", error);
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to parse user from localStorage", error);
-      }
-      setLoading(false);
-    }, 1000); // Simulate network delay
-  }, []);
-  
-  const login = useCallback((email: string, password?: string) => {
-    setLoading(true);
-    setTimeout(() => {
-        const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-        if (foundUser && (!password || foundUser.password === password)) {
-            setUser(foundUser);
-            localStorage.setItem('user', JSON.stringify(foundUser));
-        } else {
-            alert('Invalid credentials!');
-        }
-        setLoading(false);
-    }, 800);
-}, []);
+    }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('user');
-  }, []);
+    const login = useCallback((email: string, password?: string) => {
+        setLoading(true);
+        setTimeout(() => {
+            const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+            if (foundUser) {
+                const fullUser = MOCK_USERS.find(u => u.id === foundUser.id) || foundUser;
+                setUser(fullUser);
+                sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(fullUser));
+            } else {
+                // Fallback for demo purposes
+                const userRole = email as UserRole;
+                 const defaultUser = MOCK_USERS.find(u => u.role === userRole) || MOCK_USERS.find(u => u.role === UserRole.PATIENT)!;
+                setUser(defaultUser);
+                sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
+            }
+            setLoading(false);
+        }, 500);
+    }, []);
 
-  const register = useCallback((userData: Partial<User>, role: UserRole) => {
-    setLoading(true);
-    setTimeout(() => {
-        const newUser: User = {
-            id: role === UserRole.PATIENT ? `patient-${Date.now()}` : `provider-${Date.now()}`,
-            name: userData.name || '',
-            email: userData.email || '',
-            password: userData.password,
-            role: role,
-            avatarUrl: `https://i.pravatar.cc/150?u=${userData.email}`,
-            isVerified: role === UserRole.PATIENT, // Patients are auto-verified
-            status: 'Active',
-            ...userData
-        };
-        setUsers(prev => [...prev, newUser]);
-        setUser(newUser);
-        localStorage.setItem('user', JSON.stringify(newUser));
-        setLoading(false);
-    }, 1200);
-}, []);
-
-  const updateUser = useCallback(async (updateFn: (currentUser: User) => User) => {
-    setUser(prevUser => {
-        if (!prevUser) return null;
-        const updatedUser = updateFn(prevUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        
-        return updatedUser;
-    });
-  }, []);
-
-  const addAppointment = useCallback((appt: Omit<Appointment, 'id' | 'status' | 'patientName'>) => {
-    if (!user) return false;
-    const newAppt: Appointment = {
-        ...appt,
-        id: `appt_${Date.now()}`,
-        patientName: user.name,
-        status: 'Pending',
-    };
-    setAppointments(prev => [newAppt, ...prev]);
-    return true;
-  }, [user]);
-  
-  const cancelAppointment = useCallback((id: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
-  }, []);
-  
-  const confirmAppointment = useCallback((id: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a));
-  }, []);
-  
-  const submitAppointmentFeedback = useCallback((id: string, summary: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, visitSummary: summary } : a));
-  }, []);
-
-  const changeSubscription = useCallback((planId: string) => {
-      const allPlans = [...MOCK_PATIENT_PLANS, ...MOCK_PROVIDER_PLANS];
-      const newPlan = allPlans.find(p => p.id === planId);
-      if (newPlan && user) {
-          const subscriptionData = {
-              planId: newPlan.id,
-              planName: newPlan.name,
-              status: 'Active' as const,
-              renewalDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString(),
-          };
-          updateUser(currentUser => ({...currentUser, subscription: subscriptionData }));
-      }
-  }, [user, updateUser]);
-
-  const verifyUser = useCallback((userId: string) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, isVerified: true } : u));
-  }, []);
-
-  const updateUserStatus = useCallback((userId: string, status: 'Active' | 'Suspended') => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status } : u));
-  }, []);
-  
-  // Combine all other state modification functions...
-  const addClaim = (claim: Omit<Claim, 'id'>) => setClaims(prev => [{ ...claim, id: `claim_${Date.now()}` }, ...prev]);
-  const makePayment = (invoiceId: string, amount: number) => {
-    setInvoices(prev => prev.map(inv => {
-        if (inv.id === invoiceId) {
-            const newAmountDue = inv.amountDue - amount;
-            return {
-                ...inv,
-                amountDue: newAmountDue,
-                status: newAmountDue <= 0 ? 'Paid' : 'Due',
-                date: new Date().toLocaleDateString(),
+    const register = useCallback((userData: Partial<Omit<User, 'id' | 'role' | 'avatarUrl'>>, role: UserRole) => {
+        setLoading(true);
+        setTimeout(() => {
+            const newUser: User = {
+                id: `user_${Date.now()}`,
+                name: userData.name || '',
+                email: userData.email || '',
+                ...userData,
+                role,
+                avatarUrl: `https://picsum.photos/seed/${userData.name}/100`,
+                status: 'Active',
+                isVerified: role !== UserRole.PROVIDER,
             };
-        }
-        return inv;
-    }));
-  };
-  const addPrescription = (rx: Omit<Prescription, 'id' | 'status'>) => setPrescriptions(prev => [{ ...rx, id: `rx_${Date.now()}`, status: 'Sent' }, ...prev]);
-  const addNote = (note: Omit<ProgressNote, 'id' | 'status'>) => setProgressNotes(prev => [{ ...note, id: `note_${Date.now()}`, status: 'Draft' }, ...prev]);
-  const updateNote = (note: ProgressNote) => setProgressNotes(prev => prev.map(n => n.id === note.id ? note : n));
-  const addReferral = (ref: Omit<Referral, 'id' | 'status'>) => setReferrals(prev => [{ ...ref, id: Date.now(), status: 'Pending' }, ...prev]);
-  const updateInsurance = async (info: InsuranceInfo) => { setInsurance(info); };
-  const changePassword = async (current: string, newPass: string) => { return true; };
-  const markMessagesAsRead = (contactId: string) => {
-      setMessages(prev => ({
-          ...prev,
-          [contactId]: (prev[contactId] || []).map((msg: any) => ({ ...msg, isRead: true }))
-      }));
-  };
-   const sendMessage = (message: any) => {
-    const receiverId = message.receiverId === user?.id ? message.senderId : message.receiverId;
-    const newMessage = { ...message, id: `msg_${Date.now()}`, timestamp: new Date().toISOString(), isRead: false };
+            setUsers(prev => [...prev, newUser]);
+            setUser(newUser);
+            sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
+            setLoading(false);
+        }, 500);
+    }, []);
 
-    setMessages(prev => ({
-      ...prev,
-      [receiverId]: [...(prev[receiverId] || []), newMessage]
-    }));
-  };
-  
-  const currentSubscription = user?.role === UserRole.PATIENT 
-    ? MOCK_PATIENT_PLANS.find(p => p.name === user?.subscription?.planName) || null
-    : MOCK_PROVIDER_PLANS.find(p => p.name === user?.subscription?.planName) || null;
+    const logout = useCallback(() => {
+        setUser(null);
+        sessionStorage.removeItem(USER_STORAGE_KEY);
+    }, []);
 
-  // --- Value provided to consumers ---
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    logout,
-    register,
-    updateUser,
-    users,
-    appointments,
-    claims,
-    invoices,
-    prescriptions,
-    progressNotes,
-    referrals,
-    insurance,
-    currentSubscription,
-    patientSubscriptionPlans: MOCK_PATIENT_PLANS,
-    providerSubscriptionPlans: MOCK_PROVIDER_PLANS,
-    addAppointment,
-    cancelAppointment,
-    confirmAppointment,
-    submitAppointmentFeedback,
-    addClaim,
-    makePayment,
-    addPrescription,
-    addNote,
-    updateNote,
-    addReferral,
-    updateInsurance,
-    changeSubscription,
-    changePassword,
-    markMessagesAsRead,
-    sendMessage,
-    messages,
-    verifyUser,
-    updateUserStatus,
-  };
+    const updateUser = useCallback(async (updater: (currentUser: User) => User) => {
+        setUser(prevUser => {
+            if (!prevUser) return null;
+            const updated = updater(prevUser);
+            sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+        });
+    }, []);
+    
+    const addClaim = useCallback((newClaim: Omit<Claim, 'id'>) => {
+        const fullClaim: Claim = { ...newClaim, id: `CLM_${Date.now()}` };
+        setClaims(prev => [...prev, fullClaim]);
+    }, []);
+    
+    const addInvoice = useCallback((newInvoice: Omit<BillingInvoice, 'id'>) => {
+        const fullInvoice: BillingInvoice = { ...newInvoice, id: `inv_${Date.now()}` };
+        setInvoices(prev => [...prev, fullInvoice]);
+    }, []);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    const makePayment = useCallback((invoiceId: string, amount: number) => {
+        setInvoices(prev => prev.map(inv => {
+            if (inv.id === invoiceId) {
+                const newAmountDue = inv.amountDue - amount;
+                return { ...inv, amountDue: newAmountDue, status: newAmountDue <= 0 ? 'Paid' : 'Due' };
+            }
+            return inv;
+        }));
+    }, []);
+
+    const confirmAppointment = useCallback((id: string) => {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a));
+    }, []);
+    
+    const cancelAppointment = useCallback((id: string) => {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
+    }, []);
+    
+    const changeSubscription = useCallback((planId: string) => {
+        updateUser(u => ({...u, subscription: { planId, status: 'Active', renewalDate: '2025-09-01' }}));
+    }, [updateUser]);
+
+    const addPrescription = useCallback((newPrescription: Omit<Prescription, 'id' | 'status'>) => {
+        const fullRx: Prescription = { ...newPrescription, id: `rx_${Date.now()}`, status: 'Sent' };
+        setPrescriptions(prev => [fullRx, ...prev]);
+    }, []);
+
+    const sendMessage = useCallback((message: Omit<Message, 'id' | 'timestamp' | 'isRead'>) => {
+        const fullMessage: Message = { ...message, id: `msg_${Date.now()}`, timestamp: new Date().toISOString(), isRead: false };
+        const threadId = message.senderId === user?.id ? message.receiverId : message.senderId;
+        setMessages(prev => ({
+            ...prev,
+            [threadId]: [...(prev[threadId] || []), fullMessage]
+        }));
+        // Simulate reply
+        setTimeout(() => {
+            const reply: Message = {
+                id: `msg_reply_${Date.now()}`,
+                senderId: message.receiverId,
+                receiverId: message.senderId,
+                text: "Thank you for your message. I will get back to you shortly.",
+                timestamp: new Date().toISOString(),
+                isRead: false,
+            };
+            setMessages(prev => ({
+                ...prev,
+                [threadId]: [...(prev[threadId] || []), reply]
+            }));
+        }, 1500);
+    }, [user]);
+
+    const markMessagesAsRead = useCallback((threadId: string) => {
+        setMessages(prev => {
+            const thread = prev[threadId];
+            if (!thread) return prev;
+            return {
+                ...prev,
+                [threadId]: thread.map(msg => msg.senderId !== user?.id ? { ...msg, isRead: true } : msg)
+            };
+        });
+    }, [user]);
+
+    const addLabOrder = useCallback((newOrder: Omit<LabOrder, 'id'>) => {
+        const fullOrder: LabOrder = { ...newOrder, id: `lo_${Date.now()}` };
+        setLabOrders(prev => [fullOrder, ...prev]);
+    }, []);
+    
+    const updateInsurance = useCallback(async (info: InsuranceInfo) => {
+        await updateUser(u => ({...u, insurance: info}));
+    }, [updateUser]);
+
+    const changePassword = useCallback(async (current: string, newPass: string) => {
+        console.log({current, newPass}); // Mock
+        return true;
+    }, []);
+    
+    const verifyUser = useCallback((userId: string) => {
+        setUsers(prev => prev.map(u => u.id === userId ? {...u, isVerified: true} : u));
+    }, []);
+
+    const updateUserStatus = useCallback((userId: string, status: 'Active' | 'Suspended' | 'Inactive') => {
+        setUsers(prev => prev.map(u => u.id === userId ? {...u, status} : u));
+    }, []);
+
+    const addReferral = useCallback((newReferral: Omit<Referral, 'id' | 'status' | 'createdAt' | 'type' | 'auditLog'>) => {
+        const now = new Date().toISOString();
+        const patient = users.find(u => u.id === newReferral.patientId);
+        const newLog: AuditLogEntry = { date: now, action: 'Referral Created', status: ReferralStatus.PENDING };
+        const fullReferral: Referral = {
+            ...newReferral,
+            id: `ref_${Date.now()}`,
+            status: ReferralStatus.PENDING,
+            createdAt: now,
+            type: 'Outgoing',
+            patientName: patient?.name || 'Unknown',
+            auditLog: [newLog],
+        };
+        setReferrals(prev => [fullReferral, ...prev]);
+    }, [users]);
+    
+    const updateReferral = useCallback(async (referralId: string, updates: Partial<Referral>, auditLogAction?: string) => {
+        setReferrals(prev => prev.map(r => {
+            if (r.id === referralId) {
+                const updatedReferral = { ...r, ...updates, updatedAt: new Date().toISOString() };
+                if (updates.status && updates.status !== r.status) {
+                    const newLogEntry: AuditLogEntry = {
+                        date: new Date().toISOString(),
+                        action: auditLogAction || `Status changed to ${updates.status}`,
+                        status: updates.status,
+                    };
+                    updatedReferral.auditLog = [newLogEntry, ...(updatedReferral.auditLog || [])];
+                }
+                return updatedReferral;
+            }
+            return r;
+        }));
+    }, []);
+
+    const currentSubscription = useMemo(() => {
+        if (!user || !user.subscription) return undefined;
+        return [...MOCK_PROVIDER_PLANS, ...MOCK_PATIENT_PLANS].find(p => p.id === user.subscription?.planId);
+    }, [user]);
+
+    const insurance = useMemo(() => user?.insurance, [user]);
+
+    const value = {
+        user, users, loading, login, logout, register, updateUser, claims, addClaim, appointments, 
+        confirmAppointment, cancelAppointment, providerSubscriptionPlans: MOCK_PROVIDER_PLANS, 
+        patientSubscriptionPlans: MOCK_PATIENT_PLANS, currentSubscription, changeSubscription, progressNotes,
+        prescriptions, addPrescription, messages, sendMessage, markMessagesAsRead, invoices, addInvoice, makePayment,
+        labOrders, addLabOrder, insurance, updateInsurance, changePassword, verifyUser, updateUserStatus,
+        referrals, addReferral, updateReferral,
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

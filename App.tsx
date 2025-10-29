@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useCallback, ReactNode, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -14,6 +13,7 @@ import PatientRegister from './pages/auth/PatientRegister';
 import ProviderRegister from './pages/auth/ProviderRegister';
 import { NotificationProvider } from './contexts/NotificationContext';
 import WelcomePage from './pages/WelcomePage';
+import AdminRegister from './pages/auth/AdminRegister';
 
 // --- Global App Context for Toasts/Modals ---
 interface Toast {
@@ -99,6 +99,7 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/patient" element={<PatientRegister />} />
         <Route path="/register/provider" element={<ProviderRegister />} />
+        <Route path="/register/admin" element={<AdminRegister />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
