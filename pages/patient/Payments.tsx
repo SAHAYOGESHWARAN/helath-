@@ -55,38 +55,40 @@ const ReceiptModal: React.FC<{ invoice: BillingInvoice | null; onClose: () => vo
                 </>
             }
         >
-            <div className="space-y-4 text-sm">
-                <div className="text-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-800">NovoPath Medical</h2>
-                    <p className="text-gray-500">Payment Receipt</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="font-medium text-gray-500">Invoice ID</p>
-                            <p className="font-semibold text-gray-800">{invoice.id}</p>
-                        </div>
-                        <div>
-                            <p className="font-medium text-gray-500">Date Processed</p>
-                            <p className="font-semibold text-gray-800">{invoice.date}</p>
-                        </div>
-                        <div>
-                            <p className="font-medium text-gray-500">Description</p>
-                            <p className="font-semibold text-gray-800">{invoice.description}</p>
-                        </div>
-                        <div>
-                            <p className="font-medium text-gray-500">Payment Method</p>
-                            <p className="font-semibold text-gray-800">Visa **** 4242</p>
+            <div id="invoice-to-print">
+                 <div className="printable-invoice space-y-4 text-sm">
+                    <div className="text-center mb-6">
+                        <h2 className="text-xl font-bold text-gray-800">NovoPath Medical</h2>
+                        <p className="text-gray-500">Payment Receipt</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg border">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="font-medium text-gray-500">Invoice ID</p>
+                                <p className="font-semibold text-gray-800">{invoice.id}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-500">Date Processed</p>
+                                <p className="font-semibold text-gray-800">{invoice.date}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-500">Description</p>
+                                <p className="font-semibold text-gray-800">{invoice.description}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-500">Payment Method</p>
+                                <p className="font-semibold text-gray-800">Visa **** 4242</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div className="border-t pt-4 mt-4">
-                     <div className="flex justify-between items-center">
-                        <span className="font-semibold text-gray-800 text-lg">Total Paid</span>
-                        <span className="font-bold text-primary-600 text-xl">${invoice.totalAmount.toFixed(2)}</span>
+                    <div className="border-t pt-4 mt-4">
+                         <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-800 text-lg">Total Paid</span>
+                            <span className="font-bold text-primary-600 text-xl">${invoice.totalAmount.toFixed(2)}</span>
+                        </div>
                     </div>
+                     <p className="text-xs text-center text-gray-500 pt-4">Thank you for your payment!</p>
                 </div>
-                 <p className="text-xs text-center text-gray-500 pt-4">Thank you for your payment!</p>
             </div>
         </Modal>
     );
@@ -194,11 +196,9 @@ const Payments: React.FC = () => {
               initialValues={{ nameOnCard: '', cardNumber: '', expiryDate: '', cvc: '', amount: currentBalance > 0 ? currentBalance.toFixed(2) : '0.00' }}
               enableReinitialize validationSchema={PaymentSchema}
               onSubmit={(values, { setSubmitting, resetForm }) => {
-                setTimeout(() => { 
-                    handleSimulatedPayment(parseFloat(values.amount));
-                    setSubmitting(false);
-                    resetForm();
-                }, 1000);
+                handleSimulatedPayment(parseFloat(values.amount));
+                setSubmitting(false);
+                resetForm();
               }}
             >
             {({ errors, touched, isValid, isSubmitting, values }) => ( <Form className="space-y-4">

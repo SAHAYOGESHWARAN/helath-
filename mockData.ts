@@ -1,4 +1,5 @@
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings } from './types';
+
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task } from './types';
 
 export const MOCK_USERS: User[] = [
   {
@@ -13,8 +14,8 @@ export const MOCK_USERS: User[] = [
     address: '123 Health St, Wellness City, USA',
     state: 'California',
     status: 'Active',
-    conditions: [{id: 'c1', name: 'Hypertension'}, {id: 'c2', name: 'Asthma'}],
-    allergies: [{id: 'a1', name: 'Penicillin', severity: 'Severe', reaction: 'Anaphylaxis'}, {id: 'a2', name: 'Peanuts', severity: 'Moderate', reaction: 'Hives'}],
+    conditions: [{id: 'c1', name: 'Hypertension', status: 'Active'}, {id: 'c2', name: 'Asthma', status: 'Active'}],
+    allergies: [{id: 'a1', name: 'Penicillin', severity: 'Severe', reaction: 'Anaphylaxis', status: 'Active'}, {id: 'a2', name: 'Peanuts', severity: 'Moderate', reaction: 'Hives', status: 'Active'}],
     medications: [
         {id: 'med1', name: 'Lisinopril 10mg', dosage: '1 tablet', frequency: 'Once daily', status: 'Active', adherence: 95},
         {id: 'med2', name: 'Atorvastatin 20mg', dosage: '1 tablet', frequency: 'Once daily at bedtime', status: 'Active', adherence: 98},
@@ -44,7 +45,17 @@ export const MOCK_USERS: User[] = [
     ],
     tasks: [
         { id: 'task1', text: 'Walk for 30 minutes', completed: true, dueDate: new Date(Date.now() - 86400000).toISOString().split('T')[0] }, // Yesterday
-        { id: 'task2', text: 'Drink 8 glasses of water', completed: false },
+        { 
+            id: 'task2', 
+            text: 'Drink 8 glasses of water', 
+            completed: false,
+            subtasks: [
+                { id: 'sub1', text: 'Morning glass', completed: true },
+                { id: 'sub2', text: 'Lunch glass', completed: true },
+                { id: 'sub3', text: 'Afternoon glass', completed: false },
+                { id: 'sub4', text: 'Dinner glass', completed: false },
+            ]
+        },
         { id: 'task3', text: 'Schedule follow-up appointment', completed: false, dueDate: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0] }, // Overdue
         { id: 'task4', text: 'Log daily food intake', completed: true },
     ],
@@ -82,7 +93,7 @@ export const MOCK_USERS: User[] = [
 export const MOCK_APPOINTMENTS: Appointment[] = [
     { id: 'appt1', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '10:30 AM', duration: 30, reason: 'Annual Check-up', location: 'Clinic', status: 'Confirmed', visitSummary: "Patient is in good health. Discussed lifestyle modifications. Continue current medications. Follow up in 1 year." },
     { id: 'appt2', patientId: 'pat2', patientName: 'Alice Johnson', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '11:00 AM', duration: 15, reason: 'Follow-up', location: 'Virtual', status: 'Confirmed', checkInStatus: 'Waiting' },
-    { id: 'appt3', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro2', providerName: 'Dr. David Chen', date: '2024-08-20', time: '02:00 PM', duration: 20, reason: 'Dermatology Follow-up', location: 'Clinic', status: 'Completed', visitSummary: "Checked healing of previous biopsy. No signs of infection. Recommended sunscreen." },
+    { id: 'appt3', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro2', providerName: 'Dr. David Chen', date: '2024-08-20', time: '02:00 PM', duration: 20, reason: 'Dermatology Follow-up', location: 'Clinic', status: 'Completed', visitSummary: "Checked healing of previous biopsy. No signs of infection. Recommended sunscreen.", videoUpdates: [{id: 'vid1', date: new Date(Date.now() - 86400000 * 2).toISOString(), videoUrl: 'https://storage.googleapis.com/web-dev-assets/video-and-source-tags/chrome.mp4'}] },
     { id: 'appt4', patientId: 'pat4', patientName: 'Charlie Brown', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: new Date().toISOString().split('T')[0], time: '10:30 AM', duration: 15, reason: 'Sick Visit', location: 'Virtual', status: 'Confirmed', checkInStatus: 'Checked-In' },
     { id: 'appt5', patientId: 'pat5', patientName: 'Diana Prince', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: new Date().toISOString().split('T')[0], time: '11:00 AM', duration: 30, reason: 'New Patient Intake', location: 'Clinic', status: 'Confirmed' },
 ];

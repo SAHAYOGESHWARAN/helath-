@@ -54,9 +54,9 @@ const NotificationsTab: React.FC = () => {
                 <div className="pt-4 first:pt-0">
                     <h3 className="font-semibold text-gray-800 mb-2">Email Notifications</h3>
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between"><p className="text-sm text-gray-600">Appointment reminders</p><ToggleSwitch name="emailAppointments" checked={settings.emailAppointments} onChange={handleNotificationChange} /></div>
-                        <div className="flex items-center justify-between"><p className="text-sm text-gray-600">Billing alerts</p><ToggleSwitch name="emailBilling" checked={settings.emailBilling} onChange={handleNotificationChange} /></div>
-                        <div className="flex items-center justify-between"><p className="text-sm text-gray-600">New messages</p><ToggleSwitch name="emailMessages" checked={settings.emailMessages} onChange={handleNotificationChange} /></div>
+                        <div className="flex items-center justify-between"><p className="text-sm text-gray-600">Appointment reminders & updates</p><ToggleSwitch name="emailAppointments" checked={settings.emailAppointments} onChange={handleNotificationChange} /></div>
+                        <div className="flex items-center justify-between"><p className="text-sm text-gray-600">Billing alerts & invoices</p><ToggleSwitch name="emailBilling" checked={settings.emailBilling} onChange={handleNotificationChange} /></div>
+                        <div className="flex items-center justify-between"><p className="text-sm text-gray-600">New secure messages</p><ToggleSwitch name="emailMessages" checked={settings.emailMessages} onChange={handleNotificationChange} /></div>
                     </div>
                 </div>
                 <div className="pt-4">
@@ -128,9 +128,9 @@ const SecurityTab: React.FC = () => {
                  <div className="flex items-center justify-between">
                      <div>
                         <p className="font-medium text-gray-700">Enable 2FA</p>
-                        <p className="text-sm text-gray-500">Add an extra layer of security to your account.</p>
+                        <p className="text-sm text-gray-500">Add an extra layer of security to your account. (Coming soon)</p>
                      </div>
-                     <ToggleSwitch name="2fa" checked={false} onChange={() => showToast('This is a demo feature.', 'info')} />
+                     <ToggleSwitch name="2fa" checked={false} onChange={() => {}} disabled />
                  </div>
             </Card>
         </div>

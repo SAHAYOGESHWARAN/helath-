@@ -1,3 +1,4 @@
+
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -13,6 +14,7 @@ export interface Subscription {
 export interface MedicalCondition {
   id: string;
   name: string;
+  status: 'Active' | 'Resolved';
 }
 
 export interface Allergy {
@@ -20,6 +22,7 @@ export interface Allergy {
   name: string;
   severity: 'Mild' | 'Moderate' | 'Severe';
   reaction: string;
+  status: 'Active' | 'Resolved';
 }
 
 export interface Medication {
@@ -92,11 +95,18 @@ export interface HealthGoal {
     unit: string;
 }
 
+export interface Subtask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   text: string;
   completed: boolean;
   dueDate?: string; // YYYY-MM-DD
+  subtasks?: Subtask[];
 }
 
 export interface User {
@@ -337,4 +347,7 @@ export interface AuthContextType {
   addHealthGoal: (goal: Omit<HealthGoal, 'id'>) => void;
   updateHealthGoal: (goal: HealthGoal) => void;
   deleteHealthGoal: (goalId: string) => void;
+  addSubtask: (taskId: string, text: string) => void;
+  toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
+  deleteSubtask: (taskId: string, subtaskId: string) => void;
 }

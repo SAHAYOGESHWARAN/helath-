@@ -1,53 +1,129 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Task } from '../../types';
+import { Task, Subtask } from '../../types';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { ClipboardDocumentListIcon, PlusIcon } from '../../components/shared/Icons';
+import { ClipboardDocumentListIcon, PlusIcon, TrashIcon } from '../../components/shared/Icons';
+
+const SubtaskItem: React.FC<{
+  task: Task;
+  subtask: Subtask;
+  onToggle: (taskId: string, subtaskId: string) => void;
+  onDelete: (taskId: string, subtaskId: string) => void;
+}> = ({ task, subtask, onToggle, onDelete }) => {
+  return (
+    <div className="flex items-center group">
+      <input
+        type="checkbox"
+        checked={subtask.completed}
+        onChange={() => onToggle(task.id, subtask.id)}
+        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+        aria-labelledby={`subtask-${subtask.id}`}
+      />
+      <span
+        id={`subtask-${subtask.id}`}
+        className={`ml-3 flex-grow text-sm ${subtask.completed ? 'line-through text-gray-400' : 'text-gray-600'}`}
+      >
+        {subtask.text}
+      </span>
+      <button
+        onClick={() => onDelete(task.id, subtask.id)}
+        className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label={`Delete subtask: ${subtask.text}`}
+      >
+        <TrashIcon className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
 
 const TaskItem: React.FC<{
   task: Task;
   onToggle: (id: string) => void;
+  onAddSubtask: (taskId: string, text: string) => void;
+  onToggleSubtask: (taskId: string, subtaskId: string) => void;
+  onDeleteSubtask: (taskId: string, subtaskId: string) => void;
   isJustCompleted: boolean;
   onAnimationEnd: () => void;
-}> = ({ task, onToggle, isJustCompleted, onAnimationEnd }) => {
+}> = ({ task, onToggle, onAddSubtask, onToggleSubtask, onDeleteSubtask, isJustCompleted, onAnimationEnd }) => {
   const isOverdue = !task.completed && task.dueDate ? new Date(task.dueDate) < new Date() : false;
+  const [newSubtaskText, setNewSubtaskText] = useState('');
+  
+  const handleAddSubtask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubtaskText.trim()) return;
+    onAddSubtask(task.id, newSubtaskText);
+    setNewSubtaskText('');
+  };
+
+  const subtaskProgress = useMemo(() => {
+    if (!task.subtasks || task.subtasks.length === 0) return 0;
+    const completed = task.subtasks.filter(st => st.completed).length;
+    return (completed / task.subtasks.length) * 100;
+  }, [task.subtasks]);
 
   return (
     <div
-      className={`flex items-center p-3 rounded-lg transition-all duration-300 ${
-        isJustCompleted ? 'animate-mark-complete' : task.completed ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'
+      className={`p-3 rounded-lg transition-all duration-300 ${
+        isJustCompleted ? 'animate-mark-complete' : task.completed ? 'bg-gray-100' : 'bg-white border border-gray-200 hover:bg-gray-50'
       }`}
       onAnimationEnd={onAnimationEnd}
     >
-      <input
-        type="checkbox"
-        checked={task.completed}
-        onChange={() => onToggle(task.id)}
-        className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-        aria-labelledby={`task-${task.id}`}
-      />
-      <span
-        id={`task-${task.id}`}
-        className={`ml-3 flex-grow text-gray-800 ${task.completed ? 'line-through text-gray-500' : ''}`}
-      >
-        {task.text}
-      </span>
-      {task.dueDate && (
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          checked={task.completed}
+          onChange={() => onToggle(task.id)}
+          className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+          aria-labelledby={`task-${task.id}`}
+        />
         <span
-          className={`text-xs font-medium px-2 py-1 rounded-full ${
-            task.completed ? 'text-gray-400' : isOverdue ? 'text-red-600 bg-red-100' : 'text-gray-500'
-          }`}
+          id={`task-${task.id}`}
+          className={`ml-3 flex-grow text-gray-800 ${task.completed ? 'line-through text-gray-500' : 'font-medium'}`}
         >
-          {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+          {task.text}
         </span>
+        {task.dueDate && (
+          <span
+            className={`text-xs font-medium px-2 py-1 rounded-full ${
+              task.completed ? 'text-gray-400' : isOverdue ? 'text-red-600 bg-red-100' : 'text-gray-500'
+            }`}
+          >
+            {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+          </span>
+        )}
+      </div>
+      {/* Subtasks rendering */}
+      {task.subtasks && task.subtasks.length > 0 && (
+        <div className="pl-8 pt-2 space-y-2">
+          <div className="w-full bg-gray-200 rounded-full h-1.5 my-2">
+              <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${subtaskProgress}%` }} />
+          </div>
+          {task.subtasks.map(subtask => (
+            <SubtaskItem key={subtask.id} task={task} subtask={subtask} onToggle={onToggleSubtask} onDelete={onDeleteSubtask} />
+          ))}
+        </div>
       )}
+      <div className="pl-8 pt-2">
+        <form onSubmit={handleAddSubtask} className="flex items-center gap-2">
+          <PlusIcon className="w-4 h-4 text-gray-400"/>
+          <input
+            type="text"
+            value={newSubtaskText}
+            onChange={e => setNewSubtaskText(e.target.value)}
+            placeholder="Add a subtask..."
+            className="flex-grow bg-transparent text-sm placeholder-gray-400 focus:outline-none"
+            aria-label={`Add subtask for ${task.text}`}
+          />
+        </form>
+      </div>
     </div>
   );
 };
 
 const TaskList: React.FC = () => {
-  const { user, addTask, toggleTaskCompletion } = useAuth();
+  const { user, addTask, toggleTaskCompletion, addSubtask, toggleSubtaskCompletion, deleteSubtask } = useAuth();
   const [newTaskText, setNewTaskText] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
   const [justCompleted, setJustCompleted] = useState<Set<string>>(new Set());
@@ -110,6 +186,9 @@ const TaskList: React.FC = () => {
                   key={task.id}
                   task={task}
                   onToggle={handleToggle}
+                  onAddSubtask={addSubtask}
+                  onToggleSubtask={toggleSubtaskCompletion}
+                  onDeleteSubtask={deleteSubtask}
                   isJustCompleted={justCompleted.has(task.id)}
                   onAnimationEnd={() =>
                     setJustCompleted(prev => {

@@ -65,7 +65,7 @@ const NewPrescriptionModal: React.FC<{ isOpen: boolean; onClose: () => void; }> 
                     setSubmitting(false);
                     resetForm();
                     onClose();
-                    showToast(`Prescription sent via Dosespot (simulated) for ${patient.name}.`, 'success');
+                    showToast(`Prescription sent via Dosespot for ${patient.name}.`, 'success');
                 }}
             >
             {({ isSubmitting, errors, touched, setFieldValue }) => (

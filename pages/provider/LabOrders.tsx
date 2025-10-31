@@ -95,6 +95,7 @@ const NewLabOrderModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
                                             ))}
                                         </div>
                                         <button type="button" onClick={() => push('')} className="text-sm text-primary-600 font-semibold">+ Add Custom Test</button>
+                                        {/* FIX: Replaced component prop with render prop child to fix TypeScript type inference issue. */}
                                         <ErrorMessage name="tests">{msg => <div className="text-red-500 text-xs mt-1">{msg}</div>}</ErrorMessage>
                                     </div>
                                     <Modal

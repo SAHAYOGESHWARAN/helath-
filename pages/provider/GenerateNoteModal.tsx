@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { GoogleGenerativeAI as GoogleGenAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "@google/genai";
 import Modal from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
@@ -38,32 +38,30 @@ const GenerateNoteModal: React.FC<GenerateNoteModalProps> = ({ isOpen, onClose, 
       setGeneratedNote(null);
 
       try {
-          const ai = new GoogleGenAI(process.env.API_KEY as string);
-          const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+          // FIX: Changed deprecated GoogleGenerativeAI to GoogleGenAI
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
           const systemInstruction = "You are a medical scribe AI. Your task is to take a raw transcript of a patient-provider conversation and convert it into a structured SOAP note. The output must be in JSON format with four keys: 'subjective', 'objective', 'assessment', and 'plan'. Ensure the content is professional, concise, and accurately reflects the transcript.";
           
-          const result = await model.generateContent({
-              contents: [{ role: "user", parts: [{ text: `Transcript:\n${transcript}` }] }],
-              generationConfig: {
+          const response = await ai.models.generateContent({
+              model: 'gemini-2.5-pro',
+              contents: `Transcript:\n${transcript}`,
+              config: {
+                  systemInstruction,
                   responseMimeType: "application/json",
                   responseSchema: {
-                      type: SchemaType.OBJECT,
+                      type: Type.OBJECT,
                       properties: {
-                          subjective: { type: SchemaType.STRING, description: "Patient's subjective complaints, history of present illness, and review of systems as stated by the patient." },
-                          objective: { type: SchemaType.STRING, description: "Provider's objective findings from physical examination, vital signs, and test results mentioned in the transcript." },
-                          assessment: { type: SchemaType.STRING, description: "Provider's diagnosis or assessment of the patient's condition based on the subjective and objective information." },
-                          plan: { type: SchemaType.STRING, description: "The treatment plan, including medications, therapies, follow-up instructions, and patient education." }
+                          subjective: { type: Type.STRING, description: "Patient's subjective complaints, history of present illness, and review of systems as stated by the patient." },
+                          objective: { type: Type.STRING, description: "Provider's objective findings from physical examination, vital signs, and test results mentioned in the transcript." },
+                          assessment: { type: Type.STRING, description: "Provider's diagnosis or assessment of the patient's condition based on the subjective and objective information." },
+                          plan: { type: Type.STRING, description: "The treatment plan, including medications, therapies, follow-up instructions, and patient education." }
                       },
                       required: ['subjective', 'objective', 'assessment', 'plan']
                   },
               },
-              systemInstruction: {
-                role: "system",
-                parts: [{ text: systemInstruction }],
-              }
           });
 
-          const noteText = result.response.text();
+          const noteText = response.text.trim();
           const parsedNote = JSON.parse(noteText);
           setGeneratedNote(parsedNote);
 

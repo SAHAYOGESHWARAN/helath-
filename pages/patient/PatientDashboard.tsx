@@ -2,20 +2,32 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { SparklesIcon, VideoCameraIcon, DumbbellIcon } from '../../components/shared/Icons';
-import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
+import { 
+    SparklesIcon, 
+    VideoCameraIcon, 
+    DumbbellIcon,
+    CalendarIcon,
+    PillIcon,
+    ChatBubbleLeftRightIcon,
+    ArrowRightIcon,
+    DocumentTextIcon,
+    CurrencyDollarIcon,
+    HeartIcon,
+} from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
-import { GoogleGenerativeAI as GoogleGenAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
+import Tabs from '../../components/shared/Tabs';
+import { HealthGoal } from '../../types';
 
-const GoalProgress: React.FC<{ goal: any }> = ({ goal }) => {
-    const progress = Math.min((goal.current / goal.target) * 100, 100);
+const GoalProgress: React.FC<{ goal: HealthGoal }> = ({ goal }) => {
+    const progress = goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
     const isAchieved = goal.current >= goal.target;
     return (
         <div>
             <div className="flex justify-between items-baseline mb-1">
                 <p className="font-semibold text-gray-700">{goal.title}</p>
-                <p className="text-sm font-medium text-gray-500">{goal.current} / {goal.target} {goal.unit}</p>
+                <p className="text-sm font-medium text-gray-500">{goal.current.toLocaleString()} / {goal.target.toLocaleString()} {goal.unit}</p>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div 
@@ -27,10 +39,26 @@ const GoalProgress: React.FC<{ goal: any }> = ({ goal }) => {
     );
 };
 
+const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; label: string; link: string; color: string }> = ({ icon, title, value, label, link, color }) => (
+    <Link to={link}>
+        <Card className={`hover:shadow-lg transition-shadow hover:border-${color}-200 h-full`}>
+            <div className="flex items-center">
+                <div className={`p-3 rounded-full bg-${color}-100 mr-4`}>{icon}</div>
+                <div>
+                    <p className="text-sm font-medium text-gray-500">{title}</p>
+                    <div className="flex items-baseline space-x-2">
+                        <p className="text-2xl font-bold text-gray-800">{value}</p>
+                        <p className="text-sm font-medium text-gray-600">{label}</p>
+                    </div>
+                </div>
+            </div>
+        </Card>
+    </Link>
+);
+
 
 const PatientDashboard: React.FC = () => {
-  const { user, appointments } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, appointments, messages } = useAuth();
   const [summary, setSummary] = useState('');
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState('');
@@ -42,9 +70,13 @@ const PatientDashboard: React.FC = () => {
         .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
   }, [appointments]);
 
+  const activeMedicationsCount = useMemo(() => user?.medications?.filter(m => m.status === 'Active').length || 0, [user]);
+  const primaryGoal = useMemo(() => user?.healthGoals?.[0], [user]);
+  const unreadMessages = useMemo(() => Object.values(messages).flat().filter(m => !m.isRead && m.senderId !== user?.id).length, [messages, user]);
+
   const vitalsChartData = useMemo(() => {
     if (!user?.vitals) return [];
-    return user.vitals.slice(0, 4).reverse().map(v => ({
+    return user.vitals.slice(0, 7).reverse().map(v => ({
       date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric'}),
       weight: v.weight,
       systolic: parseInt(v.bloodPressure.split('/')[0]),
@@ -53,58 +85,23 @@ const PatientDashboard: React.FC = () => {
     }));
   }, [user?.vitals]);
 
-  useEffect(() => {
-      const timer = setTimeout(() => {
-          setIsLoading(false);
-      }, 350);
-      return () => clearTimeout(timer);
-  }, []);
-
   const generateSummary = async () => {
     if (!user) {
         setSummaryError('User data is not available to generate a summary.');
         return;
     }
-
     setIsSummaryLoading(true);
     setSummary('');
     setSummaryError('');
-
     try {
-        const ai = new GoogleGenAI(process.env.API_KEY as string);
-        const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const emrData = `
-            - Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None listed'}
-            - Allergies: ${user.allergies?.map(a => `${a.name} (${a.severity})`).join(', ') || 'None listed'}
-            - Medications: ${user.medications?.filter(m => m.status === 'Active').map(m => `${m.name} ${m.dosage}`).join(', ') || 'None listed'}
-            - Surgeries: ${user.surgeries?.map(s => s.name).join(', ') || 'None listed'}
-            - Lifestyle: Smoking: ${user.lifestyle?.smokingStatus}, Alcohol: ${user.lifestyle?.alcoholConsumption}
-        `;
-
-        const systemInstruction = `You are an AI Health Assistant for NovoPath Medical. Your role is to provide a patient-friendly summary of their electronic medical record.
-        Analyze the provided health data and generate a clear, concise summary covering:
-        1.  A brief, positive opening statement.
-        2.  Key health highlights (active conditions, important allergies).
-        3.  A summary of current medications.
-        4.  One or two general wellness tips based on their lifestyle information.
-        
-        CRITICAL SAFETY INSTRUCTIONS:
-        - DO NOT provide a diagnosis or medical advice.
-        - DO NOT interpret results or predict outcomes.
-        - Your tone should be encouraging and informative, not alarming.
-        - You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
-        `;
-        
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: `Please summarize this health data for the patient, ${user.name}: ${emrData}` }] }],
-            systemInstruction: {
-                role: "system",
-                parts: [{ text: systemInstruction }],
-              }
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const systemInstruction = `You are an AI Health Assistant for NovoPath Medical. Your role is to provide a patient-friendly summary of their electronic medical record. Analyze the provided health data and generate a clear, concise summary covering key health highlights, medications, and general wellness tips. CRITICAL: You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant... consult with your doctor.**"`;
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: `Please summarize this health data for the patient, ${user.name}: Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None'}. Medications: ${user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'None'}.`,
+            config: { systemInstruction }
         });
-        setSummary(result.response.text());
-
+        setSummary(response.text);
     } catch (error) {
         console.error("Error generating health summary:", error);
         setSummaryError('Sorry, I was unable to generate your summary at this time.');
@@ -113,148 +110,138 @@ const PatientDashboard: React.FC = () => {
     }
   };
   
-  if(isLoading) {
-    return (
-      <div>
-        <div className="h-10 w-3/5 rounded-lg shimmer-bg mb-2"></div>
-        <div className="h-6 w-2/5 rounded-lg shimmer-bg mb-8"></div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-        </div>
-      </div>
-    );
-  }
+  const BPChart = () => (
+    <ResponsiveContainer width="100%" height={250}>
+      <LineChart data={vitalsChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="date" tick={{fontSize: 12}} />
+        <YAxis yAxisId="left" domain={['dataMin - 10', 'dataMax + 10']} tick={{fontSize: 12}} stroke="#ef4444" label={{ value: 'BP (mmHg)', angle: -90, position: 'insideLeft' }} />
+        <YAxis yAxisId="right" orientation="right" domain={['dataMin - 10', 'dataMax + 10']} tick={{fontSize: 12}} stroke="#f97316" />
+        <Tooltip />
+        <Legend />
+        <Line yAxisId="left" type="monotone" dataKey="systolic" stroke="#ef4444" name="Systolic" />
+        <Line yAxisId="left" type="monotone" dataKey="diastolic" stroke="#3b82f6" name="Diastolic" />
+        <Line yAxisId="right" type="monotone" dataKey="heartRate" stroke="#f97316" name="Heart Rate (bpm)" />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+
+  const WeightChart = () => (
+      <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={vitalsChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" tick={{fontSize: 12}} />
+              <YAxis domain={['dataMin - 10', 'dataMax + 10']} tick={{fontSize: 12}}/>
+              <Tooltip cursor={{fill: 'rgba(239, 246, 255, 0.7)'}}/>
+              <Bar dataKey="weight" fill="#3b82f6" name="Weight (lbs)" barSize={30} radius={[4, 4, 0, 0]}/>
+          </BarChart>
+      </ResponsiveContainer>
+  );
+
+  const vitalsTabs = [
+      { name: 'BP & Heart Rate', icon: <HeartIcon />, content: <BPChart /> },
+      { name: 'Weight', icon: <DumbbellIcon />, content: <WeightChart /> },
+  ];
+  
+  const quickActions = [
+      { name: 'Schedule Appointment', href: '/appointments', icon: <CalendarIcon className="w-5 h-5 text-primary-600"/> },
+      { name: 'View Health Records', href: '/emr', icon: <DocumentTextIcon className="w-5 h-5 text-emerald-600"/> },
+      { name: 'Message My Provider', href: '/messaging', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/> },
+      { name: 'Pay My Bill', href: '/payments', icon: <CurrencyDollarIcon className="w-5 h-5 text-amber-600"/> },
+      { name: 'Start a Video Visit', href: '/video-consults', icon: <VideoCameraIcon className="w-5 h-5 text-rose-600"/> },
+  ];
 
   return (
     <div>
       <PageHeader 
-        title={`Welcome, ${user?.name?.split(' ')[0]}!`}
-        subtitle="This is your health dashboard. What would you like to do today?"
+        title={`Welcome back, ${user?.name?.split(' ')[0]}!`}
+        subtitle="Here’s your health summary for today."
       />
       
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-                 {nextAppointment && (
-                    <Card className="bg-primary-50 border-primary-200">
-                        <h3 className="font-bold text-xl text-primary-800 mb-2">Your Next Appointment</h3>
-                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                            <div className="flex items-center space-x-4">
-                                <div className="flex flex-col items-center justify-center bg-white text-primary-700 rounded-lg p-3 w-20 text-center shadow-sm">
-                                    <span className="text-sm font-bold uppercase">{new Date(nextAppointment.date).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</span>
-                                    <span className="text-2xl font-extrabold">{new Date(nextAppointment.date).getUTCDate()}</span>
-                                </div>
-                                <div>
-                                    <p className="font-bold text-lg text-gray-800">{nextAppointment.reason}</p>
-                                    <p className="text-sm text-gray-600">with {nextAppointment.providerName}</p>
-                                    {/* FIX: Changed nextAppointment.type to nextAppointment.location */}
-                                    <p className="text-sm text-gray-500 mt-1">{nextAppointment.time} ({nextAppointment.location})</p>
-                                </div>
-                            </div>
-                            <div className="mt-4 sm:mt-0 flex space-x-2">
-                                <Link to="/appointments" className="bg-white hover:bg-gray-100 text-primary-700 font-bold py-2 px-4 rounded-lg text-sm border border-primary-200">Manage</Link>
-                                {/* FIX: Changed nextAppointment.type to nextAppointment.location */}
-                                {nextAppointment.location === 'Virtual' && <Link to="/video-consults" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center"><VideoCameraIcon className="w-4 h-4 mr-2"/> Join Call</Link>}
-                            </div>
-                         </div>
-                    </Card>
-                )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard 
+                icon={<CalendarIcon className="w-6 h-6 text-primary-600"/>}
+                title="Next Appointment"
+                value={nextAppointment ? new Date(nextAppointment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'None'}
+                label={nextAppointment?.time || ''}
+                link="/appointments"
+                color="primary"
+            />
+             <StatCard 
+                icon={<PillIcon className="w-6 h-6 text-emerald-600"/>}
+                title="Active Medications"
+                value={activeMedicationsCount}
+                label="meds"
+                link="/emr"
+                color="emerald"
+            />
+             <StatCard 
+                icon={<DumbbellIcon className="w-6 h-6 text-amber-600"/>}
+                title={primaryGoal?.title || "No Goals Set"}
+                value={primaryGoal?.current || 0}
+                label={primaryGoal?.unit || 'goals'}
+                link="/emr"
+                color="amber"
+            />
+             <StatCard 
+                icon={<ChatBubbleLeftRightIcon className="w-6 h-6 text-sky-600"/>}
+                title="Unread Messages"
+                value={unreadMessages}
+                label="messages"
+                link="/messaging"
+                color="sky"
+            />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3 space-y-6">
                  <Card title="Your AI Health Summary">
                     {isSummaryLoading ? (
-                        <div className="space-y-3 animate-pulse">
+                        <div className="space-y-3 animate-pulse p-4">
                             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                             <div className="h-4 bg-gray-200 rounded w-full"></div>
                             <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                         </div>
                     ) : summary ? (
-                        <div className="text-sm text-gray-700 space-y-2" style={{ whiteSpace: 'pre-wrap' }}>
-                            {summary}
-                        </div>
+                        <div className="text-sm text-gray-700 space-y-2 p-4" style={{ whiteSpace: 'pre-wrap' }}>{summary}</div>
                     ) : (
-                        <div className="text-center">
+                        <div className="text-center p-4">
                             <p className="text-gray-600 mb-4">Get a quick, easy-to-understand overview of your health records.</p>
                             {summaryError && <p className="text-red-500 text-sm mb-4">{summaryError}</p>}
-                            <button 
-                                onClick={generateSummary}
-                                disabled={isSummaryLoading}
-                                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition-transform transform hover:scale-105 inline-flex items-center"
-                            >
-                                <SparklesIcon className="w-5 h-5 mr-2" />
-                                Generate My Summary
+                            <button onClick={generateSummary} disabled={isSummaryLoading} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-5 rounded-lg shadow-sm inline-flex items-center">
+                                <SparklesIcon className="w-5 h-5 mr-2" /> Generate My Summary
                             </button>
                         </div>
                     )}
                 </Card>
-                 <Card title="Blood Pressure (mmHg) & Heart Rate (bpm)">
-                     <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={vitalsChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" tick={{fontSize: 12}} />
-                            <YAxis yAxisId="left" domain={['dataMin - 10', 'dataMax + 10']} tick={{fontSize: 12}} stroke="#ef4444" />
-                            <YAxis yAxisId="right" orientation="right" domain={['dataMin - 10', 'dataMax + 10']} tick={{fontSize: 12}} stroke="#f97316" />
-                            <Tooltip />
-                            <Legend />
-                            <Line yAxisId="left" type="monotone" dataKey="systolic" stroke="#ef4444" name="Systolic" />
-                            <Line yAxisId="left" type="monotone" dataKey="diastolic" stroke="#3b82f6" name="Diastolic" />
-                            <Line yAxisId="right" type="monotone" dataKey="heartRate" stroke="#f97316" name="Heart Rate (bpm)" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </Card>
-                 <Card title="Weight (lbs)">
-                     <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={vitalsChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" tick={{fontSize: 12}} />
-                            <YAxis domain={['dataMin - 5', 'dataMax + 5']} tick={{fontSize: 12}}/>
-                            <Tooltip cursor={{fill: 'rgba(239, 246, 255, 0.7)'}}/>
-                            <Bar dataKey="weight" fill="#3b82f6" name="Weight (lbs)" barSize={30} radius={[4, 4, 0, 0]}/>
-                        </BarChart>
-                    </ResponsiveContainer>
+                <Card title="Your Vitals">
+                    <Tabs tabs={vitalsTabs} />
                 </Card>
             </div>
-            <div className="lg:col-span-1 space-y-8">
-                 <Card title="Health Goals">
+            <div className="lg:col-span-2 space-y-6">
+                <Card title="Quick Actions">
+                    <div className="space-y-2">
+                        {quickActions.map(action => (
+                            <Link key={action.name} to={action.href} className="flex items-center p-3 -m-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div className="p-2 bg-gray-100 rounded-lg">{action.icon}</div>
+                                <span className="ml-4 font-semibold text-gray-700">{action.name}</span>
+                                <ArrowRightIcon className="w-4 h-4 ml-auto text-gray-400" />
+                            </Link>
+                        ))}
+                    </div>
+                </Card>
+                <Card title="Health Goals">
                     <div className="space-y-4">
                         {user?.healthGoals && user.healthGoals.length > 0 ? (
                             user.healthGoals.map(goal => <GoalProgress key={goal.id} goal={goal} />)
                         ) : (
                             <div className="text-center py-4 text-gray-500">
-                                <DumbbellIcon className="w-12 h-12 mx-auto text-gray-300 mb-2" />
                                 <p className="font-semibold text-gray-700">No Health Goals Yet</p>
-                                <p className="text-sm mt-1">Set and track goals to stay on top of your health journey.</p>
-                                <Link to="/goals" className="mt-4 inline-block bg-primary-100 text-primary-700 font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary-200 transition-colors">
-                                    Manage Goals
+                                <Link to="/emr" className="mt-2 inline-block text-primary-600 font-semibold hover:underline text-sm">
+                                    Set Goals
                                 </Link>
                             </div>
                         )}
-                    </div>
-                </Card>
-                {user?.gymMembership && (
-                    <Card title="Connected Partners">
-                        <div className="flex items-center">
-                            <div className="bg-gray-100 text-gray-600 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
-                                <DumbbellIcon className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-800">{user.gymMembership.gymName}</p>
-                                <p className={`text-sm font-semibold ${user.gymMembership.status === 'Active' ? 'text-emerald-600' : 'text-gray-500'}`}>{user.gymMembership.status}</p>
-                                {user.gymMembership.lastCheckIn && (
-                                    <p className="text-xs text-gray-500 mt-1">Last Check-in: {new Date(user.gymMembership.lastCheckIn).toLocaleDateString()}</p>
-                                )}
-                            </div>
-                        </div>
-                        <button className="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm">
-                            Sync Activity
-                        </button>
-                    </Card>
-                 )}
-                 <Card title="Quick Links">
-                     <div className="space-y-3">
-                        <Link to="/emr" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">View Health Records</Link>
-                        <Link to="/appointments" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Schedule Appointment</Link>
-                        <Link to="/messaging" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Message My Provider</Link>
-                         <Link to="/payments" className="block w-full text-left p-3 rounded-lg hover:bg-gray-100 font-medium">Pay My Bill</Link>
                     </div>
                 </Card>
             </div>

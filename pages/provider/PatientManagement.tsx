@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { User, UserRole } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
@@ -111,7 +111,11 @@ const PatientManagement: React.FC = () => {
                             className={`transition-colors duration-150 cursor-pointer ${selectedPatientId === p.id ? 'bg-primary-50' : 'hover:bg-gray-50'}`}
                             onClick={() => setSelectedPatientId(p.id)}
                         >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <Link to={`/patients/${p.id}`} className="hover:underline text-primary-600">
+                                    {p.name}
+                                </Link>
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{p.id}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.dob}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">

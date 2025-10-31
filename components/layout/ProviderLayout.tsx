@@ -29,7 +29,7 @@ const ProviderLayout: React.FC = () => {
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 md:p-8 bg-slate-50">
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/patients" replace />} />
             <Route path="/dashboard" element={<ProviderDashboard />} />
             <Route path="/calendar" element={<ProviderCalendar />} />
             <Route path="/appointments" element={<ProviderAppointments />} />
@@ -47,7 +47,7 @@ const ProviderLayout: React.FC = () => {
             <Route path="/waiting-room" element={<WaitingRoom />} />
             <Route path="/profile" element={<ProviderProfile />} />
             <Route path="/settings" element={<ProviderSettings />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/patients" replace />} />
           </Routes>
         </main>
       </div>

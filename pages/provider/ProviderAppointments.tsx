@@ -43,23 +43,19 @@ const ProviderAppointments: React.FC = () => {
   const handleConfirm = () => {
     if (!selectedAppointment) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      confirmAppointment(selectedAppointment.id);
-      showToast('Appointment confirmed!', 'success');
-      setIsSubmitting(false);
-      setModal(null);
-    }, 800);
+    confirmAppointment(selectedAppointment.id);
+    showToast('Appointment confirmed!', 'success');
+    setIsSubmitting(false);
+    setModal(null);
   };
   
   const handleCancel = () => {
     if (!selectedAppointment) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      cancelAppointment(selectedAppointment.id);
-      showToast('Appointment cancelled.', 'success');
-      setIsSubmitting(false);
-      setModal(null);
-    }, 800);
+    cancelAppointment(selectedAppointment.id);
+    showToast('Appointment cancelled.', 'success');
+    setIsSubmitting(false);
+    setModal(null);
   };
 
   return (

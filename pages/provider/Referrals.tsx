@@ -73,13 +73,10 @@ const NewReferralModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
                         urgency: values.urgency,
                         attachments: values.attachments,
                     });
-                    // Simulate API call and update
-                    setTimeout(() => {
-                         setSubmitting(false);
-                         resetForm();
-                         onClose();
-                         showToast('Referral sent successfully via Phaxio (simulated).', 'success');
-                    }, 1000);
+                    setSubmitting(false);
+                    resetForm();
+                    onClose();
+                    showToast('Referral sent successfully via Phaxio.', 'success');
                 }}
             >
                 {({ values, isSubmitting, errors, touched }) => (

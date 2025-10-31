@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 // Per coding guidelines, API_KEY is assumed to be available from process.env.
-export const genAI = new GoogleGenerativeAI(process.env.API_KEY as string);
+// FIX: Changed deprecated GoogleGenerativeAI to GoogleGenAI
+export const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });

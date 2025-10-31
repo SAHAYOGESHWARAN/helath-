@@ -1,30 +1,25 @@
-import React, { createContext, useState, useCallback, ReactNode, useContext } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+// FIX: 'useAuth' is not exported from AuthContext, it's in its own hook file.
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { UserRole } from './types';
+import { NotificationProvider } from './contexts/NotificationContext';
 import LoginPage from './pages/auth/LoginPage';
 import PatientLayout from './components/layout/PatientLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
 import AdminLayout from './components/layout/AdminLayout';
+import { UserRole } from './types';
 import UniqueLoader from './components/shared/UniqueLoader';
 import RegisterPage from './pages/auth/RegisterPage';
 import PatientRegister from './pages/auth/PatientRegister';
 import ProviderRegister from './pages/auth/ProviderRegister';
-import { NotificationProvider } from './contexts/NotificationContext';
-import WelcomePage from './pages/WelcomePage';
 import AdminRegister from './pages/auth/AdminRegister';
+import WelcomePage from './pages/WelcomePage';
 import FeaturesPage from './pages/FeaturesPage';
 import TestimonialsPage from './pages/TestimonialsPage';
 import ForProvidersPage from './pages/ForProvidersPage';
 
-// --- Global App Context for Toasts/Modals ---
-interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
-
+// AppContext for showToast
 interface AppContextType {
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
@@ -39,11 +34,48 @@ export const useApp = () => {
   return context;
 };
 
+// FIX: Simplify toast types to avoid complex Omit/Parameters usage which caused a type error.
+interface ToastMessage {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
+const Toast: React.FC<{ message: string, type: 'success' | 'error' | 'info', onClose: () => void }> = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = {
+    success: 'bg-emerald-500',
+    error: 'bg-red-500',
+    info: 'bg-blue-500',
+  }[type];
+
+  return (
+    <div className={`px-6 py-3 text-white rounded-lg shadow-2xl animate-slide-in-up text-sm font-medium ${bgColor}`}>
+      {message}
+    </div>
+  );
+};
+
+const Toaster: React.FC<{ toasts: ToastMessage[] }> = ({ toasts }) => {
+  return (
+    <div className="fixed bottom-5 right-5 z-[100] space-y-3">
+      {toasts.map(toast => (
+        <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => {}} />
+      ))}
+    </div>
+  );
+};
+
+
 const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
-    const newToast: Toast = { id: Date.now(), message, type };
+    const newToast = { id: Date.now(), message, type };
     setToasts(prev => [...prev, newToast]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== newToast.id));
@@ -53,37 +85,12 @@ const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <AppContext.Provider value={{ showToast }}>
       {children}
-      <ToastContainer toasts={toasts} />
+      <Toaster toasts={toasts} />
     </AppContext.Provider>
   );
 };
 
-const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
-  const getToastColors = (type: Toast['type']) => {
-    switch (type) {
-      case 'success': return 'bg-emerald-500';
-      case 'error': return 'bg-red-500';
-      case 'info':
-      default: return 'bg-blue-500';
-    }
-  };
-
-  return (
-    <div className="fixed bottom-5 right-5 z-[100] space-y-3">
-      {toasts.map(toast => (
-        <div
-          key={toast.id}
-          className={`px-6 py-3 text-white rounded-lg shadow-2xl animate-slide-in-up text-sm font-medium ${getToastColors(toast.type)}`}
-        >
-          {toast.message}
-        </div>
-      ))}
-    </div>
-  );
-};
-
-
-function AppRoutes() {
+const AppRoutes: React.FC = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -93,9 +100,21 @@ function AppRoutes() {
       </div>
     );
   }
+  
+  if (user) {
+    switch (user.role) {
+      case UserRole.PATIENT:
+        return <PatientLayout />;
+      case UserRole.PROVIDER:
+        return <ProviderLayout />;
+      case UserRole.ADMIN:
+        return <AdminLayout />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  }
 
-  if (!user) {
-    return (
+  return (
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/features" element={<FeaturesPage />} />
@@ -108,35 +127,21 @@ function AppRoutes() {
         <Route path="/register/admin" element={<AdminRegister />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    );
-  }
-  
-  if (!user.role) {
-      return <Navigate to="/" replace />;
-  }
+  );
+};
 
-  switch (user.role) {
-    case UserRole.PATIENT:
-      return <PatientLayout />;
-    case UserRole.PROVIDER:
-      return <ProviderLayout />;
-    case UserRole.ADMIN:
-      return <AdminLayout />;
-    default:
-      return <Navigate to="/" replace />;
-  }
-}
-
-export default function App() {
+function App() {
   return (
     <AuthProvider>
-      <AppProvider>
-        <NotificationProvider>
+      <NotificationProvider>
+        <AppProvider>
           <HashRouter>
             <AppRoutes />
           </HashRouter>
-        </NotificationProvider>
-      </AppProvider>
+        </AppProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
+
+export default App;
