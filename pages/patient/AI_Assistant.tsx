@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat, GroundingMetadata } from '@google/genai';
+import { GoogleGenerativeAI as GoogleGenAI, ChatSession, Content, Part } from '@google/generative-ai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon, CameraIcon } from '../../components/shared/Icons';
@@ -7,11 +7,9 @@ import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBu
 import PageHeader from '../../components/shared/PageHeader';
 import VideoUpdateModal from './VideoUpdateModal';
 
-interface Message {
-  role: 'user' | 'model';
-  parts: { text: string }[];
+interface Message extends Content {
   suggestions?: string[];
-  groundingMetadata?: GroundingMetadata;
+  groundingMetadata?: any;
 }
 
 const AIWeightLossCoach: React.FC = () => {
@@ -21,52 +19,11 @@ const AIWeightLossCoach: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ai = useRef<GoogleGenAI | null>(null);
-  const chat = useRef<Chat | null>(null);
+  const chat = useRef<ChatSession | null>(null);
 
   useEffect(() => {
-    // Per coding guidelines, API_KEY is assumed to be available from process.env.
-    ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  }, []);
-
-  useEffect(() => {
-    if (user && history.length === 0) {
-      setHistory([
-        {
-          role: 'model',
-          parts: [{ text: `Hello, ${user.name}! I'm your AI Weight Loss Coach, powered by Gemini. I can help you with personalized meal plans, workout suggestions, and tracking your progress. How can I help you achieve your goals today?` }],
-          suggestions: [
-              "Create a 7-day meal plan for me", 
-              user.gymMembership ? `Suggest a workout I can do at ${user.gymMembership.gymName}` : "What's a good 30-minute workout?", 
-              "How many calories are in an apple?"
-            ],
-        },
-      ]);
-    }
-  }, [user, history.length]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(scrollToBottom, [history, loading]);
-
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim() || loading || !ai.current || !user) return;
-
-    const userMessage: Message = { role: 'user', parts: [{ text }] };
-    // Don't add video placeholder messages to the API history
-    const historyForApi = text.startsWith('[User sent a video update') ? history : [...history, userMessage];
-    
-    if (!text.startsWith('[User sent a video update')) {
-        setHistory(prev => [...prev, userMessage]);
-    }
-    
-    setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }] }]);
-    setPrompt('');
-    setLoading(true);
-
-    try {
+    if (user) {
+      const ai = new GoogleGenAI(process.env.API_KEY as string);
       const activeMedications = user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'none';
       const lifestyleInfo = user.lifestyle 
         ? `Diet: ${user.lifestyle.diet}, Exercise: ${user.lifestyle.exercise}, Smoking: ${user.lifestyle.smokingStatus}, Alcohol: ${user.lifestyle.alcoholConsumption}` 
@@ -74,8 +31,6 @@ const AIWeightLossCoach: React.FC = () => {
       const latestVitals = user.vitals && user.vitals.length > 0 ? `Latest vitals from ${user.vitals[0].date}: BP: ${user.vitals[0].bloodPressure}, HR: ${user.vitals[0].heartRate}, Weight: ${user.vitals[0].weight} lbs.` : 'not available.';
       const healthGoals = user.healthGoals && user.healthGoals.length > 0 ? user.healthGoals.map(g => `${g.title}: Target ${g.target} ${g.unit}, Current ${g.current} ${g.unit}`).join('; ') : 'none specified.';
       const gymInfo = user.gymMembership ? `Gym Membership: Active at ${user.gymMembership.gymName}. Last check-in was on ${new Date(user.gymMembership.lastCheckIn!).toLocaleDateString()}.` : 'no gym membership connected.';
-
-
       const patientContext = `
         The current user is ${user.name}. 
         Their known medical conditions are: ${user.conditions?.map(c => c.name).join(', ') || 'none'}.
@@ -86,7 +41,6 @@ const AIWeightLossCoach: React.FC = () => {
         Health Goals: ${healthGoals}
         Gym Info: ${gymInfo}
       `;
-      
       const systemInstruction = `You are NovoPath Medical's "AI Weight Loss Coach", a friendly and supportive AI assistant powered by Gemini. Your goal is to help patients with personalized health guidance for weight loss.
       You have the following context about the patient: ${patientContext}
       
@@ -104,55 +58,55 @@ const AIWeightLossCoach: React.FC = () => {
       - At the end of EVERY single response, without exception, you MUST include a clear, bolded disclaimer on its own line: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with your doctor before starting any new diet or exercise program.**"
       - Keep your tone empathetic, clear, and helpful.`;
       
-      if (!chat.current) {
-        chat.current = ai.current.chats.create({
-            model: "gemini-2.5-flash",
-            config: {
-                systemInstruction: systemInstruction,
-                tools: [{googleSearch: {}}],
-            },
-            history: historyForApi.map(msg => ({
-              role: msg.role,
-              parts: msg.parts,
-            })),
-        });
-      }
+      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash-latest", systemInstruction });
+      chat.current = model.startChat();
+    }
+  }, [user]);
 
-      const resultStream = await chat.current.sendMessageStream({ message: text });
-      let responseReceived = false;
-      for await (const chunk of resultStream) {
-          const chunkText = chunk.text;
-          if (chunkText) {
-              responseReceived = true;
-              setHistory(prev => {
-                  const lastMessage = prev[prev.length - 1];
-                  if (lastMessage && lastMessage.role === 'model') {
-                      const updatedMessage = {
-                          ...lastMessage,
-                          parts: [{ text: lastMessage.parts[0].text + chunkText }],
-                          groundingMetadata: chunk.candidates?.[0]?.groundingMetadata,
-                      };
-                      return [...prev.slice(0, -1), updatedMessage];
-                  }
-                  return prev;
-              });
-          }
-      }
-      
-      if (!responseReceived) {
+  useEffect(() => {
+    if (user && history.length === 0) {
+      setHistory([
+        {
+          role: 'model',
+          parts: [{ text: `Hello, ${user.name}! I'm your AI Weight Loss Coach, powered by Gemini. I can help you with personalized meal plans, workout suggestions, and tracking your progress. How can I help you achieve your goals today?` }],
+          suggestions: [
+              "Create a 7-day meal plan for me",
+              user.gymMembership ? `Suggest a workout I can do at ${user.gymMembership.gymName}` : "What's a good 30-minute workout?",
+              "How many calories are in an apple?"
+            ],
+        },
+      ]);
+    }
+  }, [user, history.length]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(scrollToBottom, [history, loading]);
+
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim() || loading || !chat.current || !user) return;
+
+    const userMessage: Message = { role: 'user', parts: [{ text }] };
+    setHistory(prev => [...prev, userMessage]);
+    setLoading(true);
+
+    try {
+      const result = await chat.current.sendMessageStream(text);
+      let accumulatedText = "";
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        accumulatedText += chunkText;
         setHistory(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage?.role === 'model') {
-                const updatedMessage = {
-                    ...lastMessage,
-                    parts: [{ text: "I'm not sure how to respond to that. Could you try rephrasing?\n\n**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with your doctor before starting any new diet or exercise program.**" }],
-                };
-                return [...prev.slice(0, -1), updatedMessage];
-            }
-            return prev;
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage && lastMessage.role === 'model') {
+            const updatedMessage = { ...lastMessage, parts: [{ text: accumulatedText }] };
+            return [...prev.slice(0, -1), updatedMessage];
+          }
+          return [...prev, { role: 'model', parts: [{ text: accumulatedText }] }];
         });
       }
-
     } catch (error) {
       console.error("Error generating content:", error);
       chat.current = null; // Reset chat on error
@@ -179,7 +133,7 @@ const AIWeightLossCoach: React.FC = () => {
   };
   
   const handleSendVideo = (videoBlobUrl: string) => {
-    if (!videoBlobUrl || loading || !ai.current || !user) return;
+    if (!videoBlobUrl || loading || !chat.current || !user) return;
   
     const userMessage: Message = {
       role: 'user',
