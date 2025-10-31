@@ -1,10 +1,8 @@
-
 import React, { useState, ReactElement } from 'react';
 
 interface Tab {
     name: string;
-    // FIX: Changed type from ReactElement to ReactElement<any> to allow adding className prop via cloneElement.
-    icon: ReactElement<any>;
+    icon: ReactElement;
     content: ReactElement;
 }
 
@@ -34,7 +32,8 @@ const Tabs: React.FC<TabsProps> = ({ tabs }) => {
                             `}
                             aria-current={activeTab === index ? 'page' : undefined}
                         >
-                            {React.cloneElement(tab.icon, { className: 'w-5 h-5 mr-2' })}
+                            {/* FIX: Cast tab.icon to allow passing className */}
+                            {React.cloneElement(tab.icon as React.ReactElement<any>, { className: 'w-5 h-5 mr-2' })}
                             {tab.name}
                         </button>
                     ))}

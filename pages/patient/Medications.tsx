@@ -39,6 +39,7 @@ const Medications: React.FC = () => {
 
     const [newMed, setNewMed] = useState({ name: '', dosage: '', frequency: '' });
     const [takenMeds, setTakenMeds] = useState<Set<string>>(new Set());
+    const [justTaken, setJustTaken] = useState<Set<string>>(new Set());
     
     const activeMeds = useMemo(() => user?.medications?.filter(m => m.status === 'Active') || [], [user]);
 
@@ -61,6 +62,7 @@ const Medications: React.FC = () => {
 
     const handleMarkAsTaken = (medId: string, medName: string) => {
         setTakenMeds(prev => new Set(prev).add(medId));
+        setJustTaken(prev => new Set(prev).add(medId));
         showToast(`${medName} logged as taken for today.`, 'success');
     };
     
@@ -94,10 +96,23 @@ const Medications: React.FC = () => {
                         <div className="space-y-4">
                            {activeMeds.length > 0 ? activeMeds.map(med => {
                                const isTaken = takenMeds.has(med.id);
+                               const isJustTaken = justTaken.has(med.id);
                                return (
-                                   <div key={med.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                   <div
+                                        key={med.id}
+                                        className={`flex justify-between items-center p-3 rounded-lg transition-colors ${isJustTaken ? 'animate-mark-complete' : (isTaken ? 'bg-gray-100' : 'bg-gray-50')}`}
+                                        onAnimationEnd={() => {
+                                            if (isJustTaken) {
+                                                setJustTaken(prev => {
+                                                    const newSet = new Set(prev);
+                                                    newSet.delete(med.id);
+                                                    return newSet;
+                                                });
+                                            }
+                                        }}
+                                   >
                                         <div>
-                                            <p className={`font-semibold ${isTaken ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{med.name}</p>
+                                            <p className={`font-semibold transition-colors ${isTaken ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{med.name}</p>
                                             <p className="text-sm text-gray-500">Take {med.frequency.toLowerCase()}</p>
                                         </div>
                                         <button 

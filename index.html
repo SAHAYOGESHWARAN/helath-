@@ -124,19 +124,7 @@
       transform: translateY(-8px);
       box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
-    .testimonial-card::before {
-      content: '“';
-      position: absolute;
-      top: -0.5rem;
-      left: 1rem;
-      font-size: 6rem;
-      line-height: 1;
-      font-family: 'Times New Roman', serif;
-      color: #eff6ff;
-      z-index: 0;
-      transition: color 0.3s ease;
-    }
-
+    
     /* For printing receipts */
     @media print {
         body * {
@@ -154,6 +142,35 @@
         .printable-invoice {
            font-family: sans-serif;
         }
+    }
+
+    /* New notification animation */
+    @keyframes pulse-bg {
+        0% { background-color: #eff6ff; } /* primary-50 */
+        50% { background-color: #dbeafe; } /* primary-100 */
+        100% { background-color: #eff6ff; } /* primary-50 */
+    }
+    .animate-pulse-bg-once {
+        animation: pulse-bg 1.5s ease-in-out;
+    }
+
+    /* New task complete animation */
+    @keyframes mark-complete {
+      0% {
+        background-color: #d1fae5; /* emerald-100 */
+        transform: scale(1);
+      }
+      50% {
+        background-color: #6ee7b7; /* emerald-300 */
+        transform: scale(1.02);
+      }
+      100% {
+        background-color: #f3f4f6; /* gray-100 */
+        transform: scale(1);
+      }
+    }
+    .animate-mark-complete {
+      animation: mark-complete 0.7s ease-in-out forwards;
     }
   </style>
   <script>

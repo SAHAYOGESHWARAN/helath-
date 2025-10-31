@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
-import { BellIcon } from '../shared/Icons';
-// FIX: The error indicates a module resolution problem. `Link` is a valid export. Assuming this will be resolved by fixing other react-router-dom issues.
+import { BellIcon, XMarkIcon } from '../shared/Icons';
 import { Link } from 'react-router-dom';
 
 interface NotificationPanelProps {
@@ -10,7 +8,7 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose }) => {
-    const { notifications, markAsRead, clearAll } = useNotifications();
+    const { notifications, markAsRead, clearAll, removeNotification, markAllAsRead } = useNotifications();
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     const timeSince = (date: string) => {
@@ -33,6 +31,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose }) => {
         onClose();
     };
 
+    const handleDismiss = (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeNotification(id);
+    };
+
     return (
         <div className="absolute right-0 mt-3 w-80 bg-white border border-gray-200 rounded-lg shadow-2xl animate-fade-in origin-top-right z-30">
             <div className="flex justify-between items-center p-3 border-b border-gray-200">
@@ -42,13 +46,20 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose }) => {
             <div className="max-h-96 overflow-y-auto">
                 {notifications.length > 0 ? (
                     notifications.map(n => (
-                        <Link to={n.link || '#'} key={n.id} onClick={() => handleNotificationClick(n.id)} className={`flex items-start p-3 hover:bg-gray-50 border-b border-gray-100 ${!n.isRead ? 'bg-primary-50' : ''}`}>
+                        <Link to={n.link || '#'} key={n.id} onClick={() => handleNotificationClick(n.id)} className={`group relative flex items-start p-3 hover:bg-gray-50 border-b border-gray-100 ${!n.isRead ? 'bg-primary-50 animate-pulse-bg-once' : ''}`}>
                             {!n.isRead && <div className="w-2 h-2 bg-primary-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>}
                             <div className="flex-1">
                                 <p className="text-sm font-semibold text-gray-800">{n.title}</p>
                                 <p className="text-xs text-gray-600">{n.message}</p>
                                 <p className="text-xs text-gray-400 mt-1">{timeSince(n.timestamp)}</p>
                             </div>
+                            <button 
+                                onClick={(e) => handleDismiss(e, n.id)}
+                                className="absolute top-2 right-2 p-0.5 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Dismiss notification"
+                            >
+                                <XMarkIcon className="w-3.5 h-3.5" />
+                            </button>
                         </Link>
                     ))
                 ) : (
@@ -60,7 +71,13 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose }) => {
             </div>
              <div className="flex justify-between items-center p-2 bg-white rounded-b-lg border-t">
                 <button onClick={clearAll} className="text-xs font-medium text-red-600 hover:underline">Clear All</button>
-                <button onClick={() => notifications.forEach(n => !n.isRead && markAsRead(n.id))} className="text-xs font-medium text-primary-600 hover:underline">Mark all as read</button>
+                <button 
+                    onClick={markAllAsRead} 
+                    disabled={unreadCount === 0}
+                    className="text-xs font-medium text-primary-600 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                >
+                    Mark all as read
+                </button>
             </div>
         </div>
     );

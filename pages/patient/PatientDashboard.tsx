@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, VideoCameraIcon, DumbbellIcon } from '../../components/shared/Icons';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 
 const GoalProgress: React.FC<{ goal: any }> = ({ goal }) => {
@@ -71,7 +71,7 @@ const PatientDashboard: React.FC = () => {
     setSummaryError('');
 
     try {
-        const ai = new GoogleGenerativeAI(process.env.API_KEY as string);
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
         const emrData = `
             - Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None listed'}
@@ -94,12 +94,15 @@ const PatientDashboard: React.FC = () => {
         - Your tone should be encouraging and informative, not alarming.
         - You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with a doctor for diagnosis and treatment.**"
         `;
-
-        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const result = await model.generateContent(`${systemInstruction}\n\nPlease summarize this health data for the patient, ${user.name}: ${emrData}`);
-        const response = result.response;
-        const text = response.text();
-        setSummary(text);
+        
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: `Please summarize this health data for the patient, ${user.name}: ${emrData}`,
+            config: {
+                systemInstruction: systemInstruction,
+            }
+        });
+        setSummary(response.text);
 
     } catch (error) {
         console.error("Error generating health summary:", error);
@@ -144,12 +147,14 @@ const PatientDashboard: React.FC = () => {
                                 <div>
                                     <p className="font-bold text-lg text-gray-800">{nextAppointment.reason}</p>
                                     <p className="text-sm text-gray-600">with {nextAppointment.providerName}</p>
-                                    <p className="text-sm text-gray-500 mt-1">{nextAppointment.time} ({nextAppointment.type})</p>
+                                    {/* FIX: Changed nextAppointment.type to nextAppointment.location */}
+                                    <p className="text-sm text-gray-500 mt-1">{nextAppointment.time} ({nextAppointment.location})</p>
                                 </div>
                             </div>
                             <div className="mt-4 sm:mt-0 flex space-x-2">
                                 <Link to="/appointments" className="bg-white hover:bg-gray-100 text-primary-700 font-bold py-2 px-4 rounded-lg text-sm border border-primary-200">Manage</Link>
-                                {nextAppointment.type === 'Virtual' && <Link to="/video-consults" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center"><VideoCameraIcon className="w-4 h-4 mr-2"/> Join Call</Link>}
+                                {/* FIX: Changed nextAppointment.type to nextAppointment.location */}
+                                {nextAppointment.location === 'Virtual' && <Link to="/video-consults" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center"><VideoCameraIcon className="w-4 h-4 mr-2"/> Join Call</Link>}
                             </div>
                          </div>
                     </Card>
@@ -213,7 +218,14 @@ const PatientDashboard: React.FC = () => {
                         {user?.healthGoals && user.healthGoals.length > 0 ? (
                             user.healthGoals.map(goal => <GoalProgress key={goal.id} goal={goal} />)
                         ) : (
-                            <p className="text-sm text-gray-500 text-center">No health goals set. Talk to your provider to set one up.</p>
+                            <div className="text-center py-4 text-gray-500">
+                                <DumbbellIcon className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                                <p className="font-semibold text-gray-700">No Health Goals Yet</p>
+                                <p className="text-sm mt-1">Set and track goals to stay on top of your health journey.</p>
+                                <Link to="/goals" className="mt-4 inline-block bg-primary-100 text-primary-700 font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary-200 transition-colors">
+                                    Manage Goals
+                                </Link>
+                            </div>
                         )}
                     </div>
                 </Card>

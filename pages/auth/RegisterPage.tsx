@@ -23,7 +23,7 @@ const RoleSelectionCard: React.FC<{ to: string, icon: React.ReactNode, title: st
 
 const RegisterPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6" style={{backgroundImage: "url('/pattern-light.svg')"}}>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-6xl mx-auto">
         <div className="text-center mb-12">
             <Link to="/" className="inline-block mb-6">

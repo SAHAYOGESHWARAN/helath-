@@ -1,22 +1,10 @@
-
 import React, { useRef, useEffect, useState } from 'react';
-// FIX: The error indicates a module resolution problem. `Link` is a valid export. Assuming this will be resolved by fixing other react-router-dom issues.
 import { Link } from 'react-router-dom';
 import {
     NovoPathLogoIcon,
-    StarIcon,
-    DocumentTextIcon,
-    CalendarIcon,
-    SparklesIcon,
-    ArrowRightIcon
+    ArrowRightIcon,
 } from '../components/shared/Icons';
 import { useAuth } from '../hooks/useAuth';
-
-const MOCK_TESTIMONIALS = [
-    { name: 'Emily R.', avatarUrl: 'https://i.pravatar.cc/150?u=emily.r', role: 'Patient', rating: 5, feedback: "NovoPath has made managing my family's health records a breeze. The ability to schedule appointments and access lab results from one dashboard is a game-changer." },
-    { name: 'Dr. Ben Carter', avatarUrl: 'https://i.pravatar.cc/150?u=ben.c', role: 'Cardiologist', rating: 5, feedback: "As a specialist, coordinating with primary care physicians is crucial. NovoPath's EMR system is intuitive and has significantly improved my workflow and patient care." },
-    { name: 'Jessica T.', avatarUrl: 'https://i.pravatar.cc/150?u=jessica.t', role: 'Parent', rating: 5, feedback: "The AI Health Guide is like having a nurse in my pocket. It provides reliable answers quickly, which gives me peace of mind when my kids are sick." },
-];
 
 const useOnScreen = (options: IntersectionObserverInit) => {
     const ref = useRef<HTMLDivElement>(null);
@@ -69,9 +57,9 @@ const Header: React.FC = () => {
                     <span className={`text-2xl font-bold ${isScrolled ? 'text-gray-900' : 'text-white'}`}>NovoPath</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
-                    <a href="#features" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Features</a>
-                    <a href="#testimonials" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Testimonials</a>
-                    <a href="#" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>For Providers</a>
+                    <Link to="/features" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Features</Link>
+                    <Link to="/testimonials" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Testimonials</Link>
+                    <Link to="/for-providers" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>For Providers</Link>
                 </nav>
                 <div className="flex items-center space-x-4">
                     <Link to="/login" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-primary-600 hover:text-primary-700' : 'text-white hover:opacity-90'}`}>
@@ -117,45 +105,6 @@ const HeroSection: React.FC = () => {
     );
 };
 
-const FeatureCard: React.FC<{icon: React.ReactNode, title: string, description: string, index: number}> = ({ icon, title, description, index }) => {
-    const [ref, isVisible] = useOnScreen({ threshold: 0.2 });
-    return (
-        <div ref={ref} className={`transition-all duration-700 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{transitionDelay: `${index * 100}ms`}}>
-            <div className="bg-white p-8 rounded-2xl shadow-lg h-full border border-gray-100 hover:shadow-primary-100/50 hover:border-primary-200 transition-all">
-                <div className="bg-primary-100 text-primary-600 w-16 h-16 rounded-full flex items-center justify-center mb-5">
-                    {icon}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-                <p className="text-gray-600">{description}</p>
-            </div>
-        </div>
-    );
-};
-
-const FeaturesSection: React.FC = () => {
-    const features = [
-        { icon: <DocumentTextIcon className="w-8 h-8" />, title: "Unified EMR System", description: "A complete electronic medical record system designed for modern healthcare operations, ensuring all patient data is accessible and secure." },
-        { icon: <CalendarIcon className="w-8 h-8" />, title: "In-Person & Virtual Visits", description: "Seamlessly schedule and manage both in-person and virtual appointments, providing flexibility for patients and providers." },
-        { icon: <SparklesIcon className="w-8 h-8" />, title: "AI-Powered Health Insights", description: "Leverage our intelligent AI to get quick answers to health questions and personalized insights based on your medical history." },
-    ];
-
-    return (
-        <section id="features" className="py-24 bg-gray-50">
-            <div className="container mx-auto px-6 text-center">
-                <AnimatedSection>
-                    <h2 className="text-4xl font-bold text-gray-900">A New Standard for Healthcare</h2>
-                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">NovoPath combines cutting-edge technology with a user-centric design to deliver a superior healthcare experience.</p>
-                </AnimatedSection>
-                <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
-                    {features.map((feature, index) => (
-                        <FeatureCard key={index} {...feature} index={index} />
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
 const StatsSection: React.FC = () => (
     <AnimatedSection className="bg-white py-20">
         <div className="container mx-auto px-6">
@@ -177,46 +126,9 @@ const StatsSection: React.FC = () => (
     </AnimatedSection>
 );
 
-const TestimonialCard: React.FC<{ testimonial: typeof MOCK_TESTIMONIALS[0], index: number }> = ({ testimonial, index }) => {
-    const [ref, isVisible] = useOnScreen({ threshold: 0.2 });
-    return(
-        <div ref={ref} className={`bg-white p-8 rounded-2xl shadow-lg border border-gray-100 h-full flex flex-col transition-all duration-700 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{transitionDelay: `${index * 100}ms`}}>
-            <div className="flex items-center mb-4">
-                <img src={testimonial.avatarUrl} alt={testimonial.name} className="w-14 h-14 rounded-full shadow-md" />
-                <div className="ml-4">
-                    <p className="font-bold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-primary-600 font-medium">{testimonial.role}</p>
-                </div>
-            </div>
-            <div className="flex mb-4">
-                {[...Array(5)].map((_, i) => <StarIcon key={i} className={`w-5 h-5 ${i < testimonial.rating ? 'text-amber-400' : 'text-gray-300'}`} />)}
-            </div>
-            <p className="text-gray-600 italic">"{testimonial.feedback}"</p>
-        </div>
-    );
-};
-
-const TestimonialsSection: React.FC = () => {
-    return(
-        <section id="testimonials" className="py-24 bg-gray-50">
-            <div className="container mx-auto px-6 text-center">
-                <AnimatedSection>
-                    <h2 className="text-4xl font-bold text-gray-900">Loved by Patients and Professionals</h2>
-                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Discover why thousands of users trust NovoPath for their healthcare needs.</p>
-                </AnimatedSection>
-                <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
-                    {MOCK_TESTIMONIALS.map((t, index) => (
-                       <TestimonialCard key={t.name} testimonial={t} index={index} />
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
 const FinalCtaSection: React.FC = () => (
     <AnimatedSection className="py-24 bg-white">
-        <div className="container mx-auto px-6 text-center bg-primary-600 rounded-2xl py-16 text-white" style={{backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.95), rgba(59, 130, 246, 0.95)), url("/pattern-dark.svg")'}}>
+        <div className="container mx-auto px-6 text-center bg-primary-600 rounded-2xl py-16 text-white" style={{backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.95), rgba(59, 130, 246, 0.95))'}}>
             <h2 className="text-4xl font-bold">Start Your Journey to Better Health Today</h2>
             <p className="mt-4 text-lg text-primary-100 max-w-2xl mx-auto">Create an account in minutes and take the first step towards a more connected and empowered healthcare experience.</p>
             <div className="mt-8">
@@ -243,17 +155,17 @@ const Footer: React.FC = () => (
                 <div>
                     <h3 className="font-bold text-lg mb-4">For Patients</h3>
                     <ul className="space-y-2 text-gray-400 text-sm">
-                        <li><a href="/login" className="hover:text-white">Find a Doctor</a></li>
-                        <li><a href="/login" className="hover:text-white">Book Appointment</a></li>
-                        <li><a href="/login" className="hover:text-white">My Records</a></li>
+                        <li><Link to="/login" className="hover:text-white">Find a Doctor</Link></li>
+                        <li><Link to="/login" className="hover:text-white">Book Appointment</Link></li>
+                        <li><Link to="/login" className="hover:text-white">My Records</Link></li>
                     </ul>
                 </div>
                 <div>
                     <h3 className="font-bold text-lg mb-4">For Providers</h3>
                     <ul className="space-y-2 text-gray-400 text-sm">
-                        <li><a href="/login" className="hover:text-white">Platform Overview</a></li>
-                        <li><a href="/login" className="hover:text-white">EMR System</a></li>
-                        <li><a href="/login" className="hover:text-white">Pricing</a></li>
+                        <li><Link to="/for-providers" className="hover:text-white">Platform Overview</Link></li>
+                        <li><Link to="/login" className="hover:text-white">EMR System</Link></li>
+                        <li><Link to="/login" className="hover:text-white">Pricing</Link></li>
                     </ul>
                 </div>
                 <div>
@@ -280,8 +192,6 @@ const WelcomePage: React.FC = () => {
             <main>
                 <HeroSection />
                 <StatsSection />
-                <FeaturesSection />
-                <TestimonialsSection />
                 <FinalCtaSection />
             </main>
             <Footer />

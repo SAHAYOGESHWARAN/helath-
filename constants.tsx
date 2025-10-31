@@ -22,7 +22,9 @@ import {
     BuildingOfficeIcon,
     ShieldExclamationIcon,
     UserGroupIcon,
-    PencilAltIcon
+    PencilAltIcon,
+    ClipboardDocumentListIcon,
+    DumbbellIcon,
 } from './components/shared/Icons';
 
 export interface NavItem {
@@ -36,6 +38,8 @@ export const PATIENT_NAV: NavItem[] = [
   { name: 'Appointments', href: '/appointments', icon: <CalendarIcon /> },
   { name: 'Health Records', href: '/emr', icon: <DocumentTextIcon /> },
   { name: 'Medications', href: '/medications', icon: <PillIcon /> },
+  { name: 'Health Goals', href: '/goals', icon: <DumbbellIcon /> },
+  { name: 'Tasks', href: '/tasks', icon: <ClipboardDocumentListIcon /> },
   { name: 'Visit History', href: '/history', icon: <DocumentDuplicateIcon /> },
   { name: 'Messaging', href: '/messaging', icon: <ChatBubbleLeftRightIcon /> },
   { name: 'Video Consults', href: '/video-consults', icon: <VideoCameraIcon /> },

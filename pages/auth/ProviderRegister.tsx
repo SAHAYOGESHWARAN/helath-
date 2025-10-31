@@ -1,6 +1,4 @@
-
 import React from 'react';
-// FIX: The error indicates a module resolution problem. `Link` is a valid export. Assuming this will be resolved by fixing other react-router-dom issues.
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -53,7 +51,7 @@ const ProviderRegister: React.FC = () => {
   const { register } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" style={{backgroundImage: "url('/pattern-light.svg')"}}>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg mx-auto">
         <div className="text-center mb-8">
             <Link to="/" className="inline-block mb-4">

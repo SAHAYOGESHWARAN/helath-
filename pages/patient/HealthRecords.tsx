@@ -1,355 +1,295 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
-import { User, VitalsRecord, LabResult } from '../../types';
-import { SpinnerIcon, PencilAltIcon, TrashIcon, DownloadIcon, PlusIcon, HomeIcon, DocumentTextIcon, ChartBarIcon } from '../../components/shared/Icons';
+import PageHeader from '../../components/shared/PageHeader';
+import { Medication } from '../../types';
+import { PillIcon, CheckCircleIcon, PlusIcon, HeartIcon, ExclamationTriangleIcon, DocumentDuplicateIcon, ChartBarIcon, BeakerIcon, ShieldCheckIcon, UserGroupIcon, ChevronDownIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../App';
-import PageHeader from '../../components/shared/PageHeader';
-import Modal from '../../components/shared/Modal';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import Tabs from '../../components/shared/Tabs';
+import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line, Legend } from 'recharts';
 
+// --- Start of components adapted from Medications.tsx ---
 
-const SummaryTab: React.FC<{ user: User | null; onEdit: (tab: EmrTab, item: any) => void; onDelete: (type: EmrListType, id: string) => void; }> = ({ user, onEdit, onDelete }) => (
-    <div className="space-y-8">
-        <Card title="Medical Conditions">
-            <ul className="space-y-2">
-                {user?.conditions?.length ? user.conditions.map(c => (
-                    <li key={c.id} className="p-2 border rounded-md flex justify-between items-center">
-                        <span>{c.name}</span>
-                        <div className="space-x-2">
-                           <button onClick={() => onEdit('conditions', c)} className="p-1 text-gray-500 hover:text-primary-600"><PencilAltIcon className="w-4 h-4" /></button>
-                           <button onClick={() => onDelete('conditions', c.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon className="w-4 h-4" /></button>
-                        </div>
-                    </li>
-                )) : <p className="text-gray-500 text-sm">No conditions listed.</p>}
-            </ul>
-        </Card>
-        <Card title="Allergies">
-            <ul className="space-y-2">
-                {user?.allergies?.length ? user.allergies.map(a => (
-                    <li key={a.id} className="p-3 border rounded-md flex justify-between items-center">
-                        <div>
-                          <span>{a.name}</span>
-                          <span className={`text-xs ml-2 px-2 py-0.5 rounded-full ${a.severity === 'Severe' ? 'bg-red-100 text-red-700' : a.severity === 'Moderate' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{a.severity}</span>
-                        </div>
-                        <div className="space-x-2">
-                           <button onClick={() => onEdit('allergies', a)} className="p-1 text-gray-500 hover:text-primary-600"><PencilAltIcon className="w-4 h-4" /></button>
-                           <button onClick={() => onDelete('allergies', a.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon className="w-4 h-4" /></button>
-                        </div>
-                    </li>
-                )) : <p className="text-gray-500 text-sm">No allergies listed.</p>}
-            </ul>
-        </Card>
-        <Card title="Surgeries & Procedures">
-            <ul className="space-y-2">
-                {user?.surgeries?.length ? user.surgeries.map(s => (
-                    <li key={s.id} className="p-2 border rounded-md flex justify-between items-center">
-                        <div>
-                          <span>{s.name}</span>
-                          <span className="text-gray-500 text-sm ml-2">({s.date})</span>
-                        </div>
-                        <div className="space-x-2">
-                           <button onClick={() => onEdit('surgeries', s)} className="p-1 text-gray-500 hover:text-primary-600"><PencilAltIcon className="w-4 h-4" /></button>
-                           <button onClick={() => onDelete('surgeries', s.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon className="w-4 h-4" /></button>
-                        </div>
-                    </li>
-                )) : <p className="text-gray-500 text-sm">No surgeries listed.</p>}
-            </ul>
-        </Card>
-        <Card title="Immunization Records">
-            <ul className="space-y-2">
-                {user?.immunizations?.length ? user.immunizations.map(i => (
-                    <li key={i.id} className="p-2 border rounded-md flex justify-between items-center">
-                        <div>
-                          <span>{i.vaccine}</span>
-                          <span className="text-gray-500 text-sm ml-2">({i.date})</span>
-                        </div>
-                        <div className="space-x-2">
-                           <button onClick={() => onEdit('immunizations', i)} className="p-1 text-gray-500 hover:text-primary-600"><PencilAltIcon className="w-4 h-4" /></button>
-                           <button onClick={() => onDelete('immunizations', i.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon className="w-4 h-4" /></button>
-                        </div>
-                    </li>
-                )) : <p className="text-gray-500 text-sm">No immunizations listed.</p>}
-            </ul>
-        </Card>
-        <Card title="Family History">
-            <ul className="space-y-2">
-                {user?.familyHistory?.length ? user.familyHistory.map(h => (
-                    <li key={h.id} className="p-2 border rounded-md flex justify-between items-center">
-                        <div>
-                          <span className="font-semibold">{h.relation}:</span>
-                          <span className="text-gray-700 ml-2">{h.condition}</span>
-                        </div>
-                        <div className="space-x-2">
-                           <button onClick={() => onEdit('familyHistory', h)} className="p-1 text-gray-500 hover:text-primary-600"><PencilAltIcon className="w-4 h-4" /></button>
-                           <button onClick={() => onDelete('familyHistory', h.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon className="w-4 h-4" /></button>
-                        </div>
-                    </li>
-                )) : <p className="text-gray-500 text-sm">No family history listed.</p>}
-            </ul>
-        </Card>
-        <Card title="Lifestyle Information">
-            <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                     <div><p className="font-semibold">Diet:</p><p className="text-gray-600">{user?.lifestyle?.diet || 'Not specified'}</p></div>
-                     <div><p className="font-semibold">Exercise:</p><p className="text-gray-600">{user?.lifestyle?.exercise || 'Not specified'}</p></div>
-                     <div><p className="font-semibold">Smoking:</p><p className="text-gray-600">{user?.lifestyle?.smokingStatus || 'Not specified'}</p></div>
-                     <div><p className="font-semibold">Alcohol:</p><p className="text-gray-600">{user?.lifestyle?.alcoholConsumption || 'Not specified'}</p></div>
-                </div>
-                <div className="flex justify-end pt-4 border-t">
-                    <button onClick={() => onEdit('lifestyle', user?.lifestyle)} className="flex items-center text-sm font-medium text-primary-600 hover:text-primary-800">
-                        <PencilAltIcon className="w-4 h-4 mr-2" />
-                        Edit Lifestyle Info
-                    </button>
-                </div>
+const MedicationCard: React.FC<{ med: Medication, onRequestRefill: (name: string) => void }> = ({ med, onRequestRefill }) => (
+    <div className="p-4 border border-gray-200 rounded-lg bg-white flex flex-col sm:flex-row justify-between sm:items-center">
+        <div className="flex items-center space-x-4">
+            <div className={`p-3 rounded-full ${med.status === 'Active' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500'}`}>
+                <PillIcon />
             </div>
-        </Card>
-      </div>
+            <div>
+                <p className="font-bold text-lg text-gray-800">{med.name}</p>
+                <p className="text-sm text-gray-600">{med.dosage}, {med.frequency}</p>
+                 {med.status === 'Active' && typeof med.adherence === 'number' && (
+                    <div className="flex items-center text-xs mt-1">
+                        <span className="font-semibold mr-1.5">Adherence:</span>
+                        <div className="w-20 bg-gray-200 rounded-full h-1.5">
+                            <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${med.adherence}%` }}></div>
+                        </div>
+                        <span className="ml-1.5 font-medium text-emerald-700">{med.adherence}%</span>
+                    </div>
+                 )}
+            </div>
+        </div>
+        <div className="flex items-center space-x-3 mt-3 sm:mt-0">
+             {med.status === 'Active' && <button onClick={() => onRequestRefill(med.name)} className="text-xs font-semibold text-white bg-primary-500 hover:bg-primary-600 px-3 py-1.5 rounded-full">Request Refill</button>}
+            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${med.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'}`}>{med.status}</span>
+        </div>
+    </div>
 );
 
-const VitalsTab: React.FC<{ vitals: VitalsRecord[] }> = ({ vitals }) => {
-    if (!vitals || vitals.length === 0) {
-        return (
-            <div className="text-center py-10 text-gray-500">
-                <ChartBarIcon className="w-12 h-12 mx-auto text-gray-300 mb-2"/>
-                <p className="font-semibold">No Vitals Data</p>
-                <p className="text-sm">Your vitals history will be charted here as it is recorded.</p>
-            </div>
-        );
-    }
-    const chartData = vitals.map(v => ({
-        date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        systolic: parseInt(v.bloodPressure.split('/')[0]),
-        diastolic: parseInt(v.bloodPressure.split('/')[1]),
-        heartRate: v.heartRate,
-        weight: v.weight,
-    })).reverse();
+const MedicationsTab: React.FC = () => {
+    const { user, updateUser } = useAuth();
+    const { showToast } = useApp();
+
+    const [newMed, setNewMed] = useState({ name: '', dosage: '', frequency: '' });
+    const [takenMeds, setTakenMeds] = useState<Set<string>>(new Set());
+    const [justTaken, setJustTaken] = useState<Set<string>>(new Set());
+    
+    const activeMeds = useMemo(() => user?.medications?.filter(m => m.status === 'Active') || [], [user]);
+
+    const handleAddMedication = async () => {
+        if (newMed.name.trim() && newMed.dosage.trim() && newMed.frequency.trim()) {
+            const newMedication: Medication = {
+                id: `med_${Date.now()}`,
+                status: 'Active',
+                adherence: 100, // Start with perfect adherence
+                ...newMed
+            };
+            const updatedMeds = [...(user?.medications || []), newMedication];
+            await updateUser(currentUser => ({...currentUser, medications: updatedMeds}));
+            showToast('Medication added!', 'success');
+            setNewMed({ name: '', dosage: '', frequency: '' });
+        } else {
+            showToast('Please fill out all fields.', 'error');
+        }
+    };
+
+    const handleMarkAsTaken = (medId: string, medName: string) => {
+        setTakenMeds(prev => new Set(prev).add(medId));
+        setJustTaken(prev => new Set(prev).add(medId));
+        showToast(`${medName} logged as taken for today.`, 'success');
+    };
+    
+    const handleRequestRefill = (medName: string) => {
+        showToast(`Refill requested for ${medName}. Your provider has been notified.`, 'info');
+    };
 
     return (
-        <div className="space-y-8">
-            <Card title="Blood Pressure (mmHg)">
-                 <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="systolic" stroke="#ef4444" name="Systolic" />
-                        <Line type="monotone" dataKey="diastolic" stroke="#3b82f6" name="Diastolic" />
-                    </LineChart>
-                </ResponsiveContainer>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+                <Card title="Add New Medication">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                        <input type="text" value={newMed.name} onChange={e => setNewMed({...newMed, name: e.target.value})} placeholder="Medication Name" className="w-full p-2 border bg-white rounded-md" />
+                        <input type="text" value={newMed.dosage} onChange={e => setNewMed({...newMed, dosage: e.target.value})} placeholder="Dosage (e.g., 10mg)" className="w-full p-2 border bg-white rounded-md" />
+                        <input type="text" value={newMed.frequency} onChange={e => setNewMed({...newMed, frequency: e.target.value})} placeholder="Frequency (e.g., Once daily)" className="w-full p-2 border bg-white rounded-md" />
+                    </div>
+                    <button onClick={handleAddMedication} className="w-full mt-4 bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><PlusIcon className="w-4 h-4 mr-2"/> Add to My List</button>
+                </Card>
+                 <Card>
+                    <h2 className="text-xl font-bold mb-4">My Medication List</h2>
+                    <div className="space-y-4">
+                        {user?.medications && user.medications.length > 0 ? user.medications.map(med => <MedicationCard key={med.id} med={med} onRequestRefill={handleRequestRefill}/>) : <p className="text-gray-500 text-center">You haven't added any medications yet.</p>}
+                    </div>
+                </Card>
+            </div>
+            <div className="lg:col-span-1 space-y-8">
+                 <Card title="Log Today's Doses">
+                    <div className="space-y-4">
+                       {activeMeds.length > 0 ? activeMeds.map(med => {
+                           const isTaken = takenMeds.has(med.id);
+                           const isJustTaken = justTaken.has(med.id);
+                           return (
+                               <div 
+                                    key={med.id} 
+                                    className={`flex justify-between items-center p-3 rounded-lg transition-colors ${isJustTaken ? 'animate-mark-complete' : (isTaken ? 'bg-gray-100' : 'bg-gray-50')}`}
+                                    onAnimationEnd={() => {
+                                        if (isJustTaken) {
+                                            setJustTaken(prev => {
+                                                const newSet = new Set(prev);
+                                                newSet.delete(med.id);
+                                                return newSet;
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <div>
+                                        <p className={`font-semibold transition-colors ${isTaken ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{med.name}</p>
+                                        <p className="text-sm text-gray-500">Take {med.frequency.toLowerCase()}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleMarkAsTaken(med.id, med.name)}
+                                        disabled={isTaken}
+                                        className="flex items-center text-sm font-medium text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-full disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <CheckCircleIcon className="w-5 h-5 mr-1.5" />
+                                        {isTaken ? 'Taken' : 'Mark as Taken'}
+                                    </button>
+                               </div>
+                           );
+                       }) : <p className="text-gray-500 text-center text-sm">No active medications to log.</p>}
+                    </div>
+                 </Card>
+            </div>
+        </div>
+    );
+};
+// --- End of components from Medications.tsx ---
+
+const VitalsTab: React.FC = () => {
+    const { user } = useAuth();
+    const vitalsChartData = (user?.vitals || []).slice(0, 7).reverse().map(v => ({
+        date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric'}),
+        'Systolic': parseInt(v.bloodPressure.split('/')[0]),
+        'Diastolic': parseInt(v.bloodPressure.split('/')[1]),
+        'Heart Rate': v.heartRate
+    }));
+    return (
+        <Card title="Vitals Trend - Blood Pressure & Heart Rate">
+            <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={vitalsChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis yAxisId="left" orientation="left" stroke="#8884d8" label={{ value: 'BP (mmHg)', angle: -90, position: 'insideLeft' }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" label={{ value: 'HR (bpm)', angle: -90, position: 'insideRight' }}/>
+                    <Tooltip />
+                    <Legend />
+                    <Line yAxisId="left" type="monotone" dataKey="Systolic" stroke="#8884d8" />
+                    <Line yAxisId="left" type="monotone" dataKey="Diastolic" stroke="#3b82f6" />
+                    <Line yAxisId="right" type="monotone" dataKey="Heart Rate" stroke="#82ca9d" />
+                </LineChart>
+            </ResponsiveContainer>
+        </Card>
+    );
+};
+
+const LabResultsTab: React.FC = () => {
+    const { user } = useAuth();
+    const labResults = user?.labResults || [];
+    const [openResultId, setOpenResultId] = useState<string | null>(labResults.length > 0 ? labResults[0].id : null);
+
+    const toggleResult = (id: string) => {
+        setOpenResultId(prevId => (prevId === id ? null : id));
+    };
+
+    return (
+        <div className="space-y-4">
+            {labResults.length > 0 ? (
+                labResults.map(result => {
+                    const isOpen = openResultId === result.id;
+                    return (
+                        <div key={result.id} className="border border-gray-200 rounded-lg bg-white transition-shadow hover:shadow-md overflow-hidden">
+                            <button
+                                onClick={() => toggleResult(result.id)}
+                                className="w-full p-4 flex justify-between items-center cursor-pointer text-left"
+                                aria-expanded={isOpen}
+                                aria-controls={`lab-details-${result.id}`}
+                            >
+                                <div className="font-bold text-lg text-gray-800">
+                                    {result.testName} - {new Date(result.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}
+                                </div>
+                                <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            <div
+                                id={`lab-details-${result.id}`}
+                                className={`transition-all duration-300 ease-in-out grid ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="px-4 pb-4 border-t border-gray-200 pt-4">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left font-medium text-gray-500">Component</th>
+                                                        <th className="px-4 py-2 text-left font-medium text-gray-500">Value</th>
+                                                        <th className="px-4 py-2 text-left font-medium text-gray-500">Reference Range</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {result.components.map(comp => (
+                                                        <tr key={comp.name} className={`hover:bg-gray-50 ${comp.isAbnormal ? 'bg-red-50' : 'bg-white'}`}>
+                                                            <td className="px-4 py-2 font-medium text-gray-800">{comp.name}</td>
+                                                            <td className={`px-4 py-2 font-semibold ${comp.isAbnormal ? 'text-red-600' : 'text-gray-800'}`}>{comp.value}</td>
+                                                            <td className="px-4 py-2 text-gray-500">{comp.referenceRange}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })
+            ) : (
+                <Card>
+                    <p className="text-gray-500 text-center">No lab results on file.</p>
+                </Card>
+            )}
+        </div>
+    );
+};
+
+const ConditionsAndAllergiesTab: React.FC = () => {
+    const { user } = useAuth();
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card>
+                <div className="flex items-center text-primary-600 mb-2"><HeartIcon className="w-5 h-5 mr-2"/> <h3 className="font-bold">Conditions</h3></div>
+                <ul className="space-y-1 text-gray-700 list-disc list-inside">
+                    {user?.conditions?.length ? user.conditions.map(c => <li key={c.id}>{c.name}</li>) : <li>None reported</li>}
+                </ul>
             </Card>
-            <Card title="Weight (lbs) & Heart Rate (bpm)">
-                 <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis yAxisId="left" orientation="left" stroke="#10b981" domain={['dataMin - 10', 'dataMax + 10']}/>
-                        <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" domain={['dataMin - 10', 'dataMax + 10']}/>
-                        <Tooltip />
-                        <Legend />
-                        <Line yAxisId="left" type="monotone" dataKey="weight" stroke="#10b981" name="Weight" />
-                        <Line yAxisId="right" type="monotone" dataKey="heartRate" stroke="#f59e0b" name="Heart Rate" />
-                    </LineChart>
-                </ResponsiveContainer>
+            <Card>
+                <div className="flex items-center text-red-600 mb-2"><ExclamationTriangleIcon className="w-5 h-5 mr-2"/> <h3 className="font-bold">Allergies</h3></div>
+                <ul className="space-y-1 text-gray-700 list-disc list-inside">
+                     {user?.allergies?.length ? user.allergies.map(a => <li key={a.id}>{a.name} ({a.severity})</li>) : <li>No known allergies</li>}
+                </ul>
             </Card>
         </div>
     );
 };
 
-const LabResultsTab: React.FC<{ labResults: LabResult[] }> = ({ labResults }) => (
-    <div className="space-y-8">
-        {labResults.length > 0 ? (
-            labResults.map(result => (
-                <Card key={result.id} title={`${result.testName} - ${result.date}`}>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Component</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Range</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {result.components.map(comp => (
-                                    <tr key={comp.name} className={comp.isAbnormal ? 'bg-red-50' : ''}>
-                                        <td className={`px-4 py-3 text-sm ${comp.isAbnormal ? 'font-bold text-red-800' : 'font-medium text-gray-800'}`}>{comp.name}</td>
-                                        <td className={`px-4 py-3 text-sm ${comp.isAbnormal ? 'font-bold text-red-800' : 'text-gray-600'}`}>{comp.value}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">{comp.referenceRange}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
-            ))
-        ) : (
-            <div className="text-center py-10 text-gray-500">
-                <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300 mb-2"/>
-                <p className="font-semibold">No Lab Results Found</p>
-                <p className="text-sm">Your lab results will appear here once they are available.</p>
-            </div>
-        )}
-    </div>
-);
-
-// --- Form Schemas & Components (condensed for brevity) ---
-const ConditionSchema = Yup.object().shape({ name: Yup.string().min(2).required('Required') });
-const AllergySchema = Yup.object().shape({ name: Yup.string().min(2).required('Required'), severity: Yup.string().required(), reaction: Yup.string().min(3).required() });
-const SurgerySchema = Yup.object().shape({ name: Yup.string().min(3).required(), date: Yup.date().max(new Date()).required() });
-const ImmunizationSchema = Yup.object().shape({ vaccine: Yup.string().min(3).required(), date: Yup.date().max(new Date()).required() });
-const FamilyHistorySchema = Yup.object().shape({ relation: Yup.string().required(), condition: Yup.string().min(2).required() });
-const LifestyleSchema = Yup.object().shape({ smokingStatus: Yup.string().required(), alcoholConsumption: Yup.string().required() });
-
-// Unified Form Component for Modals
-const GenericForm: React.FC<{ validationSchema: any, initialValues: any, onSubmit: any, onCancel: any, isSubmitting: boolean, fields: any[] }> = ({ validationSchema, initialValues, onSubmit, onCancel, isSubmitting, fields }) => (
-    <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit} enableReinitialize>
-        {({ errors, touched }) => (
-            <Form className="space-y-4">
-                {fields.map(field => (
-                    <div key={field.name}>
-                        <label className="block text-sm font-medium">{field.label}</label>
-                        <Field {...field} className={`w-full p-2 border rounded ${errors[field.name] && touched[field.name] ? 'border-red-500' : 'border-gray-300'}`} />
-                        <ErrorMessage name={field.name} component="p" className="text-red-500 text-xs mt-1" />
-                    </div>
-                ))}
-                <div className="flex justify-end space-x-2 pt-4 border-t">
-                    <button type="button" onClick={onCancel} className="bg-gray-200 font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-28 flex justify-center">{isSubmitting ? <SpinnerIcon /> : 'Save'}</button>
-                </div>
-            </Form>
-        )}
-    </Formik>
-);
-
-const emrTabConfig = {
-    conditions: { schema: ConditionSchema, fields: [{ name: 'name', label: 'Condition Name' }], defaultValues: { id: '', name: '' }, singular: 'Condition' },
-    allergies: { schema: AllergySchema, fields: [{ name: 'name', label: 'Allergy Name' }, { name: 'severity', label: 'Severity', as: 'select', children: <><option value="Mild">Mild</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option></> }, { name: 'reaction', label: 'Reaction' }], defaultValues: { id: '', name: '', severity: 'Mild' as const, reaction: '' }, singular: 'Allergy' },
-    surgeries: { schema: SurgerySchema, fields: [{ name: 'name', label: 'Surgery/Procedure' }, { name: 'date', label: 'Date', type: 'date' }], defaultValues: { id: '', name: '', date: '' }, singular: 'Surgery' },
-    immunizations: { schema: ImmunizationSchema, fields: [{ name: 'vaccine', label: 'Vaccine Name' }, { name: 'date', label: 'Date', type: 'date' }], defaultValues: { id: '', vaccine: '', date: '' }, singular: 'Immunization' },
-    familyHistory: { schema: FamilyHistorySchema, fields: [{ name: 'relation', label: 'Relation', as: 'select', children: <><option value="">Select</option><option value="Mother">Mother</option><option value="Father">Father</option><option value="Sibling">Sibling</option><option value="Grandparent">Grandparent</option><option value="Other">Other</option></> }, { name: 'condition', label: 'Condition' }], defaultValues: { id: '', relation: '' as const, condition: '' }, singular: 'Family History' },
-    lifestyle: { schema: LifestyleSchema, fields: [{ name: 'diet', as: 'textarea', rows: 2, placeholder: 'Describe diet' }, { name: 'exercise', as: 'textarea', rows: 2, placeholder: 'Describe exercise' }, { name: 'smokingStatus', as: 'select', children: <><option value="Never">Never</option><option value="Former">Former</option><option value="Current">Current</option></> }, { name: 'alcoholConsumption', as: 'select', children: <><option value="None">None</option><option value="Occasional">Occasional</option><option value="Regular">Regular</option></> }], defaultValues: { diet: '', exercise: '', smokingStatus: 'Never' as const, alcoholConsumption: 'None' as const }, singular: 'Lifestyle Info' }
+const HistoryTab: React.FC = () => {
+    const { user } = useAuth();
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="lg:col-span-1">
+                <div className="flex items-center text-gray-600 mb-2"><DocumentDuplicateIcon className="w-5 h-5 mr-2"/> <h3 className="font-bold">Surgeries & Procedures</h3></div>
+                <ul className="space-y-1 text-gray-700 list-disc list-inside">
+                    {user?.surgeries?.length ? user.surgeries.map(s => <li key={s.id}>{s.name} ({s.date})</li>) : <li>None</li>}
+                </ul>
+            </Card>
+            <Card className="lg:col-span-1">
+                 <div className="flex items-center text-gray-600 mb-2"><ShieldCheckIcon className="w-5 h-5 mr-2"/> <h3 className="font-bold">Immunizations</h3></div>
+                <ul className="space-y-1 text-gray-700 list-disc list-inside">
+                    {user?.immunizations?.length ? user.immunizations.map(i => <li key={i.id}>{i.vaccine} ({i.date})</li>) : <li>None</li>}
+                </ul>
+            </Card>
+            <Card className="lg:col-span-1">
+                 <div className="flex items-center text-gray-600 mb-2"><UserGroupIcon className="w-5 h-5 mr-2"/> <h3 className="font-bold">Family History</h3></div>
+                <ul className="space-y-1 text-gray-700 list-disc list-inside">
+                    {user?.familyHistory?.length ? user.familyHistory.map(f => <li key={f.id}><strong>{f.relation}:</strong> {f.condition}</li>) : <li>None reported</li>}
+                </ul>
+            </Card>
+        </div>
+    );
 };
 
-type EmrTab = keyof typeof emrTabConfig;
-type EmrListType = Exclude<EmrTab, 'lifestyle'>;
 
 const HealthRecords: React.FC = () => {
-    const { user, updateUser } = useAuth();
-    const { showToast } = useApp();
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalConfig, setModalConfig] = useState<{ tab: EmrTab, item: any | null } | null>(null);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: EmrListType, id: string } | null>(null);
-
-    const openModal = (tab: EmrTab, item: any | null = null) => {
-        const itemToEdit = tab === 'lifestyle' ? (user?.lifestyle || emrTabConfig.lifestyle.defaultValues) : item;
-        setModalConfig({ tab, item: itemToEdit });
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setModalConfig(null);
-    };
-
-    const handleSave = async (values: any) => {
-        if (!modalConfig) return;
-        setIsSubmitting(true);
-      
-        await updateUser(currentUser => {
-            if (modalConfig.tab === 'lifestyle') {
-                return { ...currentUser, lifestyle: values };
-            }
-            const listKey = modalConfig.tab as EmrListType;
-            const list = [...(currentUser[listKey] as any[] || [])];
-            const id = values.id || `${listKey}_${Date.now()}`;
-            const index = list.findIndex(item => item.id === id);
-
-            if (index > -1) {
-                list[index] = { ...values, id };
-            } else {
-                list.push({ ...values, id });
-            }
-            return { ...currentUser, [listKey]: list };
-        });
-      
-        setIsSubmitting(false);
-        showToast('Information saved!', 'success');
-        closeModal();
-      };
-      
-      const handleDelete = async () => {
-        if (!deleteConfirmation) return;
-        setIsSubmitting(true);
-        await updateUser(currentUser => {
-          const list = currentUser[deleteConfirmation.type] as any[] || [];
-          return { ...currentUser, [deleteConfirmation.type]: list.filter(item => item.id !== deleteConfirmation.id) };
-        });
-        setIsSubmitting(false);
-        showToast('Item removed.', 'success');
-        setDeleteConfirmation(null);
-      };
-      
-    const handleDownloadEmr = () => { /* ... existing download logic ... */ };
-    
-    const pageTabs = [
-        { name: 'Summary', icon: <HomeIcon />, content: <SummaryTab user={user} onEdit={openModal} onDelete={(type, id) => setDeleteConfirmation({ type, id })} /> },
-        { name: 'Vitals', icon: <ChartBarIcon />, content: <VitalsTab vitals={user?.vitals || []} /> },
-        { name: 'Lab Results', icon: <DocumentTextIcon />, content: <LabResultsTab labResults={user?.labResults || []} /> },
-    ];
+  const tabs = [
+    { name: 'Medications', icon: <PillIcon />, content: <MedicationsTab /> },
+    { name: 'Vitals', icon: <ChartBarIcon />, content: <VitalsTab /> },
+    { name: 'Lab Results', icon: <BeakerIcon />, content: <LabResultsTab /> },
+    { name: 'Conditions & Allergies', icon: <HeartIcon />, content: <ConditionsAndAllergiesTab /> },
+    { name: 'History', icon: <DocumentDuplicateIcon />, content: <HistoryTab /> },
+  ];
 
   return (
     <div>
-        <PageHeader 
-            title="My Electronic Medical Record (EMR)" 
-            subtitle="Manage your personal health information."
-        >
-             <div className="flex items-center space-x-3">
-                <button onClick={handleDownloadEmr} className="bg-white hover:bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm border border-gray-300 flex items-center">
-                    <DownloadIcon className="w-5 h-5 mr-2" /><span>Download EMR</span>
-                </button>
-                <button onClick={() => openModal('conditions')} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm flex items-center">
-                    <PlusIcon className="w-5 h-5 mr-2" /><span>Add Record</span>
-                </button>
-            </div>
-        </PageHeader>
-      
-        <Card className="p-0">
-            <Tabs tabs={pageTabs} />
-        </Card>
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={closeModal} 
-        title={`${modalConfig?.item?.id ? 'Edit' : 'New'} ${modalConfig ? emrTabConfig[modalConfig.tab].singular : ''}`}
-        size="lg"
-      >
-        {modalConfig && (
-            <GenericForm 
-                validationSchema={emrTabConfig[modalConfig.tab].schema}
-                initialValues={modalConfig.item || emrTabConfig[modalConfig.tab].defaultValues}
-                onSubmit={handleSave}
-                onCancel={closeModal}
-                isSubmitting={isSubmitting}
-                fields={emrTabConfig[modalConfig.tab].fields}
-            />
-        )}
-      </Modal>
-
-      <Modal isOpen={!!deleteConfirmation} onClose={() => setDeleteConfirmation(null)} title="Confirm Deletion">
-        <p>Are you sure you want to delete this item? This action cannot be undone.</p>
-        <div className="flex justify-end space-x-2 pt-4">
-             <button onClick={() => setDeleteConfirmation(null)} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
-            <button onClick={handleDelete} disabled={isSubmitting} className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg w-32 flex justify-center">{isSubmitting ? <SpinnerIcon /> : 'Delete'}</button>
-        </div>
-      </Modal>
+      <PageHeader title="Health Records" subtitle="Your complete electronic medical record." />
+      <Tabs tabs={tabs} />
     </div>
   );
 };

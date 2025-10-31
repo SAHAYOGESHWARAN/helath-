@@ -1,10 +1,11 @@
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo } from './types';
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings } from './types';
 
 export const MOCK_USERS: User[] = [
   {
     id: 'pat1',
     name: 'John Doe',
     email: 'john.doe@email.com',
+    password: 'password123',
     role: UserRole.PATIENT,
     avatarUrl: 'https://picsum.photos/seed/patient/100',
     dob: '1985-05-20',
@@ -41,20 +42,27 @@ export const MOCK_USERS: User[] = [
         { id: 'goal1', title: 'Daily Steps', target: 10000, current: 7500, unit: 'steps' },
         { id: 'goal2', title: 'Weight Loss', target: 180, current: 185, unit: 'lbs' },
     ],
+    tasks: [
+        { id: 'task1', text: 'Walk for 30 minutes', completed: true, dueDate: new Date(Date.now() - 86400000).toISOString().split('T')[0] }, // Yesterday
+        { id: 'task2', text: 'Drink 8 glasses of water', completed: false },
+        { id: 'task3', text: 'Schedule follow-up appointment', completed: false, dueDate: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0] }, // Overdue
+        { id: 'task4', text: 'Log daily food intake', completed: true },
+    ],
     notificationSettings: { emailAppointments: true, emailBilling: true, emailMessages: true, smsMessages: false, pushAll: false },
     insurance: { provider: 'Blue Cross Blue Shield', planName: 'PPO Plan A', memberId: 'M123456789', groupId: 'G98765' },
     subscription: { planId: 'plan_p1', status: 'Active', renewalDate: '2025-08-15' },
     isVerified: true,
   },
-  { id: 'pat2', name: 'Alice Johnson', email: 'alice.j@email.com', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=alice.j', dob: '1992-11-12', status: 'Active', state: 'New York', isVerified: true, },
-  { id: 'pat3', name: 'Bob Williams', email: 'bob.w@email.com', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=bob.w', dob: '1970-02-01', status: 'Inactive', state: 'New York', isVerified: true, },
-  { id: 'pat4', name: 'Charlie Brown', email: 'charlie.b@email.com', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=charlie.b', dob: '1998-09-30', status: 'Active', state: 'New York', isVerified: true, },
-  { id: 'pat5', name: 'Diana Prince', email: 'diana.p@email.com', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=diana.p', dob: '1980-03-22', status: 'Active', state: 'New York', isVerified: true, },
+  { id: 'pat2', name: 'Alice Johnson', email: 'alice.j@email.com', password: 'password123', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=alice.j', dob: '1992-11-12', status: 'Active', state: 'New York', isVerified: true, },
+  { id: 'pat3', name: 'Bob Williams', email: 'bob.w@email.com', password: 'password123', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=bob.w', dob: '1970-02-01', status: 'Inactive', state: 'New York', isVerified: true, },
+  { id: 'pat4', name: 'Charlie Brown', email: 'charlie.b@email.com', password: 'password123', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=charlie.b', dob: '1998-09-30', status: 'Active', state: 'New York', isVerified: true, },
+  { id: 'pat5', name: 'Diana Prince', email: 'diana.p@email.com', password: 'password123', role: UserRole.PATIENT, avatarUrl: 'https://i.pravatar.cc/150?u=diana.p', dob: '1980-03-22', status: 'Active', state: 'New York', isVerified: true, },
 
   {
     id: 'pro1',
     name: 'Dr. Jane Smith',
     email: 'jane.smith@email.com',
+    password: 'password123',
     role: UserRole.PROVIDER,
     avatarUrl: 'https://picsum.photos/seed/provider/100',
     specialty: 'Cardiology',
@@ -64,18 +72,19 @@ export const MOCK_USERS: User[] = [
     subscription: { planId: 'plan_d2', status: 'Active', renewalDate: '2024-09-01' },
     notificationSettings: { emailAppointments: true, emailBilling: true, emailMessages: true, smsMessages: true, pushAll: true },
   },
-  { id: 'pro2', name: 'Dr. David Chen', email: 'david.c@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://i.pravatar.cc/150?u=david.c', specialty: 'Dermatology', isVerified: false, status: 'Active', state: 'New York' },
-  { id: 'pro3', name: 'Dr. Emily White', email: 'emily.w@email.com', role: UserRole.PROVIDER, avatarUrl: 'https://i.pravatar.cc/150?u=emily.w', specialty: 'General Practice', isVerified: true, status: 'Suspended', state: 'New York' },
+  { id: 'pro2', name: 'Dr. David Chen', email: 'david.c@email.com', password: 'password123', role: UserRole.PROVIDER, avatarUrl: 'https://i.pravatar.cc/150?u=david.c', specialty: 'Dermatology', isVerified: false, status: 'Active', state: 'New York' },
+  { id: 'pro3', name: 'Dr. Emily White', email: 'emily.w@email.com', password: 'password123', role: UserRole.PROVIDER, avatarUrl: 'https://i.pravatar.cc/150?u=emily.w', specialty: 'General Practice', isVerified: true, status: 'Suspended', state: 'New York' },
   
-  { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/admin/100', status: 'Active', isVerified: true },
+  { id: 'adm1', name: 'Alex Johnson', email: 'alex.j@email.com', password: 'password123', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/admin/100', status: 'Active', isVerified: true },
+  { id: 'adm2', name: 'Rish Novo', email: 'rishnovo@gmail.com', password: 'Rish@novo1', role: UserRole.ADMIN, avatarUrl: 'https://picsum.photos/seed/rish/100', status: 'Active', isVerified: true }
 ];
 
 export const MOCK_APPOINTMENTS: Appointment[] = [
-    { id: 'appt1', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '10:30 AM', duration: 30, reason: 'Annual Check-up', type: 'In-Person', status: 'Confirmed', visitSummary: "Patient is in good health. Discussed lifestyle modifications. Continue current medications. Follow up in 1 year." },
-    { id: 'appt2', patientId: 'pat2', patientName: 'Alice Johnson', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '11:00 AM', duration: 15, reason: 'Follow-up', type: 'Virtual', status: 'Confirmed', checkInStatus: 'Waiting' },
-    { id: 'appt3', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro2', providerName: 'Dr. David Chen', date: '2024-08-20', time: '02:00 PM', duration: 20, reason: 'Dermatology Follow-up', type: 'In-Person', status: 'Completed', visitSummary: "Checked healing of previous biopsy. No signs of infection. Recommended sunscreen." },
-    { id: 'appt4', patientId: 'pat4', patientName: 'Charlie Brown', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: new Date().toISOString().split('T')[0], time: '10:30 AM', duration: 15, reason: 'Sick Visit', type: 'Virtual', status: 'Confirmed', checkInStatus: 'Checked-In' },
-    { id: 'appt5', patientId: 'pat5', patientName: 'Diana Prince', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: new Date().toISOString().split('T')[0], time: '11:00 AM', duration: 30, reason: 'New Patient Intake', type: 'In-Person', status: 'Confirmed' },
+    { id: 'appt1', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '10:30 AM', duration: 30, reason: 'Annual Check-up', location: 'Clinic', status: 'Confirmed', visitSummary: "Patient is in good health. Discussed lifestyle modifications. Continue current medications. Follow up in 1 year." },
+    { id: 'appt2', patientId: 'pat2', patientName: 'Alice Johnson', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: '2024-09-15', time: '11:00 AM', duration: 15, reason: 'Follow-up', location: 'Virtual', status: 'Confirmed', checkInStatus: 'Waiting' },
+    { id: 'appt3', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro2', providerName: 'Dr. David Chen', date: '2024-08-20', time: '02:00 PM', duration: 20, reason: 'Dermatology Follow-up', location: 'Clinic', status: 'Completed', visitSummary: "Checked healing of previous biopsy. No signs of infection. Recommended sunscreen." },
+    { id: 'appt4', patientId: 'pat4', patientName: 'Charlie Brown', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: new Date().toISOString().split('T')[0], time: '10:30 AM', duration: 15, reason: 'Sick Visit', location: 'Virtual', status: 'Confirmed', checkInStatus: 'Checked-In' },
+    { id: 'appt5', patientId: 'pat5', patientName: 'Diana Prince', providerId: 'pro1', providerName: 'Dr. Jane Smith', date: new Date().toISOString().split('T')[0], time: '11:00 AM', duration: 30, reason: 'New Patient Intake', location: 'Clinic', status: 'Confirmed' },
 ];
 
 export const MOCK_CLAIMS: Claim[] = [
@@ -194,7 +203,6 @@ export const MOCK_REFERRALS: Referral[] = [
       type: 'Outgoing',
       reason: 'Headaches',
       notes: 'Patient cancelled appointment.',
-      // FIX: Add missing 'urgency' property.
       urgency: 'Routine',
       auditLog: [
           { date: '2024-08-15T11:00:00Z', action: 'Referral Cancelled by Staff', status: ReferralStatus.CANCELLED },

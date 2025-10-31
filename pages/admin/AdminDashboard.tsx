@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/shared/Card';
@@ -6,7 +5,6 @@ import PageHeader from '../../components/shared/PageHeader';
 import { UserRole } from '../../types';
 import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
-// FIX: The error indicates a module resolution problem. `Link` is a valid export. Assuming this will be resolved by fixing other react-router-dom issues.
 import { Link } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {

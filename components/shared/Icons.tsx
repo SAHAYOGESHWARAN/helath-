@@ -1,13 +1,13 @@
 import React from 'react';
 
-const IconBase: React.FC<{ children: React.ReactNode; className?: string; fill?: string; stroke?: string; strokeWidth?: number }> = ({ children, className, fill, stroke, strokeWidth }) => (
-    <svg
-        className={className || "w-6 h-6"}
-        fill={fill || "none"}
-        stroke={stroke || "currentColor"}
-        strokeWidth={strokeWidth || 2}
-        viewBox="0 0 24 24"
+const IconBase: React.FC<{ children: React.ReactNode; className?: string; fill?: string; stroke?: string, strokeWidth?: number }> = ({ children, className, fill, stroke, strokeWidth }) => (
+    <svg 
+        className={className || "w-6 h-6"} 
+        fill={fill || "none"} 
+        stroke={stroke || "currentColor"} 
+        viewBox="0 0 24 24" 
         xmlns="http://www.w3.org/2000/svg"
+        strokeWidth={strokeWidth || 2}
     >
         {children}
     </svg>
@@ -29,7 +29,7 @@ export const ProfileIcon: React.FC<{ className?: string }> = ({ className }) => 
     <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></IconBase>
 );
 export const CogIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></IconBase>
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></IconBase>
 );
 export const NovoPathIcon: React.FC<{ className?: string }> = ({ className }) => (
     <IconBase className={className} fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H8l4-4 1 3h3l-4 5z" /></IconBase>
@@ -64,8 +64,8 @@ export const PillIcon: React.FC<{ className?: string }> = ({ className }) => (
 export const VideoCameraIcon: React.FC<{ className?: string }> = ({ className }) => (
     <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></IconBase>
 );
-export const SparklesIcon: React.FC<{ className?: string, fill?: string, stroke?: string }> = ({ className, fill, stroke }) => (
-    <IconBase className={className} fill={fill} stroke={stroke}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.293 2.293a1 1 0 010 1.414L11 12l-2 2-2.293-2.293a1 1 0 010-1.414L11 6l2.293-2.293a1 1 0 011.414 0z" /></IconBase>
+export const SparklesIcon: React.FC<{ className?: string; fill?: string; stroke?: string }> = ({ className, fill, stroke }) => (
+    <IconBase className={className} fill={fill} stroke={stroke} strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.565l-.229-1.144a3.375 3.375 0 00-2.455-2.455l-1.145-.229l1.145-.229a3.375 3.375 0 002.455-2.455l.229-1.144l.229 1.144a3.375 3.375 0 002.455 2.455l1.145.229l-1.145.229a3.375 3.375 0 00-2.455 2.455l-.229 1.144z" /></IconBase>
 );
 export const GlobeAltIcon: React.FC<{ className?: string }> = ({ className }) => (
     <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></IconBase>
@@ -211,4 +211,54 @@ export const PaperClipIcon: React.FC<{ className?: string }> = ({ className }) =
 
 export const EllipsisVerticalIcon: React.FC<{ className?: string }> = ({ className }) => (
     <IconBase className={className} fill="currentColor" strokeWidth={0}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></IconBase>
+);
+
+export const XMarkIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className} strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></IconBase>
+);
+
+export const StopIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25-2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" /></IconBase>
+);
+
+export const ArrowPathIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001a10.5 10.5 0 0 0-9.348-9.348c-5.25 0-9.563 3.86-10.395 8.856 2.4-1.843 5.568-3.006 9.043-3.006 2.052 0 3.963.621 5.534 1.688zM19.5 10.5c0 5.25-3.86 9.563-8.856 10.395-1.843-2.4-3.006-5.568-3.006-9.043 0-2.052.621-3.963 1.688-5.534 2.186 1.82 5.022 2.928 8.172 2.928z" /></IconBase>
+);
+
+export const BeakerIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3V5.25a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3m-13.5 0v3.75a3 3 0 0 0 3 3h7.5a3 3 0 0 0 3-3V14.25" /></IconBase>
+);
+
+export const QuoteIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className} fill="currentColor" strokeWidth={0}>
+        <path d="M9.48 3.461c-1.84 2.132-2.96 4.382-2.96 7.47v.53h4.44v-4.441h-4.44v-.53c0-1.281.52-2.731 1.48-3.929L9.48 3.461zm10.66 0c-1.84 2.132-2.96 4.382-2.96 7.47v.53h4.44v-4.441h-4.44v-.53c0-1.281.52-2.731 1.48-3.929L20.14 3.461z" />
+    </IconBase>
+);
+
+export const HandThumbUpIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904M6.633 9.25l-1.14-3.138a3.375 3.375 0 0 1 .14-3.218.75.75 0 0 1 1.08.288l1.376 2.853m-3.833.026C2.25 6.212 1.5 6.96 1.5 7.908v9.576a1.5 1.5 0 0 0 1.5 1.5h2.467c.36 0 .708-.121.99-.333l1.376-1.113" /></IconBase>
+);
+
+export const UserMinusIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0-5.454-2.101M15 19.128c2.11 0 3.829-.652 5.035-1.921A9.825 9.825 0 0 0 19.5 12c0-2.036-.593-3.92-1.625-5.521M15 19.128v-3.811M15 19.128c-2.993 0-5.617-1.171-7.545-3.097m-1.455 3.097A9.825 9.825 0 0 1 6.5 12c0-2.036.593-3.92 1.625-5.521m11.35 11.042c.44-.222.846-.475 1.226-.764M6 16.128a9.38 9.38 0 0 1-5.454-2.101M6.023 19.128c2.11 0 3.829-.652 5.035-1.921m-5.035 1.921c-.44-.222-.846-.475-1.226-.764m1.226.764c-2.993 0-5.617-1.171-7.545-3.097M3.75 9.75h6" /></IconBase>
+);
+
+export const FaxIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m4 0h4" /></IconBase>
+);
+
+export const ArrowTrendingUpIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.28m5.94 2.28-2.28 5.941" /></IconBase>
+);
+
+export const UserPlusIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></IconBase>
+);
+
+export const BanknotesIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6V5.25m0 0a3.75 3.75 0 0 1 7.5 0M3.75 4.5A3.75 3.75 0 0 1 7.5 3v1.5m6.375 0a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Zm-11.25-1.5a.75.75 0 0 1 .75-.75h.008v.016h-.008a.75.75 0 0 1-.75-.75V3m12 .75a.75.75 0 0 0 .75-.75h.008v.016h-.008a.75.75 0 0 0-.75-.75V3m0 3.75a.75.75 0 0 1-.75.75h-.008v-.016h.008a.75.75 0 0 1 .75.75v.008c0 .414.336.75.75.75h.008v.016h-.008c-.414 0-.75.336-.75.75v.008" /></IconBase>
+);
+
+export const ClipboardDocumentListIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <IconBase className={className} strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.082A48.424 48.424 0 0 0 12 3.811a48.424 48.424 0 0 0-4.896.082C5.97 3.992 5 4.954 5 6.091v11.585c0 1.135.845 2.098 1.976 2.192a48.427 48.427 0 0 0 1.123.082h3.298" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 21L12 17.5 7.5 21" /></IconBase>
 );

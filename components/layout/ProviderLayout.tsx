@@ -18,6 +18,8 @@ import ProviderProfile from '../../pages/provider/ProviderProfile';
 import ProviderSettings from '../../pages/provider/ProviderSettings';
 import PatientChart from '../../pages/provider/PatientChart';
 import LabOrders from '../../pages/provider/LabOrders';
+import Messaging from '../../pages/provider/Messaging';
+import Inbox from '../../pages/provider/Inbox';
 
 const ProviderLayout: React.FC = () => {
   return (
@@ -37,6 +39,8 @@ const ProviderLayout: React.FC = () => {
             <Route path="/e-prescribing" element={<EPrescribing />} />
             <Route path="/lab-orders" element={<LabOrders />} />
             <Route path="/referrals" element={<Referrals />} />
+            <Route path="/messaging" element={<Messaging />} />
+            <Route path="/inbox" element={<Inbox />} />
             <Route path="/billing" element={<ProviderBilling />} />
             <Route path="/subscription" element={<ProviderSubscription />} />
             <Route path="/reports" element={<ProviderReports />} />

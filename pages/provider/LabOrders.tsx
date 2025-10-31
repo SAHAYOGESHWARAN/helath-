@@ -19,6 +19,7 @@ const POPULAR_LABS = ['Complete Blood Count (CBC)', 'Lipid Panel', 'TSH', 'Compr
 const NewLabOrderModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen, onClose }) => {
     const { user, users, appointments, addLabOrder } = useAuth();
     const { showToast } = useApp();
+    const [itemToDelete, setItemToDelete] = useState<number | null>(null);
     
     const patients = useMemo(() => {
         if (!user || user.role !== UserRole.PROVIDER) return [];
@@ -61,7 +62,7 @@ const NewLabOrderModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
             >
                 {({ values, setFieldValue, touched, errors, isSubmitting }) => (
                     <Form>
-                        <div className="mb-4">
+                         <div className="mb-4">
                             <label className="block text-sm font-medium">Patient</label>
                             <Field as="select" name="patientId" className={`w-full p-2 border rounded ${errors.patientId && touched.patientId ? 'border-red-500' : 'border-gray-300'}`}>
                                 <option value="">Select a patient</option>
@@ -73,30 +74,57 @@ const NewLabOrderModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
                         <h3 className="font-semibold mt-4 mb-2">Tests to Order</h3>
                         <FieldArray name="tests">
                             {({ push, remove }) => (
-                                <div className="space-y-2">
-                                    {values.tests.map((_, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                            <Field name={`tests.${index}`} placeholder="e.g., Lipid Panel" className="w-full p-2 border rounded" />
-                                            {values.tests.length > 1 && (
-                                              <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 hover:bg-red-100 rounded-full"><TrashIcon className="w-5 h-5"/></button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <div className="flex flex-wrap gap-2 pt-2">
-                                        {POPULAR_LABS.map(lab => (
-                                            <button key={lab} type="button" onClick={() => {
-                                                const currentTests = values.tests.filter(t => t.trim() !== '');
-                                                setFieldValue('tests', [...currentTests, lab]);
-                                            }} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200">
-                                                + {lab}
-                                            </button>
+                                <>
+                                    <div className="space-y-2">
+                                        {values.tests.map((_, index) => (
+                                            <div key={index} className="flex items-center gap-2">
+                                                <Field name={`tests.${index}`} placeholder="e.g., Lipid Panel" className="w-full p-2 border rounded" />
+                                                {values.tests.length > 1 && (
+                                                    <button type="button" onClick={() => setItemToDelete(index)} className="p-2 text-red-500 hover:bg-red-100 rounded-full"><TrashIcon className="w-5 h-5"/></button>
+                                                )}
+                                            </div>
                                         ))}
+                                        <div className="flex flex-wrap gap-2 pt-2">
+                                            {POPULAR_LABS.map(lab => (
+                                                <button key={lab} type="button" onClick={() => {
+                                                    const currentTests = values.tests.filter(t => t.trim() !== '');
+                                                    setFieldValue('tests', [...currentTests, lab]);
+                                                }} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200">
+                                                    + {lab}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button type="button" onClick={() => push('')} className="text-sm text-primary-600 font-semibold">+ Add Custom Test</button>
+                                        <ErrorMessage name="tests" component={props => <div className="text-red-500 text-xs mt-1">{typeof props.children === 'string' ? props.children : ''}</div>} />
                                     </div>
-                                     <button type="button" onClick={() => push('')} className="text-sm text-primary-600 font-semibold">+ Add Custom Test</button>
-                                    <ErrorMessage name="tests">
-                                        {msg => <div className="text-red-500 text-xs mt-1">{msg}</div>}
-                                    </ErrorMessage>
-                                </div>
+                                    <Modal
+                                        isOpen={itemToDelete !== null}
+                                        onClose={() => setItemToDelete(null)}
+                                        title="Confirm Test Deletion"
+                                        size="sm"
+                                        footer={
+                                        <>
+                                            <button type="button" onClick={() => setItemToDelete(null)} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">
+                                            Cancel
+                                            </button>
+                                            <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (itemToDelete !== null) {
+                                                remove(itemToDelete);
+                                                setItemToDelete(null);
+                                                }
+                                            }}
+                                            className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg"
+                                            >
+                                            Delete
+                                            </button>
+                                        </>
+                                        }
+                                    >
+                                        <p>Are you sure you want to remove this test from the lab order?</p>
+                                    </Modal>
+                                </>
                             )}
                         </FieldArray>
                         

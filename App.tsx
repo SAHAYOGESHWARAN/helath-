@@ -14,6 +14,9 @@ import ProviderRegister from './pages/auth/ProviderRegister';
 import { NotificationProvider } from './contexts/NotificationContext';
 import WelcomePage from './pages/WelcomePage';
 import AdminRegister from './pages/auth/AdminRegister';
+import FeaturesPage from './pages/FeaturesPage';
+import TestimonialsPage from './pages/TestimonialsPage';
+import ForProvidersPage from './pages/ForProvidersPage';
 
 // --- Global App Context for Toasts/Modals ---
 interface Toast {
@@ -95,6 +98,9 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/" element={<WelcomePage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/testimonials" element={<TestimonialsPage />} />
+        <Route path="/for-providers" element={<ForProvidersPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/patient" element={<PatientRegister />} />

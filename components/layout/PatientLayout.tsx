@@ -8,7 +8,6 @@ import { PATIENT_NAV } from '../../constants';
 import PatientDashboard from '../../pages/patient/PatientDashboard';
 import PatientAppointments from '../../pages/patient/Appointments';
 import EMR from '../../pages/patient/HealthRecords';
-import Medications from '../../pages/patient/Medications';
 import Messaging from '../../pages/patient/Messaging';
 import VideoConsults from '../../pages/patient/VideoConsults';
 import Claims from '../../pages/patient/Claims';
@@ -18,6 +17,9 @@ import AIWeightLossCoach from '../../pages/patient/AI_Assistant';
 import Profile from '../../pages/patient/Profile';
 import Settings from '../../pages/patient/Settings';
 import VisitHistory from '../../pages/patient/VisitHistory';
+import Medications from '../../pages/patient/Medications';
+import TaskList from '../../pages/patient/TaskList';
+import HealthGoalsPage from '../../pages/patient/HealthGoalsPage';
 
 
 const PatientLayout: React.FC = () => {
@@ -34,6 +36,8 @@ const PatientLayout: React.FC = () => {
               <Route path="/appointments" element={<PatientAppointments />} />
               <Route path="/emr" element={<EMR />} />
               <Route path="/medications" element={<Medications />} />
+              <Route path="/goals" element={<HealthGoalsPage />} />
+              <Route path="/tasks" element={<TaskList />} />
               <Route path="/history" element={<VisitHistory />} />
               <Route path="/messaging" element={<Messaging />} />
               <Route path="/video-consults" element={<VideoConsults />} />

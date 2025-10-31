@@ -1,18 +1,20 @@
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo } from '../types';
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task } from '../types';
 import { MOCK_USERS, MOCK_CLAIMS, MOCK_APPOINTMENTS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS, MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS, MOCK_REFERRALS } from '../mockData';
 
 interface AuthContextType {
   user: User | null;
   users: User[];
   loading: boolean;
-  login: (email: string, password?: string) => void;
+  login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'> & { password?: string }, role: UserRole) => void;
+  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => void;
   updateUser: (updater: (currentUser: User) => User) => Promise<void>;
   claims: Claim[];
   addClaim: (newClaim: Omit<Claim, 'id'>) => void;
   appointments: Appointment[];
+  addAppointment: (newAppointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => void;
+  addVideoUpdateToAppointment: (appointmentId: string, videoUrl: string) => void;
   confirmAppointment: (id: string) => void;
   cancelAppointment: (id: string) => void;
   providerSubscriptionPlans: SubscriptionPlan[];
@@ -20,6 +22,7 @@ interface AuthContextType {
   currentSubscription: SubscriptionPlan | undefined;
   changeSubscription: (planId: string) => void;
   progressNotes: ProgressNote[];
+  addProgressNote: (newNote: Omit<ProgressNote, 'id'>) => void;
   prescriptions: Prescription[];
   addPrescription: (newPrescription: Omit<Prescription, 'id' | 'status'>) => void;
   messages: Record<string, Message[]>; // Thread ID (patientId or providerId) to messages
@@ -38,11 +41,18 @@ interface AuthContextType {
   referrals: Referral[];
   addReferral: (newReferral: Omit<Referral, 'id' | 'status' | 'createdAt' | 'type' | 'auditLog'>) => void;
   updateReferral: (referralId: string, updates: Partial<Referral>, auditLogAction?: string) => Promise<void>;
+  reminders: Record<string, ReminderSettings>;
+  addTask: (task: Omit<Task, 'id' | 'completed'>) => void;
+  toggleTaskCompletion: (taskId: string) => void;
+  addHealthGoal: (goal: Omit<HealthGoal, 'id'>) => void;
+  updateHealthGoal: (goal: HealthGoal) => void;
+  deleteHealthGoal: (goalId: string) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USER_STORAGE_KEY = 'novopath-user';
+const REMINDER_STORAGE_KEY = 'novopath-appointment-reminders';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -56,6 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [invoices, setInvoices] = useState<BillingInvoice[]>(MOCK_INVOICES);
     const [labOrders, setLabOrders] = useState<LabOrder[]>(MOCK_LAB_ORDERS);
     const [referrals, setReferrals] = useState<Referral[]>(MOCK_REFERRALS);
+    const [reminders, setReminders] = useState<Record<string, ReminderSettings>>({});
 
     useEffect(() => {
         try {
@@ -65,44 +76,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const fullUser = MOCK_USERS.find(u => u.id === parsedUser.id) || parsedUser;
                 setUser(fullUser);
             }
+            const storedReminders = localStorage.getItem(REMINDER_STORAGE_KEY);
+            if (storedReminders) {
+                setReminders(JSON.parse(storedReminders));
+            }
         } catch (error) {
-            console.error("Failed to parse user from session storage", error);
+            console.error("Failed to parse data from storage", error);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const login = useCallback((email: string, password?: string) => {
+    const login = useCallback(async (email: string, password?: string): Promise<boolean> => {
         setLoading(true);
-        setTimeout(() => {
-            const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-            if (foundUser) {
-                const fullUser = MOCK_USERS.find(u => u.id === foundUser.id) || foundUser;
-                setUser(fullUser);
-                sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(fullUser));
-            } else {
-                // Fallback for demo purposes
-                const userRole = email as UserRole;
-                 const defaultUser = MOCK_USERS.find(u => u.role === userRole) || MOCK_USERS.find(u => u.role === UserRole.PATIENT)!;
-                setUser(defaultUser);
-                sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
-            }
-            setLoading(false);
-        }, 500);
-    }, []);
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+                
+                if (foundUser) {
+                    const fullUser = users.find(u => u.id === foundUser.id) || foundUser;
+                    setUser(fullUser);
+                    sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(fullUser));
+                    setLoading(false);
+                    resolve(true);
+                } else {
+                    setLoading(false);
+                    resolve(false);
+                }
+            }, 500);
+        });
+    }, [users]);
 
-    const register = useCallback((userData: Partial<Omit<User, 'id' | 'role' | 'avatarUrl'>> & { password?: string }, role: UserRole) => {
+    const register = useCallback((userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => {
         setLoading(true);
         setTimeout(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { password, ...restUserData } = userData;
             const newUser: User = {
                 id: `user_${Date.now()}`,
-                name: restUserData.name || '',
-                email: restUserData.email || '',
-                ...restUserData,
+                name: userData.name || '',
+                email: userData.email || '',
+                ...userData,
                 role,
-                avatarUrl: `https://picsum.photos/seed/${restUserData.name}/100`,
+                avatarUrl: `https://picsum.photos/seed/${userData.name}/100`,
                 status: 'Active',
                 isVerified: role !== UserRole.PROVIDER,
             };
@@ -147,6 +161,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
     }, []);
 
+    const addAppointment = useCallback((newAppointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => {
+        const fullAppointment: Appointment = {
+            id: `appt_${Date.now()}`,
+            status: 'Pending',
+            ...newAppointment,
+        };
+        setAppointments(prev => [...prev, fullAppointment]);
+        if (reminder) {
+            setReminders(prev => {
+                const newReminders = { ...prev, [fullAppointment.id]: reminder };
+                localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(newReminders));
+                return newReminders;
+            });
+        }
+    }, []);
+
     const confirmAppointment = useCallback((id: string) => {
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a));
     }, []);
@@ -154,10 +184,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cancelAppointment = useCallback((id: string) => {
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
     }, []);
+
+    const addVideoUpdateToAppointment = useCallback((appointmentId: string, videoUrl: string) => {
+        setAppointments(prev =>
+          prev.map(appt => {
+            if (appt.id === appointmentId) {
+              const newUpdate = {
+                id: `vid_${Date.now()}`,
+                date: new Date().toISOString(),
+                videoUrl: videoUrl,
+              };
+              const updatedVideoUpdates = [...(appt.videoUpdates || []), newUpdate];
+              return { ...appt, videoUpdates: updatedVideoUpdates };
+            }
+            return appt;
+          })
+        );
+    }, []);
     
     const changeSubscription = useCallback((planId: string) => {
         updateUser(u => ({...u, subscription: { planId, status: 'Active', renewalDate: '2025-09-01' }}));
     }, [updateUser]);
+    
+    const addProgressNote = useCallback((newNote: Omit<ProgressNote, 'id'>) => {
+        const fullNote: ProgressNote = {
+            ...newNote,
+            id: `note_${Date.now()}`,
+        };
+        setProgressNotes(prev => [fullNote, ...prev]);
+    }, []);
 
     const addPrescription = useCallback((newPrescription: Omit<Prescription, 'id' | 'status'>) => {
         const fullRx: Prescription = { ...newPrescription, id: `rx_${Date.now()}`, status: 'Sent' };
@@ -254,6 +309,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return r;
         }));
     }, []);
+    
+    const addTask = useCallback((task: Omit<Task, 'id' | 'completed'>) => {
+        const newTask: Task = {
+            ...task,
+            id: `task_${Date.now()}`,
+            completed: false,
+        };
+        updateUser(u => ({ ...u, tasks: [...(u.tasks || []), newTask] }));
+    }, [updateUser]);
+
+    const toggleTaskCompletion = useCallback((taskId: string) => {
+        updateUser(u => ({
+            ...u,
+            tasks: (u.tasks || []).map(t =>
+                t.id === taskId ? { ...t, completed: !t.completed } : t
+            ),
+        }));
+    }, [updateUser]);
+
+    const addHealthGoal = useCallback((goal: Omit<HealthGoal, 'id'>) => {
+        const newGoal: HealthGoal = { ...goal, id: `goal_${Date.now()}` };
+        updateUser(u => ({ ...u, healthGoals: [...(u.healthGoals || []), newGoal] }));
+    }, [updateUser]);
+
+    const updateHealthGoal = useCallback((goal: HealthGoal) => {
+        updateUser(u => ({ ...u, healthGoals: (u.healthGoals || []).map(g => g.id === goal.id ? goal : g) }));
+    }, [updateUser]);
+
+    const deleteHealthGoal = useCallback((goalId: string) => {
+        updateUser(u => ({ ...u, healthGoals: (u.healthGoals || []).filter(g => g.id !== goalId) }));
+    }, [updateUser]);
 
     const currentSubscription = useMemo(() => {
         if (!user || !user.subscription) return undefined;
@@ -264,11 +350,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const value = {
         user, users, loading, login, logout, register, updateUser, claims, addClaim, appointments, 
-        confirmAppointment, cancelAppointment, providerSubscriptionPlans: MOCK_PROVIDER_PLANS, 
+        addAppointment, confirmAppointment, cancelAppointment, addVideoUpdateToAppointment, providerSubscriptionPlans: MOCK_PROVIDER_PLANS, 
         patientSubscriptionPlans: MOCK_PATIENT_PLANS, currentSubscription, changeSubscription, progressNotes,
-        prescriptions, addPrescription, messages, sendMessage, markMessagesAsRead, invoices, addInvoice, makePayment,
+        addProgressNote, prescriptions, addPrescription, messages, sendMessage, markMessagesAsRead, invoices, addInvoice, makePayment,
         labOrders, addLabOrder, insurance, updateInsurance, changePassword, verifyUser, updateUserStatus,
-        referrals, addReferral, updateReferral,
+        referrals, addReferral, updateReferral, reminders,
+        addTask, toggleTaskCompletion, addHealthGoal, updateHealthGoal, deleteHealthGoal
     };
 
     return (

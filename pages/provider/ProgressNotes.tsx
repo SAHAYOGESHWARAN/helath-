@@ -3,8 +3,9 @@ import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { ProgressNote } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
-// FIX: Removed import of non-existent 'OP' icon.
-import { DocumentTextIcon, PencilAltIcon } from '../../components/shared/Icons';
+import { DocumentTextIcon, SparklesIcon } from '../../components/shared/Icons';
+import GenerateNoteModal from './GenerateNoteModal';
+import { useApp } from '../../App';
 
 const getStatusPill = (status: ProgressNote['status']) => {
     switch (status) {
@@ -15,9 +16,11 @@ const getStatusPill = (status: ProgressNote['status']) => {
 };
 
 const ProgressNotes: React.FC = () => {
-    const { users, progressNotes } = useAuth();
-    const [selectedNote, setSelectedNote] = useState<ProgressNote | null>(progressNotes.length > 0 ? progressNotes[0] : null);
+    const { progressNotes, addProgressNote } = useAuth();
+    const { showToast } = useApp();
+    const [selectedNote, setSelectedNote] = useState<ProgressNote | null>(progressNotes.length > 0 ? progressNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
     const filteredNotes = useMemo(() => 
         progressNotes.filter(note => 
@@ -25,15 +28,24 @@ const ProgressNotes: React.FC = () => {
         ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [progressNotes, searchTerm]);
 
-    const getPatientAvatar = (patientId: string) => {
-        const patient = users.find(u => u.id === patientId);
-        return patient?.avatarUrl || `https://i.pravatar.cc/150?u=${patientId}`;
-    };
+    const handleSaveNote = (note: Omit<ProgressNote, 'id'>) => {
+        addProgressNote(note);
+        showToast(`Draft note for ${note.patientName} has been saved.`, 'success');
+        setIsAiModalOpen(false);
+    }
 
     return (
         <div>
-            <PageHeader title="Progress Notes" />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-12rem)]">
+            <PageHeader title="Progress Notes">
+                <button
+                    onClick={() => setIsAiModalOpen(true)}
+                    className="bg-accent hover:bg-accent-dark text-white font-bold py-2 px-5 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-105 flex items-center"
+                >
+                    <SparklesIcon className="w-5 h-5 mr-2" fill="currentColor" />
+                    <span>Generate with AI</span>
+                </button>
+            </PageHeader>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-14rem)]">
                 <Card className="lg:col-span-1 p-0 flex flex-col">
                     <div className="p-4 border-b">
                         <input
@@ -107,6 +119,7 @@ const ProgressNotes: React.FC = () => {
                     )}
                 </Card>
             </div>
+            <GenerateNoteModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} onSave={handleSaveNote} />
         </div>
     );
 };

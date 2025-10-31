@@ -7,32 +7,27 @@ import {
     UserGroupIcon,
     CheckCircleIcon,
     VideoCameraIcon,
-    CalendarIcon
+    CalendarIcon,
+    ClockIcon,
+    HandThumbUpIcon,
+    UserMinusIcon
 } from '../../components/shared/Icons';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment } from '../../types';
 import { Link } from 'react-router-dom';
+import Card from '../../components/shared/Card';
 
-const MetricCard: React.FC<{icon: React.ReactNode, title: string, value: string | number, link: string, color: 'primary' | 'teal' | 'amber' | 'indigo'}> = ({icon, title, value, link, color}) => {
-    const colorClasses = {
-        primary: { bg: 'bg-primary-100', text: 'text-primary-600', border: 'hover:border-primary-200' },
-        teal: { bg: 'bg-teal-100', text: 'text-teal-600', border: 'hover:border-teal-200' },
-        amber: { bg: 'bg-amber-100', text: 'text-amber-600', border: 'hover:border-amber-200' },
-        indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'hover:border-indigo-200' },
-    }[color];
-
-    return (
-        <Link to={link} className={`bg-white p-5 rounded-xl shadow-md border border-gray-100 hover:shadow-lg ${colorClasses.border} transition-all flex items-start`}>
-            <div className={`${colorClasses.bg} ${colorClasses.text} w-12 h-12 rounded-lg flex items-center justify-center mr-4`}>{icon}</div>
-            <div>
-                <p className="text-sm text-gray-500 font-medium">{title}</p>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-            </div>
-        </Link>
-    );
-};
+const KpiCard: React.FC<{icon: React.ReactNode, title: string, value: string | number, color: string;}> = ({icon, title, value, color}) => (
+    <Card className={`flex items-center p-4 border-l-4 ${color}`}>
+      <div className="mr-4">{icon}</div>
+      <div>
+        <p className="text-3xl font-bold text-gray-800">{value}</p>
+        <p className="text-gray-500 text-sm">{title}</p>
+      </div>
+    </Card>
+);
 
 const AppointmentStatusChart: React.FC<{appointments: Appointment[]}> = ({appointments}) => {
     const data = useMemo(() => {
@@ -78,6 +73,15 @@ const getStatusPill = (status: string) => {
     }
 }
 
+const getUrgencyBorder = (urgency: 'High' | 'Medium' | 'Low') => {
+    switch (urgency) {
+      case 'High': return 'border-l-4 border-red-500';
+      case 'Medium': return 'border-l-4 border-amber-500';
+      case 'Low': return 'border-l-4 border-blue-500';
+      default: return 'border-l-4 border-gray-300';
+    }
+};
+
 const ProviderDashboard: React.FC = () => {
     const { user, appointments, progressNotes, prescriptions, messages, users } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
@@ -95,7 +99,7 @@ const ProviderDashboard: React.FC = () => {
     const waitingRoom = useMemo(() => {
         return todaysAppointments.filter(a => a.checkInStatus === 'Waiting');
     }, [todaysAppointments]);
-
+    
     const recentActivity = useMemo(() => {
         const allMessages = [].concat(...Object.values(messages))
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -131,9 +135,13 @@ const ProviderDashboard: React.FC = () => {
         );
     }
 
-    const unreadMessages = [].concat(...Object.values(messages)).filter(m => !m.isRead && m.senderId !== user?.id).length;
     const unsignedNotes = progressNotes.filter(n => n.status === 'Pending Signature').length;
-    const draftPrescriptions = prescriptions.filter(p => p.status === 'Draft').length;
+    
+    const mockInbox = [
+        {id: 1, type: 'Note', description: 'Sign note for John Doe', icon: <DocumentTextIcon className="w-5 h-5 text-amber-600"/>, urgency: 'High', link: '/progress-notes' },
+        {id: 2, type: 'Lab', description: 'Review CBC results for Alice Johnson', icon: <PillIcon className="w-5 h-5 text-blue-600"/>, urgency: 'Medium', link: '/lab-orders'},
+        {id: 3, type: 'Message', description: 'New message from Diana Prince', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, urgency: 'High', link: '/messaging'},
+    ];
 
   return (
     <div>
@@ -143,10 +151,10 @@ const ProviderDashboard: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <MetricCard icon={<ChatBubbleLeftRightIcon className="w-6 h-6"/>} title="Unread Messages" value={unreadMessages} link="/messaging" color="primary" />
-        <MetricCard icon={<DocumentTextIcon className="w-6 h-6"/>} title="Unsigned Notes" value={unsignedNotes} link="/progress-notes" color="amber" />
-        <MetricCard icon={<PillIcon className="w-6 h-6"/>} title="Draft Prescriptions" value={draftPrescriptions} link="/e-prescribing" color="teal" />
-        <MetricCard icon={<UserGroupIcon className="w-6 h-6"/>} title="Patients Today" value={todaysAppointments.length} link="/calendar" color="indigo" />
+        <KpiCard icon={<CalendarIcon className="w-8 h-8 text-blue-500"/>} title="Appointments Today" value={todaysAppointments.length} color="border-blue-500" />
+        <KpiCard icon={<HandThumbUpIcon className="w-8 h-8 text-emerald-500"/>} title="Patient Satisfaction" value="98%" color="border-emerald-500" />
+        <KpiCard icon={<ClockIcon className="w-8 h-8 text-amber-500"/>} title="Avg. Wait Time" value="8 min" color="border-amber-500" />
+        <KpiCard icon={<UserMinusIcon className="w-8 h-8 text-red-500"/>} title="No-Show Rate" value="3%" color="border-red-500" />
       </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -155,14 +163,22 @@ const ProviderDashboard: React.FC = () => {
                     <h3 className="font-bold text-lg text-gray-900 mb-4">Today's Appointments</h3>
                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                         {todaysAppointments.length > 0 ? todaysAppointments.sort((a,b) => a.time.localeCompare(b.time)).map((appt: Appointment) => (
-                            <Link to={`/patients/${appt.patientId}`} key={appt.id} className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-primary-50 hover:shadow-sm transition-all cursor-pointer">
+                            <div key={appt.id} className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-primary-50 hover:shadow-sm transition-all">
                                 <div className="w-20 text-sm font-bold text-gray-800">{appt.time}</div>
                                 <div className="flex-1 border-l-2 border-gray-300 pl-4">
                                     <p className="font-semibold text-gray-900">{appt.patientName}</p>
                                     <p className="text-sm text-gray-600">{appt.reason}</p>
                                 </div>
-                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.checkInStatus || appt.status)}`}>{appt.checkInStatus || appt.status}</span>
-                            </Link>
+                                <div className="flex items-center space-x-2">
+                                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.checkInStatus || appt.status)}`}>{appt.checkInStatus || appt.status}</span>
+                                     <Link to={`/patients/${appt.patientId}`} className="text-primary-600 hover:underline text-xs font-semibold">View Chart</Link>
+                                     {appt.location === 'Virtual' && (
+                                         <Link to="/video-consults" className="bg-emerald-500 text-white px-2 py-1 rounded-md text-xs font-bold hover:bg-emerald-600">
+                                             Start Visit
+                                         </Link>
+                                     )}
+                                </div>
+                            </div>
                         )) : <p className="text-center text-gray-500 py-8">No appointments scheduled for today.</p>}
                     </div>
                 </div>
@@ -178,19 +194,16 @@ const ProviderDashboard: React.FC = () => {
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <div>
                  <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                    <h3 className="font-bold text-lg text-gray-900 mb-4">Virtual Waiting Room</h3>
+                    <h3 className="font-bold text-lg text-gray-900 mb-4">Task Inbox ({mockInbox.length})</h3>
                     <div className="space-y-3">
-                        {waitingRoom.length > 0 ? waitingRoom.map(p => (
-                            <div key={p.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-gray-900">{p.patientName}</p>
+                        {mockInbox.length > 0 ? mockInbox.map(item => (
+                            <Link to={item.link} key={item.id} className={`flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer ${getUrgencyBorder(item.urgency as 'High' | 'Medium' | 'Low')}`}>
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">{item.icon}</div>
+                                <div className="flex-1 ml-3">
+                                    <p className="font-semibold text-gray-800 text-sm">{item.description}</p>
                                 </div>
-                                <button className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 flex items-center">
-                                    <VideoCameraIcon className="w-4 h-4 mr-1" />
-                                    Start Visit
-                                </button>
-                            </div>
-                        )) : <p className="text-sm text-center text-gray-500 py-4">Waiting room is empty.</p>}
+                            </Link>
+                        )) : <p className="text-sm text-center text-gray-500 py-4">Inbox is empty.</p>}
                     </div>
                 </div>
             </div>

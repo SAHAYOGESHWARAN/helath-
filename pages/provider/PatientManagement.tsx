@@ -20,6 +20,7 @@ const PatientManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Suspended'>('All');
     const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: 'asc' | 'desc' } | null>(null);
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
     const sortedAndFilteredPatients = useMemo(() => {
         if (!providerUser?.state) return [];
@@ -105,7 +106,11 @@ const PatientManagement: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {sortedAndFilteredPatients.map(p => (
-                        <tr key={p.id} className="hover:bg-gray-50">
+                        <tr
+                            key={p.id}
+                            className={`transition-colors duration-150 cursor-pointer ${selectedPatientId === p.id ? 'bg-primary-50' : 'hover:bg-gray-50'}`}
+                            onClick={() => setSelectedPatientId(p.id)}
+                        >
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.name}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{p.id}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.dob}</td>
@@ -116,7 +121,10 @@ const PatientManagement: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                 <button 
-                                    onClick={() => navigate(`/patients/${p.id}`)}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // prevent row click from firing
+                                        navigate(`/patients/${p.id}`);
+                                    }}
                                     className="text-primary-600 hover:text-primary-800 font-medium"
                                 >
                                     View

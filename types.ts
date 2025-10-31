@@ -1,4 +1,3 @@
-// FIX: Removed self-import of UserRole to resolve conflict with local declaration.
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -93,10 +92,18 @@ export interface HealthGoal {
     unit: string;
 }
 
+export interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+  dueDate?: string; // YYYY-MM-DD
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string;
   role: UserRole;
   avatarUrl: string;
   phone?: string;
@@ -116,6 +123,7 @@ export interface User {
   labResults?: LabResult[];
   gymMembership?: GymMembership;
   healthGoals?: HealthGoal[];
+  tasks?: Task[];
 
   // Provider specific
   specialty?: string;
@@ -136,11 +144,12 @@ export interface Appointment {
   date: string; // YYYY-MM-DD
   time: string; // HH:MM AM/PM
   reason: string;
-  type: 'In-Person' | 'Virtual';
+  location: 'Clinic' | 'Virtual' | 'Hospital';
   status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
   duration: number; // in minutes
   checkInStatus?: 'Waiting' | 'Checked-In';
   visitSummary?: string;
+  videoUpdates?: { id: string; date: string; videoUrl: string }[];
 }
 
 export enum ClaimStatus {
@@ -305,4 +314,27 @@ export interface InsuranceInfo {
     planName: string;
     memberId: string;
     groupId: string;
+}
+
+export interface ReminderSettings {
+  channels: {
+    email: boolean;
+    sms: boolean;
+  };
+  timeOption: '1h' | '24h' | '2d' | '3d' | 'custom';
+  customDateTime: string | null;
+}
+
+export interface AuthContextType {
+  // ... (existing properties)
+  addAppointment: (appointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => void;
+  addVideoUpdateToAppointment: (appointmentId: string, videoUrl: string) => void;
+  reminders: Record<string, ReminderSettings>;
+  labOrders: LabOrder[];
+  addLabOrder: (newOrder: Omit<LabOrder, 'id'>) => void;
+  addTask: (task: Omit<Task, 'id' | 'completed'>) => void;
+  toggleTaskCompletion: (taskId: string) => void;
+  addHealthGoal: (goal: Omit<HealthGoal, 'id'>) => void;
+  updateHealthGoal: (goal: HealthGoal) => void;
+  deleteHealthGoal: (goalId: string) => void;
 }

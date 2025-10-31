@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenerativeAI, ChatSession, GenerationConfig } from '@google/generative-ai';
+import { GoogleGenAI, Chat, GroundingMetadata } from '@google/genai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { SparklesIcon, GlobeAltIcon } from '../../components/shared/Icons';
+import { SparklesIcon, GlobeAltIcon, CameraIcon } from '../../components/shared/Icons';
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 import PageHeader from '../../components/shared/PageHeader';
+import VideoUpdateModal from './VideoUpdateModal';
 
 interface Message {
   role: 'user' | 'model';
   parts: { text: string }[];
   suggestions?: string[];
-  groundingMetadata?: any;
+  groundingMetadata?: GroundingMetadata;
 }
 
 const AIWeightLossCoach: React.FC = () => {
@@ -18,13 +19,14 @@ const AIWeightLossCoach: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [history, setHistory] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ai = useRef<GoogleGenerativeAI | null>(null);
-  const chat = useRef<ChatSession | null>(null);
+  const ai = useRef<GoogleGenAI | null>(null);
+  const chat = useRef<Chat | null>(null);
 
   useEffect(() => {
     // Per coding guidelines, API_KEY is assumed to be available from process.env.
-    ai.current = new GoogleGenerativeAI(process.env.API_KEY as string);
+    ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }, []);
 
   useEffect(() => {
@@ -53,9 +55,14 @@ const AIWeightLossCoach: React.FC = () => {
     if (!text.trim() || loading || !ai.current || !user) return;
 
     const userMessage: Message = { role: 'user', parts: [{ text }] };
-    const historyForApi = [...history, userMessage];
-
-    setHistory(prev => [...prev, userMessage, { role: 'model', parts: [{ text: '' }] }]);
+    // Don't add video placeholder messages to the API history
+    const historyForApi = text.startsWith('[User sent a video update') ? history : [...history, userMessage];
+    
+    if (!text.startsWith('[User sent a video update')) {
+        setHistory(prev => [...prev, userMessage]);
+    }
+    
+    setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }] }]);
     setPrompt('');
     setLoading(true);
 
@@ -89,6 +96,7 @@ const AIWeightLossCoach: React.FC = () => {
       - Suggest workouts and exercise routines (e.g., "give me a 30-minute beginner HIIT workout"). If the patient has a gym membership, suggest exercises they can do there.
       - Provide nutritional information (e.g., "how many calories in a banana?").
       - Help the user log their food and exercise to track progress. When they log an activity, acknowledge it and offer encouragement.
+      - If the user sends a video, acknowledge it positively (e.g., "Thanks for the video update! It looks like you're making great progress.")
       - Use the patient's provided health context to tailor your suggestions. For example, if they have hypertension, suggest low-sodium meal options. If they have a weight loss goal, help them work towards it.
       - If the user's query is outside your scope or requires up-to-date information (e.g., recipes, specific exercise videos), use the Google Search tool and ALWAYS cite your sources.
       
@@ -97,8 +105,12 @@ const AIWeightLossCoach: React.FC = () => {
       - Keep your tone empathetic, clear, and helpful.`;
       
       if (!chat.current) {
-        const model = ai.current.getGenerativeModel({ model: "gemini-2.5-flash" });
-        chat.current = model.startChat({
+        chat.current = ai.current.chats.create({
+            model: "gemini-2.5-flash",
+            config: {
+                systemInstruction: systemInstruction,
+                tools: [{googleSearch: {}}],
+            },
             history: historyForApi.map(msg => ({
               role: msg.role,
               parts: msg.parts,
@@ -106,10 +118,10 @@ const AIWeightLossCoach: React.FC = () => {
         });
       }
 
-      const result = await chat.current.sendMessageStream(`${systemInstruction}\n\n${text}`);
+      const resultStream = await chat.current.sendMessageStream({ message: text });
       let responseReceived = false;
-      for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
+      for await (const chunk of resultStream) {
+          const chunkText = chunk.text;
           if (chunkText) {
               responseReceived = true;
               setHistory(prev => {
@@ -118,6 +130,7 @@ const AIWeightLossCoach: React.FC = () => {
                       const updatedMessage = {
                           ...lastMessage,
                           parts: [{ text: lastMessage.parts[0].text + chunkText }],
+                          groundingMetadata: chunk.candidates?.[0]?.groundingMetadata,
                       };
                       return [...prev.slice(0, -1), updatedMessage];
                   }
@@ -164,6 +177,27 @@ const AIWeightLossCoach: React.FC = () => {
     e.preventDefault();
     handleSendMessage(prompt);
   };
+  
+  const handleSendVideo = (videoBlobUrl: string) => {
+    if (!videoBlobUrl || loading || !ai.current || !user) return;
+  
+    const userMessage: Message = {
+      role: 'user',
+      parts: [
+        {
+          text: `[User sent a video update. Here is a placeholder for the video: ${videoBlobUrl}]`,
+        },
+      ],
+    };
+  
+    const aiPrompt = "The user just sent a video update about their progress. Acknowledge it positively and offer encouragement. For example: 'Thanks for the video update! It looks like you're making great progress.'";
+  
+    setHistory((prev) => [...prev, userMessage]);
+    setIsVideoModalOpen(false);
+  
+    // This will trigger the AI response
+    handleSendMessage(aiPrompt);
+  };
 
   return (
     <div>
@@ -181,7 +215,15 @@ const AIWeightLossCoach: React.FC = () => {
                   <img src={user?.avatarUrl} alt="user avatar" className="w-8 h-8 rounded-full flex-shrink-0" />
                 )}
                 <div className={`max-w-xl p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                  <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
+                    {msg.parts[0].text.startsWith('[User sent a video update') ? (
+                         <div>
+                            <p className="text-sm italic mb-2">Sent a video update.</p>
+                            <video src={msg.parts[0].text.match(/blob:.*$/)?.[0]} controls className="w-full rounded-md max-w-xs" />
+                         </div>
+                    ) : (
+                        <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
+                    )}
+
                   {msg.role === 'model' && msg.groundingMetadata?.groundingChunks && msg.groundingMetadata.groundingChunks.length > 0 && (
                     <div className="mt-4 pt-3 border-t border-gray-300">
                       <h4 className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
@@ -240,6 +282,9 @@ const AIWeightLossCoach: React.FC = () => {
               disabled={loading}
               aria-label="Ask your AI Weight Loss Coach"
             />
+             <button type="button" onClick={() => setIsVideoModalOpen(true)} disabled={loading} className="p-3 text-gray-500 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50" aria-label="Record video update">
+                <CameraIcon className="w-5 h-5" />
+            </button>
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
@@ -253,6 +298,11 @@ const AIWeightLossCoach: React.FC = () => {
           </form>
         </div>
       </Card>
+        <VideoUpdateModal
+            isOpen={isVideoModalOpen}
+            onClose={() => setIsVideoModalOpen(false)}
+            onSend={handleSendVideo}
+        />
     </div>
   );
 };

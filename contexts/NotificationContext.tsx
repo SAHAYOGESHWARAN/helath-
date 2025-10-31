@@ -6,7 +6,9 @@ interface NotificationContextType {
   notifications: Notification[];
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
   markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
   clearAll: () => void;
+  removeNotification: (id: string) => void;
 }
 
 export const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -53,12 +55,20 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     }, []);
 
+    const markAllAsRead = useCallback(() => {
+        setNotifications(prev => prev.map(n => (n.isRead ? n : { ...n, isRead: true })));
+    }, []);
+
     const clearAll = useCallback(() => {
         setNotifications([]);
     }, []);
 
+    const removeNotification = useCallback((id: string) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    }, []);
+
     return (
-        <NotificationContext.Provider value={{ notifications, addNotification, markAsRead, clearAll }}>
+        <NotificationContext.Provider value={{ notifications, addNotification, markAsRead, markAllAsRead, clearAll, removeNotification }}>
             {children}
         </NotificationContext.Provider>
     );
