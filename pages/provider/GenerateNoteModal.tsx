@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import Modal from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
@@ -49,12 +49,12 @@ const GenerateNoteModal: React.FC<GenerateNoteModalProps> = ({ isOpen, onClose, 
                   systemInstruction,
                   responseMimeType: "application/json",
                   responseSchema: {
-                      type: Type.OBJECT,
+                      type: "OBJECT",
                       properties: {
-                          subjective: { type: Type.STRING, description: "Patient's subjective complaints, history of present illness, and review of systems as stated by the patient." },
-                          objective: { type: Type.STRING, description: "Provider's objective findings from physical examination, vital signs, and test results mentioned in the transcript." },
-                          assessment: { type: Type.STRING, description: "Provider's diagnosis or assessment of the patient's condition based on the subjective and objective information." },
-                          plan: { type: Type.STRING, description: "The treatment plan, including medications, therapies, follow-up instructions, and patient education." }
+                          subjective: { type: "STRING", description: "Patient's subjective complaints, history of present illness, and review of systems as stated by the patient." },
+                          objective: { type: "STRING", description: "Provider's objective findings from physical examination, vital signs, and test results mentioned in the transcript." },
+                          assessment: { type: "STRING", description: "Provider's diagnosis or assessment of the patient's condition based on the subjective and objective information." },
+                          plan: { type: "STRING", description: "The treatment plan, including medications, therapies, follow-up instructions, and patient education." }
                       },
                       required: ['subjective', 'objective', 'assessment', 'plan']
                   },

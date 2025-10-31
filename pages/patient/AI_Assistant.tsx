@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat, GroundingMetadata } from '@google/genai';
+import { GoogleGenAI, Chat } from '@google/genai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon, CameraIcon } from '../../components/shared/Icons';
@@ -11,7 +11,6 @@ interface Message {
   role: 'user' | 'model';
   parts: { text: string }[];
   suggestions?: string[];
-  groundingMetadata?: GroundingMetadata;
 }
 
 const AIWeightLossCoach: React.FC = () => {
@@ -132,7 +131,6 @@ const AIWeightLossCoach: React.FC = () => {
                       const updatedMessage = {
                           ...lastMessage,
                           parts: [{ text: lastMessage.parts[0].text + chunkText }],
-                          groundingMetadata: chunk.candidates?.[0]?.groundingMetadata,
                       };
                       return [...prev.slice(0, -1), updatedMessage];
                   }
@@ -226,31 +224,6 @@ const AIWeightLossCoach: React.FC = () => {
                         <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
                     )}
 
-                  {msg.role === 'model' && msg.groundingMetadata?.groundingChunks && msg.groundingMetadata.groundingChunks.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-gray-300">
-                      <h4 className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
-                        <GlobeAltIcon className="w-4 h-4 mr-1.5" />
-                        Sources
-                      </h4>
-                      <ol className="list-decimal list-inside space-y-1">
-                        {msg.groundingMetadata.groundingChunks.map((source, i) => (
-                          source.web && (
-                            <li key={i} className="text-xs">
-                              <a
-                                href={source.web.uri}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline truncate block"
-                                title={source.web.uri}
-                              >
-                                {source.web.title || source.web.uri}
-                              </a>
-                            </li>
-                          )
-                        ))}
-                      </ol>
-                    </div>
-                  )}
                 </div>
               </div>
               {msg.role === 'model' && msg.suggestions && (
