@@ -1,16 +1,91 @@
-import React from 'react';
+
+import React, { useMemo, useCallback, useState } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { CurrencyDollarIcon } from '../../components/shared/Icons';
+import { useAuth } from '../../hooks/useAuth';
+import { useTable } from '../../hooks/useTable';
+import PaginationControls from '../../components/shared/PaginationControls';
+import { Table, ColumnDefinition } from '../../components/shared/Table';
+
+const exportToCsv = (filename: string, rows: object[]) => {
+    if (!rows || rows.length === 0) return;
+    const separator = ',';
+    const keys = Object.keys(rows[0]);
+    const csvContent =
+        keys.join(separator) +
+        '\n' +
+        rows.map(row => {
+            return keys.map(k => {
+                let cell = (row as any)[k] === null || (row as any)[k] === undefined ? '' : (row as any)[k];
+                cell = String(cell).replace(/"/g, '""');
+                if (String(cell).includes(separator) || String(cell).includes('\n')) {
+                    cell = `"${cell}"`;
+                }
+                return cell;
+            }).join(separator);
+        }).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 
 const Billing: React.FC = () => {
-    // Mock data for demonstration
-    const transactions = [
-        { id: 'txn_1', date: '2024-08-15', provider: 'Dr. Jane Smith', type: 'Subscription', amount: 99.00, status: 'Success' },
-        { id: 'txn_2', date: '2024-08-14', provider: 'Dr. David Chen', type: 'Subscription', amount: 49.00, status: 'Success' },
-        { id: 'txn_3', date: '2024-08-12', provider: 'Healthcare Group LLC', type: 'Enterprise Plan', amount: 1200.00, status: 'Success' },
-        { id: 'txn_4', date: '2024-08-10', provider: 'Dr. Emily White', type: 'Subscription', amount: 99.00, status: 'Failed' },
-    ];
+    const { invoices, users } = useAuth();
+
+    const { revenueThisMonth, totalRevenue, failedTransactions } = useMemo(() => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        let monthRevenue = 0;
+        let ytdRevenue = 0;
+
+        invoices.forEach(inv => {
+            if (inv.status === 'Paid') {
+                const invDate = new Date(inv.date);
+                if (invDate.getFullYear() === currentYear) {
+                    ytdRevenue += inv.totalAmount;
+                    if (invDate.getMonth() === currentMonth) {
+                        monthRevenue += inv.totalAmount;
+                    }
+                }
+            }
+        });
+
+        return {
+            revenueThisMonth: monthRevenue,
+            totalRevenue: ytdRevenue,
+            failedTransactions: 230, // Mocked for now
+        };
+    }, [invoices]);
+
+    const transactions = useMemo(() => {
+        return [...invoices].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(inv => {
+            const user = users.find(u => u.id === inv.patientId);
+            return {
+                id: inv.id,
+                date: inv.date,
+                provider: user?.name || 'Unknown User',
+                type: 'Subscription / Co-pay', // Mocked type
+                amount: inv.totalAmount,
+                status: inv.status,
+            };
+        });
+    }, [invoices, users]);
+    
+    const handleExport = useCallback(() => {
+        exportToCsv('billing_transactions.csv', transactions);
+    }, [transactions]);
+
 
     return (
         <div>
@@ -19,15 +94,15 @@ const Billing: React.FC = () => {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <Card className="flex items-center p-4">
                     <div className="p-3 bg-emerald-100 rounded-full mr-4"><CurrencyDollarIcon className="w-6 h-6 text-emerald-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">$1,447.00</p><p className="text-gray-500">Revenue (This Month)</p></div>
+                    <div><p className="text-3xl font-bold text-gray-800">${revenueThisMonth.toLocaleString()}</p><p className="text-gray-500">Revenue (This Month)</p></div>
                 </Card>
                 <Card className="flex items-center p-4">
                      <div className="p-3 bg-blue-100 rounded-full mr-4"><CurrencyDollarIcon className="w-6 h-6 text-blue-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">$15,820.00</p><p className="text-gray-500">Total Revenue (YTD)</p></div>
+                    <div><p className="text-3xl font-bold text-gray-800">${totalRevenue.toLocaleString()}</p><p className="text-gray-500">Total Revenue (YTD)</p></div>
                 </Card>
                 <Card className="flex items-center p-4">
                      <div className="p-3 bg-red-100 rounded-full mr-4"><CurrencyDollarIcon className="w-6 h-6 text-red-600" /></div>
-                    <div><p className="text-3xl font-bold text-gray-800">$99.00</p><p className="text-gray-500">Failed Transactions</p></div>
+                    <div><p className="text-3xl font-bold text-gray-800">${failedTransactions.toLocaleString()}</p><p className="text-gray-500">Failed Transactions</p></div>
                 </Card>
             </div>
 
@@ -36,7 +111,7 @@ const Billing: React.FC = () => {
                     <h3 className="text-lg font-semibold">Transaction History</h3>
                     <div className="flex space-x-2">
                         <input type="date" className="p-2 border rounded-md text-sm" />
-                        <button className="bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Export CSV</button>
+                        <button onClick={handleExport} className="bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Export CSV</button>
                     </div>
                 </div>
                  <div className="overflow-x-auto">
@@ -45,7 +120,7 @@ const Billing: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Provider/Org</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -60,7 +135,7 @@ const Billing: React.FC = () => {
                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tx.provider}</td>
                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.type}</td>
                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">${tx.amount.toFixed(2)}</td>
-                                         <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs rounded-full ${tx.status === 'Success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{tx.status}</span></td>
+                                         <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs rounded-full ${tx.status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{tx.status}</span></td>
                                      </tr>
                                  ))
                              ) : (

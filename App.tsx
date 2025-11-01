@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-// FIX: 'useAuth' is not exported from AuthContext, it's in its own hook file.
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -60,11 +59,11 @@ const Toast: React.FC<{ message: string, type: 'success' | 'error' | 'info', onC
   );
 };
 
-const Toaster: React.FC<{ toasts: ToastMessage[] }> = ({ toasts }) => {
+const Toaster: React.FC<{ toasts: ToastMessage[]; onRemove: (id: number) => void }> = ({ toasts, onRemove }) => {
   return (
     <div className="fixed bottom-5 right-5 z-[100] space-y-3">
       {toasts.map(toast => (
-        <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => {}} />
+        <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => onRemove(toast.id)} />
       ))}
     </div>
   );
@@ -77,15 +76,16 @@ const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     const newToast = { id: Date.now(), message, type };
     setToasts(prev => [...prev, newToast]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== newToast.id));
-    }, 4000);
+  }, []);
+
+  const removeToast = useCallback((id: number) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
   return (
     <AppContext.Provider value={{ showToast }}>
       {children}
-      <Toaster toasts={toasts} />
+      <Toaster toasts={toasts} onRemove={removeToast} />
     </AppContext.Provider>
   );
 };
@@ -102,16 +102,18 @@ const AppRoutes: React.FC = () => {
   }
   
   if (user) {
-    switch (user.role) {
-      case UserRole.PATIENT:
-        return <PatientLayout />;
-      case UserRole.PROVIDER:
-        return <ProviderLayout />;
-      case UserRole.ADMIN:
-        return <AdminLayout />;
-      default:
-        return <Navigate to="/login" replace />;
-    }
+    const rolePath = user.role.toLowerCase();
+    return (
+        <Routes>
+            <Route path="/*" element={<Navigate to={`/${rolePath}/dashboard`} replace />} />
+            <Route path={`/${rolePath}/*`} element={
+                user.role === UserRole.PATIENT ? <PatientLayout /> :
+                user.role === UserRole.PROVIDER ? <ProviderLayout /> :
+                user.role === UserRole.ADMIN ? <AdminLayout /> :
+                <Navigate to="/login" replace />
+            } />
+        </Routes>
+    );
   }
 
   return (

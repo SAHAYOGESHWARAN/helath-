@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -137,11 +138,7 @@ const ProviderDashboard: React.FC = () => {
 
     const unsignedNotes = progressNotes.filter(n => n.status === 'Pending Signature').length;
     
-    const mockInbox = [
-        {id: 1, type: 'Note', description: 'Sign note for John Doe', icon: <DocumentTextIcon className="w-5 h-5 text-amber-600"/>, urgency: 'High', link: '/progress-notes' },
-        {id: 2, type: 'Lab', description: 'Review CBC results for Alice Johnson', icon: <PillIcon className="w-5 h-5 text-blue-600"/>, urgency: 'Medium', link: '/lab-orders'},
-        {id: 3, type: 'Message', description: 'New message from Diana Prince', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, urgency: 'High', link: '/messaging'},
-    ];
+    const mockInbox: any[] = [];
 
   return (
     <div>
@@ -152,9 +149,9 @@ const ProviderDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <KpiCard icon={<CalendarIcon className="w-8 h-8 text-blue-500"/>} title="Appointments Today" value={todaysAppointments.length} color="border-blue-500" />
-        <KpiCard icon={<HandThumbUpIcon className="w-8 h-8 text-emerald-500"/>} title="Patient Satisfaction" value="98%" color="border-emerald-500" />
-        <KpiCard icon={<ClockIcon className="w-8 h-8 text-amber-500"/>} title="Avg. Wait Time" value="8 min" color="border-amber-500" />
-        <KpiCard icon={<UserMinusIcon className="w-8 h-8 text-red-500"/>} title="No-Show Rate" value="3%" color="border-red-500" />
+        <KpiCard icon={<HandThumbUpIcon className="w-8 h-8 text-emerald-500"/>} title="Patient Satisfaction" value="N/A" color="border-emerald-500" />
+        <KpiCard icon={<ClockIcon className="w-8 h-8 text-amber-500"/>} title="Avg. Wait Time" value="0 min" color="border-amber-500" />
+        <KpiCard icon={<UserMinusIcon className="w-8 h-8 text-red-500"/>} title="No-Show Rate" value="0%" color="border-red-500" />
       </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

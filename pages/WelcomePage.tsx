@@ -2,9 +2,12 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     NovoPathLogoIcon,
+    ArrowDownIcon,
     ArrowRightIcon,
+    UserCircleIcon,
+    BriefcaseIcon,
+    CogIcon,
 } from '../components/shared/Icons';
-import { useAuth } from '../hooks/useAuth';
 
 const useOnScreen = (options: IntersectionObserverInit) => {
     const ref = useRef<HTMLDivElement>(null);
@@ -19,10 +22,14 @@ const useOnScreen = (options: IntersectionObserverInit) => {
         }, options);
         
         const currentRef = ref.current;
-        if (currentRef) observer.observe(currentRef);
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
 
         return () => {
-            if (currentRef) observer.unobserve(currentRef);
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
         };
     }, [ref, options]);
 
@@ -39,30 +46,20 @@ const AnimatedSection: React.FC<{children: React.ReactNode, className?: string}>
 };
 
 const Header: React.FC = () => {
-    const [isScrolled, setIsScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 10);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
     return (
-        <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+        <header className="fixed top-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-lg shadow-sm">
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2">
                     <NovoPathLogoIcon className="w-9 h-9" />
-                    <span className={`text-2xl font-bold ${isScrolled ? 'text-gray-900' : 'text-white'}`}>NovoPath</span>
+                    <span className="text-2xl font-bold text-gray-900">NovoPath</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
-                    <Link to="/features" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Features</Link>
-                    <Link to="/testimonials" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>Testimonials</Link>
-                    <Link to="/for-providers" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-600 hover:text-primary-600' : 'text-gray-200 hover:text-white'}`}>For Providers</Link>
+                    <Link to="/features" className="text-sm font-medium text-gray-600 hover:text-primary-600">Features</Link>
+                    <Link to="/testimonials" className="text-sm font-medium text-gray-600 hover:text-primary-600">Testimonials</Link>
+                    <Link to="/for-providers" className="text-sm font-medium text-gray-600 hover:text-primary-600">For Providers</Link>
                 </nav>
                 <div className="flex items-center space-x-4">
-                    <Link to="/login" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-primary-600 hover:text-primary-700' : 'text-white hover:opacity-90'}`}>
+                    <Link to="/login" className="text-sm font-medium text-primary-600 hover:text-primary-700">
                         Sign In
                     </Link>
                     <Link to="/register" className="text-sm font-medium text-white bg-primary-600 px-5 py-2.5 rounded-lg hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg">
@@ -73,72 +70,6 @@ const Header: React.FC = () => {
         </header>
     );
 };
-
-const HeroSection: React.FC = () => {
-    const { user } = useAuth();
-    const greeting = user ? `Welcome back, ${user.name}!` : "The Future of Integrated Healthcare is Here";
-    
-    return (
-        <section className="relative bg-gray-900 text-white pt-32 pb-24 md:pt-48 md:pb-32 flex items-center justify-center text-center">
-            <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{backgroundImage: "url('https://images.unsplash.com/photo-1579684385127-6ab18a5d781a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80')"}}></div>
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-900/80 to-transparent"></div>
-
-            <div className="container mx-auto px-6 relative z-10">
-                <AnimatedSection>
-                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                        {greeting}
-                    </h1>
-                    <p className="mt-6 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
-                        NovoPath is a unified platform connecting patients and providers through a comprehensive EMR, seamless scheduling, and AI-powered health insights.
-                    </p>
-                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                        <Link to={user ? "/dashboard" : "/register/patient"} className="w-full sm:w-auto bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-primary-700 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center">
-                            I'm a Patient <ArrowRightIcon className="w-5 h-5 ml-2" />
-                        </Link>
-                        <Link to={user ? "/dashboard" : "/register/provider"} className="w-full sm:w-auto bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg hover:bg-gray-600 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center">
-                            I'm a Provider <ArrowRightIcon className="w-5 h-5 ml-2" />
-                        </Link>
-                    </div>
-                </AnimatedSection>
-            </div>
-        </section>
-    );
-};
-
-const StatsSection: React.FC = () => (
-    <AnimatedSection className="bg-white py-20">
-        <div className="container mx-auto px-6">
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-                <div>
-                    <p className="text-5xl font-extrabold text-primary-600">10,000+</p>
-                    <p className="mt-2 text-lg font-medium text-gray-700">Active Patients</p>
-                </div>
-                <div>
-                    <p className="text-5xl font-extrabold text-primary-600">500+</p>
-                    <p className="mt-2 text-lg font-medium text-gray-700">Verified Providers</p>
-                </div>
-                <div>
-                    <p className="text-5xl font-extrabold text-primary-600">98%</p>
-                    <p className="mt-2 text-lg font-medium text-gray-700">Patient Satisfaction</p>
-                </div>
-            </div>
-        </div>
-    </AnimatedSection>
-);
-
-const FinalCtaSection: React.FC = () => (
-    <AnimatedSection className="py-24 bg-white">
-        <div className="container mx-auto px-6 text-center bg-primary-600 rounded-2xl py-16 text-white" style={{backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.95), rgba(59, 130, 246, 0.95))'}}>
-            <h2 className="text-4xl font-bold">Start Your Journey to Better Health Today</h2>
-            <p className="mt-4 text-lg text-primary-100 max-w-2xl mx-auto">Create an account in minutes and take the first step towards a more connected and empowered healthcare experience.</p>
-            <div className="mt-8">
-                <Link to="/register" className="bg-white text-primary-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl text-lg">
-                    Sign Up Now
-                </Link>
-            </div>
-        </div>
-    </AnimatedSection>
-);
 
 const Footer: React.FC = () => (
     <footer className="bg-gray-900 text-white">
@@ -186,17 +117,88 @@ const Footer: React.FC = () => (
 
 
 const WelcomePage: React.FC = () => {
-    return (
-        <div className="bg-white min-h-screen font-sans antialiased">
-            <Header />
-            <main>
-                <HeroSection />
-                <StatsSection />
-                <FinalCtaSection />
-            </main>
-            <Footer />
-        </div>
-    );
-};
+  return (
+    <div className="bg-white min-h-screen font-sans antialiased">
+      <Header />
 
+      <main>
+        {/* Hero Section */}
+        <section className="relative pt-32 pb-24 md:pt-48 md:pb-32 flex items-center justify-center text-center overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-teal-50"></div>
+            <div className="absolute top-0 left-0 w-64 h-64 bg-blue-200 rounded-full opacity-30 -translate-x-1/4 -translate-y-1/4 animate-[floating_15s_ease-in-out_infinite]"></div>
+            <div className="absolute bottom-0 right-0 w-72 h-72 bg-teal-200 rounded-full opacity-30 translate-x-1/4 translate-y-1/4 animate-[floating_12s_ease-in-out_infinite_3s]"></div>
+
+            <div className="container mx-auto px-6 relative z-10">
+                <AnimatedSection>
+                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight gradient-text">
+                        Intelligent Healthcare,
+                        <br />
+                        Seamlessly Connected.
+                    </h1>
+                    <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                        NovoPath is an intelligent, connected platform that empowers both patients and providers with seamless tools for a healthier tomorrow.
+                    </p>
+                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Link to="/register" className="bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-primary-700 transition-all transform hover:scale-105 shadow-xl inline-flex items-center">
+                            Get Started Free <ArrowRightIcon className="w-5 h-5 ml-2" />
+                        </Link>
+                        <Link to="/features" className="font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-all">
+                            Learn More
+                        </Link>
+                    </div>
+                </AnimatedSection>
+            </div>
+             <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                <ArrowDownIcon className="w-6 h-6 text-gray-400 scroll-indicator"/>
+            </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-24">
+            <div className="container mx-auto px-6">
+                <AnimatedSection className="text-center">
+                    <h2 className="text-4xl font-bold text-gray-900">How It Works</h2>
+                    <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">A simple, three-step journey to better health management.</p>
+                </AnimatedSection>
+
+                <div className="grid md:grid-cols-3 gap-12 mt-16 text-center">
+                    <AnimatedSection>
+                        <div className="flex justify-center mb-5"><div className="w-16 h-16 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center"><UserCircleIcon className="w-8 h-8"/></div></div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">1. Connect</h3>
+                        <p className="text-gray-600">Create your secure account as a patient or provider in minutes.</p>
+                    </AnimatedSection>
+                     <AnimatedSection>
+                        <div className="flex justify-center mb-5"><div className="w-16 h-16 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center"><BriefcaseIcon className="w-8 h-8"/></div></div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">2. Consult</h3>
+                        <p className="text-gray-600">Schedule appointments, manage records, and connect via secure telehealth.</p>
+                    </AnimatedSection>
+                     <AnimatedSection>
+                        <div className="flex justify-center mb-5"><div className="w-16 h-16 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center"><CogIcon className="w-8 h-8"/></div></div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">3. Control</h3>
+                        <p className="text-gray-600">Take control of your health with AI insights, goal tracking, and streamlined billing.</p>
+                    </AnimatedSection>
+                </div>
+            </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-20 bg-primary-600">
+            <div className="container mx-auto px-6 text-center">
+                 <AnimatedSection>
+                    <h2 className="text-3xl font-bold text-white">Ready to Transform Your Healthcare Experience?</h2>
+                    <p className="mt-4 text-lg text-primary-100 max-w-2xl mx-auto">Join NovoPath today and discover a smarter way to manage health.</p>
+                    <div className="mt-8">
+                        <Link to="/register" className="bg-white text-primary-600 font-bold py-3 px-8 rounded-lg hover:bg-primary-50 transition-all transform hover:scale-105 shadow-2xl">
+                            Sign Up Now
+                        </Link>
+                    </div>
+                </AnimatedSection>
+            </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+  
 export default WelcomePage;

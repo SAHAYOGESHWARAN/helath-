@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../../components/layout/Sidebar';
@@ -16,6 +14,11 @@ import Subscription from '../../pages/patient/Subscription';
 import AIWeightLossCoach from '../../pages/patient/AI_Assistant';
 import Profile from '../../pages/patient/Profile';
 import Settings from '../../pages/patient/Settings';
+import VisitHistory from '../../pages/patient/VisitHistory';
+import Medications from '../../pages/patient/Medications';
+import TaskList from '../../pages/patient/TaskList';
+import HealthGoalsPage from '../../pages/patient/HealthGoalsPage';
+
 
 const PatientLayout: React.FC = () => {
   return (
@@ -30,6 +33,10 @@ const PatientLayout: React.FC = () => {
               <Route path="/dashboard" element={<PatientDashboard />} />
               <Route path="/appointments" element={<PatientAppointments />} />
               <Route path="/emr" element={<EMR />} />
+              <Route path="/medications" element={<Medications />} />
+              <Route path="/goals" element={<HealthGoalsPage />} />
+              <Route path="/tasks" element={<TaskList />} />
+              <Route path="/history" element={<VisitHistory />} />
               <Route path="/messaging" element={<Messaging />} />
               <Route path="/video-consults" element={<VideoConsults />} />
               <Route path="/claims" element={<Claims />} />

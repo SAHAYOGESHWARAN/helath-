@@ -1,4 +1,3 @@
-
 export enum UserRole {
   PATIENT = 'PATIENT',
   PROVIDER = 'PROVIDER',
@@ -15,6 +14,8 @@ export interface MedicalCondition {
   id: string;
   name: string;
   status: 'Active' | 'Resolved';
+  ageOfOnset?: number;
+  notes?: string;
 }
 
 export interface Allergy {
@@ -23,6 +24,7 @@ export interface Allergy {
   severity: 'Mild' | 'Moderate' | 'Severe';
   reaction: string;
   status: 'Active' | 'Resolved';
+  notes?: string;
 }
 
 export interface Medication {
@@ -109,6 +111,21 @@ export interface Task {
   subtasks?: Subtask[];
 }
 
+export interface NotificationSettings {
+    emailAppointments: boolean;
+    emailBilling: boolean;
+    emailMessages: boolean;
+    smsMessages: boolean;
+    pushAll: boolean;
+}
+
+export interface InsuranceInfo {
+    provider: string;
+    planName: string;
+    memberId: string;
+    groupId: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -118,6 +135,8 @@ export interface User {
   avatarUrl: string;
   phone?: string;
   status?: 'Active' | 'Suspended' | 'Inactive';
+  createdAt?: string;
+  bio?: string;
   // Patient specific
   dob?: string;
   address?: string;
@@ -219,6 +238,7 @@ export interface SubscriptionPlan {
   features: string[];
   patientLimit: number;
   isPopular?: boolean;
+  type: 'patient' | 'provider';
 }
 
 export interface Notification {
@@ -293,6 +313,15 @@ export interface AuditLogEntry {
     status: ReferralStatus;
 }
 
+export interface SystemAuditLog {
+    id: number;
+    timestamp: string;
+    user: string;
+    userRole: UserRole | 'System';
+    action: string;
+    details: string;
+}
+
 export interface Referral {
     id: string;
     patientId: string;
@@ -311,21 +340,6 @@ export interface Referral {
     auditLog: AuditLogEntry[];
 }
 
-export interface NotificationSettings {
-    emailAppointments: boolean;
-    emailBilling: boolean;
-    emailMessages: boolean;
-    smsMessages: boolean;
-    pushAll: boolean;
-}
-
-export interface InsuranceInfo {
-    provider: string;
-    planName: string;
-    memberId: string;
-    groupId: string;
-}
-
 export interface ReminderSettings {
   channels: {
     email: boolean;
@@ -333,21 +347,4 @@ export interface ReminderSettings {
   };
   timeOption: '1h' | '24h' | '2d' | '3d' | 'custom';
   customDateTime: string | null;
-}
-
-export interface AuthContextType {
-  // ... (existing properties)
-  addAppointment: (appointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => void;
-  addVideoUpdateToAppointment: (appointmentId: string, videoUrl: string) => void;
-  reminders: Record<string, ReminderSettings>;
-  labOrders: LabOrder[];
-  addLabOrder: (newOrder: Omit<LabOrder, 'id'>) => void;
-  addTask: (task: Omit<Task, 'id' | 'completed'>) => void;
-  toggleTaskCompletion: (taskId: string) => void;
-  addHealthGoal: (goal: Omit<HealthGoal, 'id'>) => void;
-  updateHealthGoal: (goal: HealthGoal) => void;
-  deleteHealthGoal: (goalId: string) => void;
-  addSubtask: (taskId: string, text: string) => void;
-  toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
-  deleteSubtask: (taskId: string, subtaskId: string) => void;
 }

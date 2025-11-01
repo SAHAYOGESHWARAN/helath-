@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
@@ -16,7 +15,11 @@ interface BillingHistoryItem {
     status: 'Paid';
 }
 
-const billingHistory: BillingHistoryItem[] = []; // Start with no history
+// FIX: Populated empty mock data.
+const billingHistory: BillingHistoryItem[] = [
+    { id: 'inv_abc1', date: '2024-07-15', amount: 29.99, status: 'Paid' },
+    { id: 'inv_abc2', date: '2024-06-15', amount: 29.99, status: 'Paid' },
+];
 
 const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: string; onClose: () => void }> = ({ invoice, planName, onClose }) => {
     if (!invoice) return null;
@@ -138,8 +141,8 @@ const Subscription: React.FC = () => {
                         </div>
                         <div className="mt-4 space-y-4">
                             <div>
-                                <div className="flex justify-between text-sm mb-1"><span className="font-medium">Video Consults</span><span>1 of 5 used</span></div>
-                                <div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-primary-600 h-2 rounded-full" style={{width: '20%'}}></div></div>
+                                <div className="flex justify-between text-sm mb-1"><span className="font-medium">Video Consults</span><span>0 of 5 used</span></div>
+                                <div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-primary-600 h-2 rounded-full" style={{width: '0%'}}></div></div>
                             </div>
                              <ul className="space-y-3 pt-4 border-t text-sm">
                                 {currentSubscription.features.map(feature => (

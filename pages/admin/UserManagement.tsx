@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
 import { useTable } from '../../hooks/useTable';
 import PaginationControls from '../../components/shared/PaginationControls';
+import { Table, ColumnDefinition } from '../../components/shared/Table';
 
 const getRolePill = (role: UserRole) => {
     switch (role) {
@@ -12,18 +13,35 @@ const getRolePill = (role: UserRole) => {
         case UserRole.PROVIDER: return 'bg-emerald-100 text-emerald-800';
         case UserRole.ADMIN: return 'bg-purple-100 text-purple-800';
     }
-}
+};
 
 const UserManagement: React.FC = () => {
     const { users } = useAuth();
     const [roleFilter, setRoleFilter] = useState<UserRole | 'All'>('All');
 
-    const filteredUsers = useMemo(() => {
-        if (roleFilter === 'All') return users;
-        return users.filter(u => u.role === roleFilter);
-    }, [users, roleFilter]);
+    const { 
+        paginatedItems, 
+        paginationProps, 
+        requestSort, 
+        getSortArrow,
+        setColumnFilters,
+    } = useTable(users, 10);
     
-    const { paginatedItems, paginationProps, requestSort, getSortArrow } = useTable(filteredUsers, 10);
+    useEffect(() => {
+        setColumnFilters(prev => ({...prev, role: roleFilter === 'All' ? '' : roleFilter}));
+    }, [roleFilter, setColumnFilters]);
+
+    const columns: ColumnDefinition<User>[] = [
+        { accessorKey: 'name', header: 'Name', cell: row => <span className="font-medium text-gray-900">{row.name}</span> },
+        { accessorKey: 'email', header: 'Email' },
+        { accessorKey: 'role', header: 'Role', cell: row => (
+            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRolePill(row.role)}`}>{row.role}</span>
+        )},
+        { accessorKey: 'status', header: 'Status', cell: row => row.status },
+        { accessorKey: 'actions', header: 'Actions', cell: () => (
+            <button className="text-primary-600 hover:underline">Edit</button>
+        )},
+    ];
 
     return (
         <div>
@@ -37,30 +55,12 @@ const UserManagement: React.FC = () => {
                         <button onClick={() => setRoleFilter(UserRole.ADMIN)} className={`px-3 py-1 text-sm rounded-md ${roleFilter === UserRole.ADMIN ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>Admins</button>
                     </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th onClick={() => requestSort('name')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Name {getSortArrow('name')}</th>
-                                <th onClick={() => requestSort('email')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Email {getSortArrow('email')}</th>
-                                <th onClick={() => requestSort('role')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Role {getSortArrow('role')}</th>
-                                <th onClick={() => requestSort('status')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Status {getSortArrow('status')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {paginatedItems.map(user => (
-                                <tr key={user.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRolePill(user.role)}`}>{user.role}</span></td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.status}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium"><a href="#" className="text-primary-600 hover:text-primary-900">Edit</a></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <Table<User>
+                    columns={columns}
+                    data={paginatedItems}
+                    requestSort={requestSort}
+                    getSortArrow={getSortArrow}
+                />
                  <PaginationControls {...paginationProps} />
             </Card>
         </div>

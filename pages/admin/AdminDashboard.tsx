@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/shared/Card';
@@ -17,7 +18,10 @@ const AdminDashboard: React.FC = () => {
         const totalRevenue = providers.reduce((acc, provider) => {
             const plan = providerSubscriptionPlans.find(p => p.id === provider.subscription?.planId);
             if (plan && plan.price.startsWith('$')) {
-                return acc + parseFloat(plan.price.replace(/[^0-9.-]+/g,""));
+                const price = parseFloat(plan.price.replace(/[^0-9.-]+/g,""));
+                if (!isNaN(price)) {
+                    return acc + price;
+                }
             }
             return acc;
         }, 0);
@@ -29,18 +33,35 @@ const AdminDashboard: React.FC = () => {
             pendingVerifications: providers.filter(p => !p.isVerified).length,
             monthlyRevenue: totalRevenue,
         };
-    }, [users, invoices, providerSubscriptionPlans]);
+    }, [users, providerSubscriptionPlans]);
 
-    const userRoleData = [
+    const userRoleData = useMemo(() => [
         { name: 'Patients', value: stats.totalPatients },
         { name: 'Providers', value: stats.totalProviders },
         { name: 'Admins', value: users.filter(u => u.role === UserRole.ADMIN).length },
-    ];
+    ], [stats, users]);
     
-    const revenueData = [
-        { month: 'Mar', revenue: 680 }, { month: 'Apr', revenue: 890 }, { month: 'May', revenue: 1150 },
-        { month: 'Jun', revenue: 1340 }, { month: 'Jul', revenue: 1580 }, { month: 'Aug', revenue: stats.monthlyRevenue },
-    ];
+    const revenueData = useMemo(() => {
+        const months: { [key: string]: number } = {};
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        
+        invoices.forEach(invoice => {
+            if (invoice.status === 'Paid') {
+                const date = new Date(invoice.date);
+                const month = monthNames[date.getMonth()];
+                months[month] = (months[month] || 0) + invoice.totalAmount;
+            }
+        });
+        
+        // Add current month's estimated revenue from subscriptions
+        const currentMonthName = monthNames[new Date().getMonth()];
+        months[currentMonthName] = (months[currentMonthName] || 0) + stats.monthlyRevenue;
+        
+        return monthNames.slice(0, new Date().getMonth() + 1).map(month => ({
+            month,
+            revenue: months[month] || 0,
+        }));
+    }, [invoices, stats.monthlyRevenue]);
 
     const COLORS = ['#3b82f6', '#14B8A6', '#6366f1'];
 
@@ -78,7 +99,7 @@ const AdminDashboard: React.FC = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${value}`} />
-                                <Tooltip cursor={{ fill: 'rgba(239, 246, 255, 0.7)' }} />
+                                <Tooltip cursor={{ fill: 'rgba(239, 246, 255, 0.7)' }} formatter={(value: number) => `$${value.toFixed(2)}`} />
                                 <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" barSize={30} radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>

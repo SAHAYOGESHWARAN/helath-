@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -64,7 +64,6 @@ const NewReferralModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
                     if (!provider || !patient) return;
                     addReferral({
                         patientId: values.patientId,
-                        // FIX: Add missing patientName property
                         patientName: patient.name,
                         referredTo: values.referredTo,
                         referredFrom: provider.name,
@@ -208,9 +207,8 @@ const ReferralDetailsModal: React.FC<{ referral: Referral | null, onClose: () =>
                  </>}
                   {isIncomingPending && <>
                     <button onClick={() => handleUpdateStatus(ReferralStatus.CANCELLED, 'Referral Declined')} className="bg-red-100 text-red-700 font-bold py-2 px-4 rounded-lg">Decline</button>
-                    <button onClick={() => handleUpdateStatus(ReferralStatus.COMPLETED, 'Referral Accepted')} className="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg">Accept</button>
+                    <button onClick={() => handleUpdateStatus(ReferralStatus.COMPLETED, 'Referral Accepted')} className="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg">Accept & Schedule</button>
                  </>}
-                <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Close</button>
             </div>
         </Modal>
     );
@@ -220,46 +218,57 @@ const Referrals: React.FC = () => {
     const { referrals } = useAuth();
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
     const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
-    
-    const { paginatedItems, paginationProps, setColumnFilters, getSortArrow, requestSort } = useTable<Referral>(
-        referrals, 10, { initialSort: { key: 'createdAt', direction: 'desc' } }
-    );
+    const [typeFilter, setTypeFilter] = useState<'All' | 'Incoming' | 'Outgoing'>('All');
+
+    const filteredReferrals = useMemo(() => {
+        if (typeFilter === 'All') return referrals;
+        return referrals.filter(r => r.type === typeFilter);
+    }, [referrals, typeFilter]);
+
+    const { paginatedItems, paginationProps, requestSort, getSortArrow } = useTable(filteredReferrals, 10, {
+        initialSort: { key: 'createdAt', direction: 'desc' }
+    });
 
     return (
         <div>
-            <PageHeader title="Referrals" buttonText="New Referral" onButtonClick={() => setIsNewModalOpen(true)} />
+            <PageHeader title="Referral Management" buttonText="New Outgoing Referral" onButtonClick={() => setIsNewModalOpen(true)} />
             <Card>
+                <div className="flex space-x-2 border-b mb-4">
+                    <button onClick={() => setTypeFilter('All')} className={`py-2 px-4 font-medium ${typeFilter === 'All' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}>All</button>
+                    <button onClick={() => setTypeFilter('Incoming')} className={`py-2 px-4 font-medium ${typeFilter === 'Incoming' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}>Incoming</button>
+                    <button onClick={() => setTypeFilter('Outgoing')} className={`py-2 px-4 font-medium ${typeFilter === 'Outgoing' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}>Outgoing</button>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th onClick={() => requestSort('patientName')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Patient{getSortArrow('patientName')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Direction</th>
-                                <th onClick={() => requestSort('referredTo')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">To/From{getSortArrow('referredTo')}</th>
-                                <th onClick={() => requestSort('createdAt')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Date{getSortArrow('createdAt')}</th>
-                                <th onClick={() => requestSort('urgency')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Urgency{getSortArrow('urgency')}</th>
-                                <th onClick={() => requestSort('status')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Status{getSortArrow('status')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th onClick={() => requestSort('patientName')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Patient {getSortArrow('patientName')}</th>
+                                <th onClick={() => requestSort('type')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Type {getSortArrow('type')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Referred To/From</th>
+                                <th onClick={() => requestSort('createdAt')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Date {getSortArrow('createdAt')}</th>
+                                <th onClick={() => requestSort('urgency')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Urgency {getSortArrow('urgency')}</th>
+                                <th onClick={() => requestSort('status')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Status {getSortArrow('status')}</th>
+                                <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                           {paginatedItems.map(referral => (
-                                <tr key={referral.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap font-medium">{referral.patientName}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${referral.type === 'Incoming' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800'}`}>{referral.type}</span></td>
+                            {paginatedItems.map(referral => (
+                                <tr key={referral.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedReferral(referral)}>
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{referral.patientName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{referral.type}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">{referral.type === 'Incoming' ? referral.referredFrom : referral.referredTo}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">{new Date(referral.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 whitespace-nowrap"><span className={getUrgencyPill(referral.urgency)}>{referral.urgency}</span></td>
                                     <td className="px-6 py-4 whitespace-nowrap"><span className={getReferralStatusPill(referral.status)}>{referral.status}</span></td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <button onClick={() => setSelectedReferral(referral)} className="text-primary-600 hover:underline text-sm">View</button>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={(e) => { e.stopPropagation(); setSelectedReferral(referral); }} className="text-primary-600 hover:text-primary-900">Details</button>
                                     </td>
                                 </tr>
-                           ))}
+                            ))}
                         </tbody>
                     </table>
                 </div>
-                 <PaginationControls {...paginationProps} />
+                <PaginationControls {...paginationProps} />
             </Card>
             <NewReferralModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} />
             <ReferralDetailsModal referral={selectedReferral} onClose={() => setSelectedReferral(null)} />

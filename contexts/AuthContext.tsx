@@ -1,7 +1,7 @@
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 // FIX: Add missing Subscription type import.
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, HealthGoal, Task, Subtask, Subscription } from '../types';
-import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS, MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS, MOCK_REFERRALS } from '../mockData';
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog } from '../types';
+import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS, MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS, MOCK_REFERRALS, MOCK_AUDIT_LOG } from '../mockData';
 
 export interface AuthContextType {
   user: User | null;
@@ -47,6 +47,8 @@ export interface AuthContextType {
   // Generic data actions for patient
   changePassword: (current: string, newPass: string) => Promise<boolean>;
   reminders: Record<string, ReminderSettings>;
+  addCondition: (condition: Omit<MedicalCondition, 'id'>) => void;
+  addAllergy: (allergy: Omit<Allergy, 'id'>) => void;
 
   // Health Goals
   addHealthGoal: (goal: Omit<HealthGoal, 'id'>) => void;
@@ -63,6 +65,7 @@ export interface AuthContextType {
   // FIX: Add missing properties
   addClaim: (claim: Omit<Claim, 'id'>) => void;
   addInvoice: (invoice: Omit<BillingInvoice, 'id'>) => void;
+  auditLog: SystemAuditLog[];
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,7 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [invoices, setInvoices] = useState(MOCK_INVOICES);
     const [progressNotes, setProgressNotes] = useState(MOCK_PROGRESS_NOTES);
     const [prescriptions, setPrescriptions] = useState(MOCK_PRESCRIPTIONS);
-    const [messages, setMessages] = useState(MOCK_MESSAGES);
+    const [messages, setMessages] = useState<Record<string, Message[]>>(MOCK_MESSAGES);
     const [labOrders, setLabOrders] = useState(MOCK_LAB_ORDERS);
     const [referrals, setReferrals] = useState(MOCK_REFERRALS);
     const [reminders, setReminders] = useState<Record<string, ReminderSettings>>({});
@@ -101,7 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return new Promise(resolve => {
             setTimeout(() => {
                 const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-                if (foundUser) {
+                if (foundUser && foundUser.password === password) {
                     setUser(foundUser);
                     sessionStorage.setItem('novopath-user', JSON.stringify(foundUser));
                     resolve(true);
@@ -216,7 +219,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const sendMessage = useCallback((message: Omit<Message, 'id' | 'timestamp' | 'isRead'>) => {
-        const key = message.receiverId === user?.id ? message.senderId : message.receiverId;
+        const key = user?.role === UserRole.PROVIDER ? message.receiverId : user?.id === message.senderId ? message.receiverId : message.senderId;
+        if (!key) return;
         const newMessage: Message = { ...message, id: `msg_${Date.now()}`, timestamp: new Date().toISOString(), isRead: false };
         setMessages(prev => ({ ...prev, [key]: [...(prev[key] || []), newMessage] }));
     }, [user]);
@@ -320,6 +324,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }) }));
     }, [updateUser]);
 
+    const addCondition = useCallback((condition: Omit<MedicalCondition, 'id'>) => {
+        updateUser(currentUser => ({
+            conditions: [...(currentUser.conditions || []), { ...condition, id: `cond_${Date.now()}` }],
+        }));
+    }, [updateUser]);
+
+    const addAllergy = useCallback((allergy: Omit<Allergy, 'id'>) => {
+        updateUser(currentUser => ({
+            allergies: [...(currentUser.allergies || []), { ...allergy, id: `alg_${Date.now()}` }],
+        }));
+    }, [updateUser]);
+
     const currentSubscription = useMemo(() => {
         if (!user || !user.subscription) return undefined;
         const allPlans = [...MOCK_PROVIDER_PLANS, ...MOCK_PATIENT_PLANS];
@@ -362,6 +378,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateReferral,
         changePassword,
         reminders,
+        addCondition,
+        addAllergy,
         addHealthGoal,
         updateHealthGoal,
         deleteHealthGoal,
@@ -372,6 +390,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteSubtask,
         addClaim,
         addInvoice,
+        auditLog: MOCK_AUDIT_LOG,
     };
 
     return (

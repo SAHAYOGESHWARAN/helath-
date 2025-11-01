@@ -1,15 +1,57 @@
-import React from 'react';
+
+import React, { useMemo, useState, useCallback } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
+import { useAuth } from '../../hooks/useAuth';
+
+const exportToCsv = (filename: string, rows: object[]) => {
+    if (!rows || rows.length === 0) {
+        return;
+    }
+    const separator = ',';
+    const keys = Object.keys(rows[0]);
+    const csvContent =
+        keys.join(separator) +
+        '\n' +
+        rows.map(row => {
+            return keys.map(k => {
+                let cell = (row as any)[k] === null || (row as any)[k] === undefined ? '' : (row as any)[k];
+                cell = String(cell).replace(/"/g, '""');
+                if (String(cell).includes(separator) || String(cell).includes('\n')) {
+                    cell = `"${cell}"`;
+                }
+                return cell;
+            }).join(separator);
+        }).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
 const Compliance: React.FC = () => {
-    // Mock audit log data
-    const auditLog = [
-        { id: 1, timestamp: '2024-08-15 10:32:15', user: 'Dr. Jane Smith', userRole: 'Provider', action: 'Access EMR', details: 'Viewed chart for John Doe (pat1)' },
-        { id: 2, timestamp: '2024-08-15 09:45:22', user: 'Alex Johnson', userRole: 'Admin', action: 'Update Settings', details: 'Updated system feature flags' },
-        { id: 3, timestamp: '2024-08-15 09:10:48', user: 'John Doe', userRole: 'Patient', action: 'Login Success', details: 'User logged in from IP 203.0.113.25' },
-        { id: 4, timestamp: '2024-08-14 15:20:11', user: 'Dr. Jane Smith', userRole: 'Provider', action: 'E-Prescription Sent', details: 'Sent prescription for Amoxicillin to patient Alice Johnson' },
-    ];
+    const { auditLog } = useAuth();
+    const [filter, setFilter] = useState('');
+
+    const filteredLog = useMemo(() => {
+        if (!filter) return auditLog;
+        const lowercasedFilter = filter.toLowerCase();
+        return auditLog.filter(log => 
+            log.user.toLowerCase().includes(lowercasedFilter) ||
+            log.action.toLowerCase().includes(lowercasedFilter) ||
+            log.details.toLowerCase().includes(lowercasedFilter)
+        );
+    }, [auditLog, filter]);
+
+    const handleExport = useCallback(() => {
+        exportToCsv('compliance_audit_log.csv', filteredLog);
+    }, [filteredLog]);
     
     return (
         <div>
@@ -18,8 +60,14 @@ const Compliance: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">System Audit Log</h3>
                     <div className="flex space-x-2">
-                        <input type="text" placeholder="Filter by user or action..." className="p-2 border rounded-md text-sm" />
-                        <button className="bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Export Log</button>
+                        <input 
+                            type="text" 
+                            placeholder="Filter by user or action..." 
+                            className="p-2 border rounded-md text-sm" 
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                        />
+                        <button onClick={handleExport} className="bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Export Log</button>
                     </div>
                 </div>
                  <div className="overflow-x-auto">
@@ -34,8 +82,8 @@ const Compliance: React.FC = () => {
                             </tr>
                         </thead>
                          <tbody className="bg-white divide-y divide-gray-200">
-                             {auditLog.length > 0 ? (
-                                auditLog.map(log => (
+                             {filteredLog.length > 0 ? (
+                                filteredLog.map(log => (
                                      <tr key={log.id}>
                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">{log.timestamp}</td>
                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.user}</td>

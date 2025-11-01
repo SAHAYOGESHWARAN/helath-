@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/shared/Card';
@@ -6,6 +5,10 @@ import { Claim, ClaimStatus } from '../../types';
 import Modal from '../../components/shared/Modal';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
+import { useTable } from '../../hooks/useTable';
+import { Table, ColumnDefinition } from '../../components/shared/Table';
+import PaginationControls from '../../components/shared/PaginationControls';
+
 
 const getStatusColor = (status: ClaimStatus) => {
   switch (status) {
@@ -104,109 +107,69 @@ const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> 
 
 const Claims: React.FC = () => {
   const { user, claims } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
 
-  const filteredClaims = useMemo(() => {
-    return claims.filter(claim => {
-      const matchesPatient = claim.patientId === user?.id;
-      const matchesStatus = statusFilter === 'All' || claim.status === statusFilter;
-      const matchesSearch = claim.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            claim.provider.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesPatient && matchesStatus && matchesSearch;
-    });
-  }, [searchTerm, statusFilter, claims, user]);
-  
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('All');
-  };
+  const myClaims = useMemo(() => claims.filter(c => c.patientId === user?.id), [claims, user]);
 
-  const isFiltered = searchTerm !== '' || statusFilter !== 'All';
+  const {
+    paginatedItems,
+    paginationProps,
+    requestSort,
+    getSortArrow,
+    setGlobalFilter,
+    setColumnFilters
+  } = useTable(myClaims, 10, { initialSort: { key: 'serviceDate', direction: 'desc' }});
+  
+  const columns: ColumnDefinition<Claim>[] = [
+    { accessorKey: 'id', header: 'Claim ID' },
+    { accessorKey: 'serviceDate', header: 'Service Date' },
+    { accessorKey: 'provider', header: 'Provider' },
+    { accessorKey: 'totalClaimChargeAmount', header: 'Total Charge', cell: (row) => `$${row.totalClaimChargeAmount.toFixed(2)}` },
+    { accessorKey: 'patientOwes', header: 'You Owe', cell: (row) => `$${row.patientOwes.toFixed(2)}`, cellClassName: 'font-semibold text-red-600'},
+    { accessorKey: 'status', header: 'Status', cell: (row) => (
+        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(row.status)}`}>
+            {row.status.replace(/_/g, ' ')}
+        </span>
+    )},
+    { accessorKey: 'actions', header: '', cell: (row) => (
+        <button onClick={() => setSelectedClaim(row)} className="text-primary-600 hover:text-primary-900 font-medium">Details</button>
+    ), cellClassName: 'text-right' },
+  ];
 
   return (
     <div>
       <PageHeader title="My Claims" />
       <Card>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
-            <input
-              type="text"
-              placeholder="Search by Claim ID or Provider..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-            >
-              <option value="All">All Statuses</option>
-              {Object.values(ClaimStatus)
-                .filter(status => status !== ClaimStatus.DRAFT && status !== ClaimStatus.PENDING_INFORMATION && status !== ClaimStatus.ADJUDICATED && status !== ClaimStatus.VOIDED) // Simplified list for patient view
-                .map(status => (
-                <option key={status} value={status}>
-                  {status.replace(/_/g, ' ').charAt(0).toUpperCase() + status.replace(/_/g, ' ').slice(1).toLowerCase()}
-                </option>
-              ))}
-            </select>
-            {isFiltered && (
-              <button 
-                onClick={handleClearFilters}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 hover:text-gray-800 transition-colors"
-              >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Clear</span>
-              </button>
-            )}
-          </div>
+          <input
+            type="text"
+            placeholder="Search by Claim ID or Provider..."
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="w-full sm:max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+          <select
+            onChange={(e) => setColumnFilters(prev => ({...prev, status: e.target.value === 'All' ? '' : e.target.value}))}
+            className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          >
+            <option value="All">All Statuses</option>
+            {Object.values(ClaimStatus).map(status => (
+              <option key={status} value={status}>
+                {status.replace(/_/g, ' ').charAt(0).toUpperCase() + status.replace(/_/g, ' ').slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-white">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Charge</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">You Owe</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Details</span></th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredClaims.length > 0 ? (
-                filteredClaims.map((claim) => (
-                  <tr key={claim.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{claim.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{claim.serviceDate}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{claim.provider}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${claim.totalClaimChargeAmount.toFixed(2)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">${claim.patientOwes.toFixed(2)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
-                        {claim.status.replace(/_/g, ' ')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button onClick={() => setSelectedClaim(claim)} className="text-primary-600 hover:text-primary-900 font-medium">Details</button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="text-center py-10 text-gray-500">
-                    You have no claims on file.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        
+        <Table<Claim>
+            columns={columns}
+            data={paginatedItems}
+            requestSort={requestSort}
+            getSortArrow={getSortArrow}
+            onRowClick={setSelectedClaim}
+            emptyState={<div className="text-center py-10 text-gray-500">You have no claims on file.</div>}
+        />
+        <PaginationControls {...paginationProps} />
+        
       </Card>
       <ClaimDetailModal claim={selectedClaim} onClose={() => setSelectedClaim(null)} />
     </div>

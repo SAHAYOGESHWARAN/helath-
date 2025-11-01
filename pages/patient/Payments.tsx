@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -10,6 +9,7 @@ import { BillingInvoice } from '../../types';
 import Modal from '../../components/shared/Modal';
 import PageHeader from '../../components/shared/PageHeader';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
+import { Table, ColumnDefinition } from '../../components/shared/Table';
 
 const PaymentSchema = Yup.object().shape({
   nameOnCard: Yup.string()
@@ -40,6 +40,17 @@ const PaymentSchema = Yup.object().shape({
 const ReceiptModal: React.FC<{ invoice: BillingInvoice | null; onClose: () => void }> = ({ invoice, onClose }) => {
     if (!invoice) return null;
 
+    const handlePrint = () => {
+        const printContents = document.getElementById('invoice-to-print')?.innerHTML;
+        const originalContents = document.body.innerHTML;
+        if (printContents) {
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload(); 
+        }
+    };
+
     return (
         <Modal 
             isOpen={!!invoice} 
@@ -48,9 +59,9 @@ const ReceiptModal: React.FC<{ invoice: BillingInvoice | null; onClose: () => vo
             footer={
                 <>
                     <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Close</button>
-                    <button onClick={() => window.print()} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                    <button onClick={handlePrint} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
                         <DownloadIcon className="w-4 h-4 mr-2" />
-                        Print / Download
+                        Print / Save as PDF
                     </button>
                 </>
             }
@@ -123,6 +134,21 @@ const Payments: React.FC = () => {
         showToast(`Payment of $${amount.toFixed(2)} submitted successfully!`, 'success');
     }
 
+    const paidInvoiceColumns: ColumnDefinition<BillingInvoice>[] = [
+      { accessorKey: 'date', header: 'Date Paid'},
+      { accessorKey: 'description', header: 'Description', cellClassName: 'font-medium text-gray-900'},
+      { accessorKey: 'totalAmount', header: 'Amount', cell: (row) => `$${row.totalAmount.toFixed(2)}`},
+      { accessorKey: 'actions', header: '', cell: (row) => (
+        <button onClick={() => setSelectedReceipt(row)} className="text-primary-600 hover:text-primary-900 font-medium">Receipt</button>
+      ), cellClassName: 'text-right'},
+    ];
+
+    const dueInvoiceColumns: ColumnDefinition<BillingInvoice>[] = [
+      { accessorKey: 'description', header: 'Description', cellClassName: 'font-medium text-gray-900'},
+      { accessorKey: 'dueDate', header: 'Due Date'},
+      { accessorKey: 'amountDue', header: 'Amount Due', cell: (row) => `$${row.amountDue.toFixed(2)}`, cellClassName: 'text-red-600 font-semibold' },
+    ];
+
   return (
     <div>
       <PageHeader title="Payments & Billing" />
@@ -130,54 +156,17 @@ const Payments: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <Card title="Outstanding Invoices">
-             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-white">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount Due</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {dueInvoices.length > 0 ? dueInvoices.map((inv) => (
-                    <tr key={inv.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.dueDate}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-semibold">${inv.amountDue.toFixed(2)}</td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={3} className="text-center py-4 text-gray-500">No outstanding invoices.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+             <Table<BillingInvoice>
+                columns={dueInvoiceColumns}
+                data={dueInvoices}
+                emptyState={<div className="text-center py-4 text-gray-500">No outstanding invoices.</div>}
+             />
           </Card>
           <Card title="Transaction History">
-             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-white">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date Paid</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Receipt</span></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paidInvoices.map((inv) => (
-                    <tr key={inv.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.totalAmount.toFixed(2)}</td>
-                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => setSelectedReceipt(inv)} className="text-primary-600 hover:text-primary-900 font-medium">Receipt</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+             <Table<BillingInvoice>
+                columns={paidInvoiceColumns}
+                data={paidInvoices}
+             />
           </Card>
         </div>
         

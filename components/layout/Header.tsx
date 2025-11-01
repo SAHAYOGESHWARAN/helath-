@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { BellIcon, ChevronDownIcon, SearchIcon, LogoutIcon, ProfileIcon, CogIcon } from '../shared/Icons';
+// FIX: Replaced LogoutIcon with ArrowRightOnRectangleIcon and aliased it as LogoutIcon
+import { BellIcon, ChevronDownIcon, SearchIcon, ArrowRightOnRectangleIcon as LogoutIcon, UserCircleIcon as ProfileIcon, CogIcon } from '../shared/Icons';
 import { useNotifications } from '../../hooks/useNotifications';
 import NotificationPanel from './NotificationPanel';
 

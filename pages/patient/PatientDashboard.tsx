@@ -15,10 +15,11 @@ import {
     HeartIcon,
 } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
+// FIX: Use GoogleGenAI instead of the deprecated GoogleGenerativeAI.
 import { GoogleGenAI } from '@google/genai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 import Tabs from '../../components/shared/Tabs';
-import { HealthGoal } from '../../types';
+import { HealthGoal, Message } from '../../types';
 
 const GoalProgress: React.FC<{ goal: HealthGoal }> = ({ goal }) => {
     const progress = goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
@@ -72,7 +73,7 @@ const PatientDashboard: React.FC = () => {
 
   const activeMedicationsCount = useMemo(() => user?.medications?.filter(m => m.status === 'Active').length || 0, [user]);
   const primaryGoal = useMemo(() => user?.healthGoals?.[0], [user]);
-  const unreadMessages = useMemo(() => Object.values(messages).flat().filter(m => !m.isRead && m.senderId !== user?.id).length, [messages, user]);
+  const unreadMessages = useMemo(() => Object.values(messages).flat().filter((m: Message) => !m.isRead && m.senderId !== user?.id).length, [messages, user]);
 
   const vitalsChartData = useMemo(() => {
     if (!user?.vitals) return [];
@@ -97,10 +98,12 @@ const PatientDashboard: React.FC = () => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const systemInstruction = `You are an AI Health Assistant for NovoPath Medical. Your role is to provide a patient-friendly summary of their electronic medical record. Analyze the provided health data and generate a clear, concise summary covering key health highlights, medications, and general wellness tips. CRITICAL: You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant... consult with your doctor.**"`;
         const response = await ai.models.generateContent({
+            // FIX: Use gemini-2.5-flash instead of deprecated gemini-1.5-flash
             model: "gemini-2.5-flash",
             contents: `Please summarize this health data for the patient, ${user.name}: Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None'}. Medications: ${user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'None'}.`,
             config: { systemInstruction }
         });
+        // FIX: Correctly access text from response
         setSummary(response.text);
     } catch (error) {
         console.error("Error generating health summary:", error);

@@ -134,6 +134,7 @@ export const useTable = <T extends Record<string, any>>(
         return React.createElement('span', { className: "ml-1" }, sortConfig.direction === 'asc' ? '▲' : '▼');
     };
 
+    // FIX: Expose columnFilters to allow components to read the current filter state.
     return {
         paginatedItems: paginatedData,
         sortedAndFilteredItems: sortedData,
@@ -142,6 +143,7 @@ export const useTable = <T extends Record<string, any>>(
         setPage: setCurrentPage,
         setGlobalFilter,
         setColumnFilters,
+        columnFilters,
         paginationProps: {
             currentPage: currentPage > totalPages && totalPages > 0 ? totalPages : currentPage,
             totalPages,

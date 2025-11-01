@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { NovoPathIcon, LogoutIcon } from '../shared/Icons';
+// FIX: Replaced LogoutIcon with ArrowRightOnRectangleIcon and aliased it as LogoutIcon
+import { NovoPathIcon, ArrowRightOnRectangleIcon as LogoutIcon } from '../shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 
 interface NavItem {

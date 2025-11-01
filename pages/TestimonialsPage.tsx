@@ -68,13 +68,14 @@ const Header: React.FC = () => {
     );
 };
 
+// FIX: Populated empty mock data.
 const MOCK_TESTIMONIALS = [
-    { name: 'Emily R.', avatarUrl: 'https://i.pravatar.cc/150?u=emily.r', role: 'Patient', rating: 5, feedback: "NovoPath has made managing my family's health records a breeze. The ability to schedule appointments and access lab results from one dashboard is a game-changer." },
-    { name: 'Dr. Ben Carter', avatarUrl: 'https://i.pravatar.cc/150?u=ben.c', role: 'Cardiologist', rating: 5, feedback: "As a specialist, coordinating with primary care physicians is crucial. NovoPath's EMR system is intuitive and has significantly improved my workflow and patient care." },
-    { name: 'Jessica T.', avatarUrl: 'https://i.pravatar.cc/150?u=jessica.t', role: 'Parent', rating: 5, feedback: "The AI Health Guide is like having a nurse in my pocket. It provides reliable answers quickly, which gives me peace of mind when my kids are sick." },
+    { name: 'Dr. Jane Smith', avatarUrl: 'https://i.pravatar.cc/150?u=pro1', role: 'Cardiologist, NovoPath Provider', rating: 5, feedback: 'NovoPath has revolutionized my practice. The integrated EMR and telehealth features save me hours every week, allowing me to focus more on patient care.' },
+    { name: 'John Doe', avatarUrl: 'https://i.pravatar.cc/150?u=pat1', role: 'NovoPath Patient', rating: 5, feedback: 'Managing my appointments and health records has never been easier. The AI assistant is incredibly helpful for understanding my lab results.' },
+    { name: 'Dr. David Chen', avatarUrl: 'https://i.pravatar.cc/150?u=pro2', role: 'Dermatologist, NovoPath Provider', rating: 4, feedback: 'The e-prescribing and referral system is seamless. It has significantly reduced administrative overhead for my staff.' },
 ];
 
-const TestimonialCard: React.FC<{ testimonial: typeof MOCK_TESTIMONIALS[0], index: number }> = ({ testimonial, index }) => {
+const TestimonialCard: React.FC<{ testimonial: {name: string, avatarUrl: string, role: string, rating: number, feedback: string}, index: number }> = ({ testimonial, index }) => {
     const [ref, isVisible] = useOnScreen({ threshold: 0.2 });
     return(
         <div ref={ref} className={`bg-white p-8 rounded-2xl shadow-lg border border-gray-100 h-full flex flex-col transition-all duration-700 ease-out transform relative fancy-card ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{transitionDelay: `${index * 100}ms`}}>
@@ -103,9 +104,15 @@ const TestimonialsSection: React.FC = () => {
                     <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Hear from healthcare professionals and patients who trust NovoPath.</p>
                 </AnimatedSection>
                 <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
-                    {MOCK_TESTIMONIALS.map((t, index) => (
-                       <TestimonialCard key={t.name} testimonial={t} index={index} />
-                    ))}
+                    {MOCK_TESTIMONIALS.length > 0 ? (
+                        MOCK_TESTIMONIALS.map((t, index) => (
+                           <TestimonialCard key={t.name} testimonial={t} index={index} />
+                        ))
+                    ) : (
+                        <div className="md:col-span-3 text-center text-gray-500 py-10">
+                            <p>No testimonials to display yet.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </section>

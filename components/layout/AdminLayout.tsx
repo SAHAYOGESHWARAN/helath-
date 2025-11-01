@@ -7,7 +7,7 @@ import { ADMIN_NAV } from '../../constants';
 import AdminDashboard from '../../pages/admin/AdminDashboard';
 import UserManagement from '../../pages/admin/UserManagement';
 import SubscriptionManagement from '../../pages/admin/SubscriptionManagement';
-import ProductManagement from '../../pages/admin/ProductManagement';
+import PlanManagement from '../../pages/admin/ProductManagement';
 import Billing from '../../pages/admin/Billing';
 import AdminReports from '../../pages/admin/AdminReports';
 import Compliance from '../../pages/admin/Compliance';
@@ -26,7 +26,7 @@ const AdminLayout: React.FC = () => {
             <Route path="/dashboard" element={<AdminDashboard />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/subscriptions" element={<SubscriptionManagement />} />
-            <Route path="/products" element={<ProductManagement />} />
+            <Route path="/plans" element={<PlanManagement />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/reports" element={<AdminReports />} />
             <Route path="/compliance" element={<Compliance />} />

@@ -2,46 +2,73 @@ import React from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
+import { User, UserRole } from '../../types';
+import { Link } from 'react-router-dom';
+import { useTable } from '../../hooks/useTable';
+import PaginationControls from '../../components/shared/PaginationControls';
+import { Table, ColumnDefinition } from '../../components/shared/Table';
+
+const getStatusPill = (status: 'Active' | 'Cancelled' | 'Trialing') => {
+    switch (status) {
+        case 'Active': return 'bg-emerald-100 text-emerald-800';
+        case 'Cancelled': return 'bg-red-100 text-red-800';
+        case 'Trialing': return 'bg-blue-100 text-blue-800';
+    }
+};
 
 const SubscriptionManagement: React.FC = () => {
-    const { providerSubscriptionPlans } = useAuth();
+    const { users, providerSubscriptionPlans } = useAuth();
+
+    const subscribedProviders = React.useMemo(() => {
+        return users
+            .filter(u => u.role === UserRole.PROVIDER && u.subscription)
+            .map(u => {
+                const plan = providerSubscriptionPlans.find(p => p.id === u.subscription!.planId);
+                return {
+                    ...u,
+                    planName: plan?.name || 'Unknown Plan',
+                    subscriptionStatus: u.subscription!.status,
+                    renewalDate: u.subscription!.renewalDate,
+                };
+            });
+    }, [users, providerSubscriptionPlans]);
+
+    const {
+        paginatedItems,
+        paginationProps,
+        requestSort,
+        getSortArrow,
+    } = useTable(subscribedProviders, 10);
+    
+    const columns: ColumnDefinition<typeof subscribedProviders[0]>[] = [
+        { accessorKey: 'name', header: 'Provider Name' },
+        { accessorKey: 'planName', header: 'Plan' },
+        { accessorKey: 'subscriptionStatus', header: 'Status', cell: (row) => (
+            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusPill(row.subscriptionStatus)}`}>
+                {row.subscriptionStatus}
+            </span>
+        )},
+        { accessorKey: 'renewalDate', header: 'Next Renewal' },
+        { accessorKey: 'actions', header: 'Actions', cell: () => <button className="text-primary-600 hover:underline">Manage</button> }
+    ];
+
     return (
         <div>
-            <PageHeader title="Subscription Plan Management" />
+            <PageHeader title="Provider Subscriptions" subtitle="View and manage active provider subscriptions." />
             <Card>
-                <p className="mb-4 text-gray-600">View and manage the subscription tiers available to providers on the platform.</p>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient Limit</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {providerSubscriptionPlans.length > 0 ? (
-                                providerSubscriptionPlans.map(plan => (
-                                    <tr key={plan.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{plan.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{plan.price}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{plan.patientLimit > 0 ? plan.patientLimit : 'Unlimited'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <button className="text-primary-600 hover:underline">Edit</button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={4} className="text-center py-10 text-gray-500">
-                                        No subscription plans found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div className="flex justify-between items-center mb-4">
+                    <p className="text-gray-600">A list of all providers with an active or past subscription plan.</p>
+                    <Link to="/plans" className="text-primary-600 font-semibold hover:underline">
+                        Manage Subscription Plans &rarr;
+                    </Link>
                 </div>
+                <Table<typeof subscribedProviders[0]>
+                    columns={columns}
+                    data={paginatedItems}
+                    requestSort={requestSort}
+                    getSortArrow={getSortArrow}
+                />
+                <PaginationControls {...paginationProps} />
             </Card>
         </div>
     );

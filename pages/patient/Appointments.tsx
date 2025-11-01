@@ -4,10 +4,11 @@ import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, ReminderSettings } from '../../types';
 import { useApp } from '../../App';
-import { ClockIcon, VideoCameraIcon, UsersIcon, CameraIcon, ChevronDownIcon } from '../../components/shared/Icons';
+import { ClockIcon, VideoCameraIcon, UsersIcon, CameraIcon, ChevronDownIcon, SpinnerIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import VideoUpdateModal from './VideoUpdateModal';
 import ScheduleAppointmentModal from './ScheduleAppointmentModal';
+import Modal from '../../components/shared/Modal';
 
 const getStatusPill = (status: Appointment['status']) => {
     switch (status) {
@@ -61,10 +62,12 @@ const AppointmentDetails: React.FC<{ appointment: Appointment; onAddVideo: () =>
 );
 
 const PatientAppointments: React.FC = () => {
-    const { appointments, addAppointment, addVideoUpdateToAppointment } = useAuth();
+    const { appointments, addAppointment, addVideoUpdateToAppointment, cancelAppointment } = useAuth();
     const { showToast } = useApp();
     const [selectedApptForVideo, setSelectedApptForVideo] = useState<Appointment | null>(null);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [cancellingAppt, setCancellingAppt] = useState<Appointment | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const sortedAppointments = useMemo(() => {
         const now = new Date();
@@ -88,6 +91,18 @@ const PatientAppointments: React.FC = () => {
         }
     };
 
+    const handleAppointmentCancel = () => {
+        if (!cancellingAppt) return;
+        setIsSubmitting(true);
+        // Simulate API call
+        setTimeout(() => {
+            cancelAppointment(cancellingAppt.id);
+            showToast('Your appointment has been cancelled.', 'success');
+            setIsSubmitting(false);
+            setCancellingAppt(null);
+        }, 500);
+    };
+
     return (
         <div>
             <PageHeader title="Appointments" buttonText="Schedule New Appointment" onButtonClick={() => setIsScheduleModalOpen(true)} />
@@ -103,8 +118,8 @@ const PatientAppointments: React.FC = () => {
 
                             return (
                              <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-shadow hover:shadow-md">
-                                 <summary className="p-4 flex justify-between items-center cursor-pointer list-none">
-                                     <div className="flex items-center space-x-4 flex-grow">
+                                 <summary className="p-4 flex flex-wrap justify-between items-center cursor-pointer list-none gap-y-3">
+                                     <div className="flex items-center space-x-4 flex-grow min-w-[250px]">
                                          <div className="flex flex-col items-center justify-center bg-primary-50 text-primary-700 rounded-lg p-3 w-20 text-center">
                                              <span className="text-sm font-bold uppercase">{new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</span>
                                              <span className="text-2xl font-extrabold">{new Date(appt.date).getUTCDate()}</span>
@@ -117,8 +132,14 @@ const PatientAppointments: React.FC = () => {
                                              </div>
                                          </div>
                                      </div>
-                                     <div className="flex items-center justify-end mt-3 sm:mt-0 space-x-3">
+                                     <div className="flex items-center justify-end space-x-3 w-full sm:w-auto">
                                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.status)}`}>{appt.status}</span>
+                                          {(appt.status === 'Confirmed' || appt.status === 'Pending') && (
+                                            <>
+                                                <button onClick={(e) => { e.stopPropagation(); showToast('Please call our office to reschedule.', 'info'); }} className="text-xs font-semibold text-primary-600 hover:underline">Reschedule</button>
+                                                <button onClick={(e) => { e.stopPropagation(); setCancellingAppt(appt); }} className="text-xs font-semibold text-red-600 hover:underline">Cancel</button>
+                                            </>
+                                         )}
                                          {isVirtual && (
                                             <Link to="/video-consults">
                                                 <button disabled={!canJoin} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center disabled:bg-gray-300 disabled:cursor-not-allowed">
@@ -170,6 +191,19 @@ const PatientAppointments: React.FC = () => {
                 onClose={() => setSelectedApptForVideo(null)}
                 onSend={handleSendVideo}
             />
+            <Modal 
+                isOpen={!!cancellingAppt} 
+                onClose={() => setCancellingAppt(null)} 
+                title="Confirm Appointment Cancellation"
+                footer={<>
+                    <button onClick={() => setCancellingAppt(null)} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-300">Go Back</button>
+                    <button onClick={handleAppointmentCancel} disabled={isSubmitting} className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg w-48 flex justify-center items-center transition-colors hover:bg-red-700">
+                        {isSubmitting ? <SpinnerIcon /> : 'Yes, Cancel Appointment'}
+                    </button>
+                </>}
+            >
+                {cancellingAppt && <p>Are you sure you want to cancel your appointment with <strong>{cancellingAppt.providerName}</strong> on <strong>{new Date(cancellingAppt.date).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric'})}</strong> at {cancellingAppt.time}?</p>}
+            </Modal>
         </div>
     );
 };

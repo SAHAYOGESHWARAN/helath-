@@ -1,12 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/shared/Card';
 import { ClockIcon, UsersIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 
+// Mock data - Populated
 const initialPatients = [
-  { id: 1, name: 'Alice Johnson', reason: 'Follow-up', checkInTime: new Date(Date.now() - 5 * 60000) }, // 5 minutes ago
-  { id: 2, name: 'Charlie Brown', reason: 'Sick Visit', checkInTime: new Date(Date.now() - 2 * 60000) }, // 2 minutes ago
+    { id: 1, name: 'Alice Johnson', reason: 'Follow-up', checkInTime: new Date(Date.now() - 5 * 60000) },
+    { id: 2, name: 'Charlie Brown', reason: 'Sick Visit', checkInTime: new Date(Date.now() - 2 * 60000) },
 ];
+
 
 const getInitials = (name: string) => {
     const parts = name.split(' ').filter(Boolean);

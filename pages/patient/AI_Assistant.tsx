@@ -1,285 +1,351 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat } from '@google/genai';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+// FIX: Use GoogleGenAI instead of the deprecated GoogleGenerativeAI.
+import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob as GenaiBlob, Content } from '@google/genai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { SparklesIcon, GlobeAltIcon, CameraIcon } from '../../components/shared/Icons';
+import { SparklesIcon, GlobeAltIcon, PaperClipIcon, MicrophoneIcon, StopIcon, SpeakerWaveIcon } from '../../components/shared/Icons';
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 import PageHeader from '../../components/shared/PageHeader';
-import VideoUpdateModal from './VideoUpdateModal';
+import { encode, decode, decodeAudioData } from '../../services/audioUtils';
 
-interface Message {
+// --- Type Definitions for Multimodal Content ---
+interface TextPart { text: string; }
+interface InlineDataPart { inlineData: { mimeType: string; data: string; }; }
+type Part = TextPart | InlineDataPart;
+
+interface AIMessage {
   role: 'user' | 'model';
-  parts: { text: string }[];
-  suggestions?: string[];
+  parts: Part[];
 }
 
-const AIWeightLossCoach: React.FC = () => {
+// --- Helper Functions ---
+const fileToGenerativePart = async (file: File) => {
+  const base64EncodedDataPromise = new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+    reader.readAsDataURL(file);
+  });
+  return {
+    inlineData: { data: await base64EncodedDataPromise, mimeType: file.type },
+  };
+};
+
+const createAudioBlob = (data: Float32Array): GenaiBlob => {
+  const l = data.length;
+  const int16 = new Int16Array(l);
+  for (let i = 0; i < l; i++) {
+    int16[i] = data[i] * 32768;
+  }
+  return {
+    data: encode(new Uint8Array(int16.buffer)),
+    mimeType: 'audio/pcm;rate=16000',
+  };
+};
+
+
+const AIAssistant: React.FC = () => {
   const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
-  const [history, setHistory] = useState<Message[]>([]);
+  const [history, setHistory] = useState<AIMessage[]>([]);
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const ai = useRef<GoogleGenAI | null>(null);
-  const chat = useRef<Chat | null>(null);
+
+  // --- Audio & Live Conversation State ---
+  const [isRecording, setIsRecording] = useState(false);
+  const [isLiveConversation, setIsLiveConversation] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  
+  // Live API refs
+  const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
+  const inputAudioContextRef = useRef<AudioContext | null>(null);
+  const outputAudioContextRef = useRef<AudioContext | null>(null);
+  const liveAudioStreamRef = useRef<MediaStream | null>(null);
+  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const liveSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  let nextStartTime = 0;
 
   useEffect(() => {
-    // Per coding guidelines, API_KEY is assumed to be available from process.env.
-    // FIX: Changed deprecated GoogleGenerativeAI to GoogleGenAI
     ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }, []);
 
   useEffect(() => {
     if (user && history.length === 0) {
-      setHistory([
-        {
-          role: 'model',
-          parts: [{ text: `Hello, ${user.name}! I'm your AI Weight Loss Coach, powered by Gemini. I can help you with personalized meal plans, workout suggestions, and tracking your progress. How can I help you achieve your goals today?` }],
-          suggestions: [
-              "Create a 7-day meal plan for me", 
-              user.gymMembership ? `Suggest a workout I can do at ${user.gymMembership.gymName}` : "What's a good 30-minute workout?", 
-              "How many calories are in an apple?"
-            ],
-        },
-      ]);
+      setHistory([{ role: 'model', parts: [{ text: `Hello, ${user.name}! I am your AI Health Assistant. How can I help you with your health goals today?` }] }]);
     }
   }, [user, history.length]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(scrollToBottom, [history, loading]);
 
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim() || loading || !ai.current || !user) return;
+  const handleSendMessage = async () => {
+    if ((!prompt.trim() && filesToUpload.length === 0) || loading || !ai.current || !user) return;
 
-    const userMessage: Message = { role: 'user', parts: [{ text }] };
-    // Don't add video placeholder messages to the API history
-    const historyForApi = text.startsWith('[User sent a video update') ? history : [...history, userMessage];
-    
-    if (!text.startsWith('[User sent a video update')) {
-        setHistory(prev => [...prev, userMessage]);
-    }
-    
-    setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }] }]);
-    setPrompt('');
     setLoading(true);
 
+    const mediaParts: InlineDataPart[] = await Promise.all(
+      filesToUpload.map(file => fileToGenerativePart(file))
+    );
+    const textPart: TextPart = { text: prompt };
+    const userParts: Part[] = [...mediaParts, textPart];
+
+    const userMessage: AIMessage = { role: 'user', parts: userParts };
+    const currentHistory: Content[] = history.map(h => ({ role: h.role, parts: h.parts }));
+    
+    setHistory(prev => [...prev, userMessage]);
+    setPrompt('');
+    setFilesToUpload([]);
+
+    const modelToUse = filesToUpload.some(f => f.type.startsWith('video/')) 
+      ? 'gemini-2.5-pro' 
+      : filesToUpload.some(f => f.type.startsWith('image/'))
+      // FIX: Use the correct model name for gemini-pro-vision, which is now gemini-2.5-flash for this use case.
+      ? 'gemini-2.5-flash'
+      // FIX: Use the correct model name for gemini flash lite.
+      : 'gemini-flash-lite-latest';
+    
     try {
-      const activeMedications = user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'none';
-      const lifestyleInfo = user.lifestyle 
-        ? `Diet: ${user.lifestyle.diet}, Exercise: ${user.lifestyle.exercise}, Smoking: ${user.lifestyle.smokingStatus}, Alcohol: ${user.lifestyle.alcoholConsumption}` 
-        : 'not specified';
-      const latestVitals = user.vitals && user.vitals.length > 0 ? `Latest vitals from ${user.vitals[0].date}: BP: ${user.vitals[0].bloodPressure}, HR: ${user.vitals[0].heartRate}, Weight: ${user.vitals[0].weight} lbs.` : 'not available.';
-      const healthGoals = user.healthGoals && user.healthGoals.length > 0 ? user.healthGoals.map(g => `${g.title}: Target ${g.target} ${g.unit}, Current ${g.current} ${g.unit}`).join('; ') : 'none specified.';
-      const gymInfo = user.gymMembership ? `Gym Membership: Active at ${user.gymMembership.gymName}. Last check-in was on ${new Date(user.gymMembership.lastCheckIn!).toLocaleDateString()}.` : 'no gym membership connected.';
+      setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }] }]);
+      
+      const resultStream = await ai.current.models.generateContentStream({
+        model: modelToUse,
+        contents: [...currentHistory, { role: 'user', parts: userParts }],
+      });
 
-
-      const patientContext = `
-        The current user is ${user.name}. 
-        Their known medical conditions are: ${user.conditions?.map(c => c.name).join(', ') || 'none'}.
-        Their known allergies are: ${user.allergies?.map(a => `${a.name} (${a.severity})`).join(', ') || 'none'}.
-        They are currently taking the following active medications: ${activeMedications}.
-        Their known lifestyle factors are: ${lifestyleInfo}.
-        Latest vitals: ${latestVitals}
-        Health Goals: ${healthGoals}
-        Gym Info: ${gymInfo}
-      `;
-      
-      const systemInstruction = `You are NovoPath Medical's "AI Weight Loss Coach", a friendly and supportive AI assistant powered by Gemini. Your goal is to help patients with personalized health guidance for weight loss.
-      You have the following context about the patient: ${patientContext}
-      
-      Your operational guidelines are:
-      - Act as a personal coach. Be encouraging, positive, and supportive.
-      - Generate personalized diet plans (e.g., "create a 7-day low-carb meal plan").
-      - Suggest workouts and exercise routines (e.g., "give me a 30-minute beginner HIIT workout"). If the patient has a gym membership, suggest exercises they can do there.
-      - Provide nutritional information (e.g., "how many calories in a banana?").
-      - Help the user log their food and exercise to track progress. When they log an activity, acknowledge it and offer encouragement.
-      - If the user sends a video, acknowledge it positively (e.g., "Thanks for the video update! It looks like you're making great progress.")
-      - Use the patient's provided health context to tailor your suggestions. For example, if they have hypertension, suggest low-sodium meal options. If they have a weight loss goal, help them work towards it.
-      - If the user's query is outside your scope or requires up-to-date information (e.g., recipes, specific exercise videos), use the Google Search tool and ALWAYS cite your sources.
-      
-      - **CRITICAL SAFETY INSTRUCTION**: You must NEVER provide a medical diagnosis, prescribe medication, or give direct medical advice. Your role is informational and motivational.
-      - At the end of EVERY single response, without exception, you MUST include a clear, bolded disclaimer on its own line: "**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with your doctor before starting any new diet or exercise program.**"
-      - Keep your tone empathetic, clear, and helpful.`;
-      
-      if (!chat.current) {
-        // FIX: Use ai.chats.create instead of deprecated ai.startChat
-        chat.current = ai.current.chats.create({
-            model: "gemini-2.5-flash",
-            config: {
-                systemInstruction: systemInstruction,
-                tools: [{googleSearch: {}}],
-            },
-            history: historyForApi.map(msg => ({
-              role: msg.role,
-              parts: msg.parts,
-            })),
-        });
-      }
-
-      const resultStream = await chat.current.sendMessageStream({ message: text });
-      let responseReceived = false;
+      let fullText = '';
       for await (const chunk of resultStream) {
-          const chunkText = chunk.text;
-          if (chunkText) {
-              responseReceived = true;
-              setHistory(prev => {
-                  const lastMessage = prev[prev.length - 1];
-                  if (lastMessage && lastMessage.role === 'model') {
-                      const updatedMessage = {
-                          ...lastMessage,
-                          parts: [{ text: lastMessage.parts[0].text + chunkText }],
-                      };
-                      return [...prev.slice(0, -1), updatedMessage];
-                  }
-                  return prev;
-              });
-          }
-      }
-      
-      if (!responseReceived) {
-        setHistory(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage?.role === 'model') {
-                const updatedMessage = {
-                    ...lastMessage,
-                    parts: [{ text: "I'm not sure how to respond to that. Could you try rephrasing?\n\n**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with your doctor before starting any new diet or exercise program.**" }],
-                };
-                return [...prev.slice(0, -1), updatedMessage];
+        const chunkText = chunk.text;
+        if (chunkText) {
+          fullText += chunkText;
+          setHistory(prev => {
+            const newHistory = [...prev];
+            const lastMessage = newHistory[newHistory.length - 1];
+            if (lastMessage.role === 'model') {
+              lastMessage.parts = [{ text: fullText }];
             }
-            return prev;
-        });
+            return newHistory;
+          });
+        }
       }
-
     } catch (error) {
       console.error("Error generating content:", error);
-      chat.current = null; // Reset chat on error
-      setHistory(prev => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.role === 'model') {
-            const updatedMessage = {
-                ...lastMessage,
-                parts: [{ text: "I'm sorry, I encountered an error. Please try again.\n\n**Disclaimer: I am an AI assistant and not a medical professional. This information is not a substitute for professional medical advice. Please consult with your doctor before starting any new diet or exercise program.**" }],
-            };
-            return [...prev.slice(0, -1), updatedMessage];
-        }
-        return prev;
-      });
+      setHistory(prev => [...prev.slice(0, -1), { role: 'model', parts: [{ text: "I'm sorry, I encountered an error. Please try again." }] }]);
     } finally {
       setLoading(false);
     }
   };
 
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSendMessage(prompt);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+        setFilesToUpload(prev => [...prev, ...Array.from(event.target.files!)]);
+    }
   };
   
-  const handleSendVideo = (videoBlobUrl: string) => {
-    if (!videoBlobUrl || loading || !ai.current || !user) return;
-  
-    const userMessage: Message = {
-      role: 'user',
-      parts: [
-        {
-          text: `[User sent a video update. Here is a placeholder for the video: ${videoBlobUrl}]`,
-        },
-      ],
-    };
-  
-    const aiPrompt = "The user just sent a video update about their progress. Acknowledge it positively and offer encouragement. For example: 'Thanks for the video update! It looks like you're making great progress.'";
-  
-    setHistory((prev) => [...prev, userMessage]);
-    setIsVideoModalOpen(false);
-  
-    // This will trigger the AI response
-    handleSendMessage(aiPrompt);
+  const handleToggleRecording = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        audioChunksRef.current = [];
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          audioChunksRef.current.push(event.data);
+        };
+        mediaRecorderRef.current.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const audioFile = new File([audioBlob], "audio.webm", { type: "audio/webm" });
+          stream.getTracks().forEach(track => track.stop());
+          
+          setLoading(true);
+          const audioPart = await fileToGenerativePart(audioFile);
+          const transcriptionPrompt = "Transcribe this audio.";
+          // FIX: Use gemini-2.5-flash for audio transcription as gemini-1.5-flash is deprecated.
+          const response = await ai.current!.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts: [audioPart, { text: transcriptionPrompt }] },
+          });
+          setPrompt(prev => prev + ' ' + response.text);
+          setLoading(false);
+        };
+        mediaRecorderRef.current.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error("Microphone access denied:", err);
+        alert("Microphone access is required for this feature.");
+      }
+    }
+  };
+
+  const handleToggleLiveConversation = useCallback(async () => {
+    if (isLiveConversation) {
+        setIsLiveConversation(false);
+        sessionPromiseRef.current?.then(session => session.close());
+        scriptProcessorRef.current?.disconnect();
+        inputAudioContextRef.current?.close();
+        outputAudioContextRef.current?.close();
+        liveAudioStreamRef.current?.getTracks().forEach(track => track.stop());
+        nextStartTime = 0;
+        liveSourcesRef.current.clear();
+        return;
+    }
+
+    setIsLiveConversation(true);
+    if (!ai.current) return;
+    
+    try {
+        inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+        outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        liveAudioStreamRef.current = stream;
+
+        sessionPromiseRef.current = ai.current.live.connect({
+            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+            config: { responseModalities: [Modality.AUDIO] },
+            callbacks: {
+                onopen: () => {
+                    const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
+                    const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+                    scriptProcessorRef.current = scriptProcessor;
+                    scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                        const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
+                        const pcmBlob = createAudioBlob(inputData);
+                        sessionPromiseRef.current?.then(session => {
+                            session.sendRealtimeInput({ media: pcmBlob });
+                        });
+                    };
+                    source.connect(scriptProcessor);
+                    scriptProcessor.connect(inputAudioContextRef.current!.destination);
+                },
+                onmessage: async (message: LiveServerMessage) => {
+                    const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+                    if (audioData && outputAudioContextRef.current) {
+                        nextStartTime = Math.max(nextStartTime, outputAudioContextRef.current.currentTime);
+                        const audioBuffer = await decodeAudioData(
+                            decode(audioData),
+                            outputAudioContextRef.current,
+                            24000,
+                            1
+                        );
+                        const source = outputAudioContextRef.current.createBufferSource();
+                        source.buffer = audioBuffer;
+                        source.connect(outputAudioContextRef.current.destination);
+                        source.addEventListener('ended', () => liveSourcesRef.current.delete(source));
+                        source.start(nextStartTime);
+                        nextStartTime += audioBuffer.duration;
+                        liveSourcesRef.current.add(source);
+                    }
+                    if (message.serverContent?.interrupted) {
+                        for (const source of liveSourcesRef.current.values()) {
+                            source.stop();
+                        }
+                        liveSourcesRef.current.clear();
+                        nextStartTime = 0;
+                    }
+                },
+                onerror: (e) => {
+                    console.error('Live session error:', e);
+                    setIsLiveConversation(false);
+                },
+                onclose: () => {
+                    setIsLiveConversation(false);
+                }
+            }
+        });
+    } catch(e) {
+        console.error("Failed to start live conversation", e);
+        setIsLiveConversation(false);
+    }
+  }, [isLiveConversation]);
+
+  const renderPart = (part: Part, index: number) => {
+    if ('text' in part) {
+      return <p key={index} className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{part.text}</p>;
+    }
+    if (part.inlineData?.mimeType.startsWith('image/')) {
+      return <img key={index} src={`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`} alt="user upload" className="rounded-lg max-w-xs mt-2" />;
+    }
+    if (part.inlineData?.mimeType.startsWith('video/')) {
+        return <video key={index} src={`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`} controls className="rounded-lg max-w-xs mt-2" />;
+    }
+    return null;
   };
 
   return (
-    <div>
-      <PageHeader title="AI Weight Loss Coach" />
-      <Card className="flex flex-col h-[calc(100vh-12rem)] p-0">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full">
+      <PageHeader title="AI Assistant & Gemini Lab" subtitle="Your multimodal guide to a healthier lifestyle." />
+      
+      <Card className="flex-1 flex flex-col p-0">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {history.map((msg, index) => (
-            <div key={index}>
-              <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.role === 'model' ? (
-                  <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                    <SparklesIcon className="w-5 h-5 text-white" stroke="white" fill="white"/>
-                  </div>
-                ) : (
-                  <img src={user?.avatarUrl} alt="user avatar" className="w-8 h-8 rounded-full flex-shrink-0" />
-                )}
-                <div className={`max-w-xl p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                    {msg.parts[0].text.startsWith('[User sent a video update') ? (
-                         <div>
-                            <p className="text-sm italic mb-2">Sent a video update.</p>
-                            <video src={msg.parts[0].text.match(/blob:.*$/)?.[0]} controls className="w-full rounded-md max-w-xs" />
-                         </div>
-                    ) : (
-                        <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.parts[0].text}</p>
-                    )}
-
+            <div key={index} className={`flex items-start gap-3 animate-fade-in-up ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ animationDelay: `${index * 50}ms`}}>
+              {msg.role === 'model' && <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 bg-primary-500`}><SparklesIcon className="w-5 h-5"/></div>}
+              <div className="flex-1 max-w-xl">
+                <div className={`p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                  {msg.parts.map(renderPart)}
                 </div>
               </div>
-              {msg.role === 'model' && msg.suggestions && (
-                <div className="flex justify-start ml-11 mt-2 flex-wrap gap-2">
-                  {msg.suggestions.map((suggestion, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSendMessage(suggestion)}
-                      className="px-3 py-1.5 text-xs font-medium text-primary-700 bg-primary-100 rounded-full hover:bg-primary-200 transition-colors"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {msg.role === 'user' && <img src={user?.avatarUrl} alt="user avatar" className="w-8 h-8 rounded-full flex-shrink-0" />}
             </div>
           ))}
-          {loading && history[history.length - 1]?.role === 'model' && history[history.length-1]?.parts[0].text === '' && (
-            <SkeletonChatBubble />
-          )}
+          {loading && <SkeletonChatBubble />}
           <div ref={messagesEndRef} />
         </div>
+
+        {isLiveConversation && (
+            <div className="p-4 border-t bg-gray-100 text-center animate-fade-in">
+                <SpeakerWaveIcon className="w-8 h-8 text-primary-600 mx-auto animate-pulse" />
+                <p className="font-semibold text-gray-700 mt-2">Live conversation is active...</p>
+                <button onClick={handleToggleLiveConversation} className="mt-2 text-sm text-red-500 font-semibold hover:underline">End Conversation</button>
+            </div>
+        )}
+
         <div className="border-t p-4 bg-white rounded-b-xl">
-          <form onSubmit={handleSubmit} className="flex items-center space-x-3">
+          {filesToUpload.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {filesToUpload.map((file, i) => (
+                <div key={i} className="bg-gray-100 p-1 rounded-md text-xs flex items-center gap-2">
+                  <span>{file.name}</span>
+                  <button onClick={() => setFilesToUpload(f => f.filter(fl => fl !== file))} className="text-gray-500 hover:text-red-500">
+                    &times;
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center space-x-2">
+            <label htmlFor="file-upload" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full cursor-pointer">
+              <PaperClipIcon className="w-6 h-6" />
+              <input id="file-upload" type="file" multiple onChange={handleFileChange} className="hidden" accept="image/*,video/*" />
+            </label>
+            <button type="button" onClick={handleToggleRecording} className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+              {isRecording ? <StopIcon className="w-6 h-6"/> : <MicrophoneIcon className="w-6 h-6" />}
+            </button>
             <input
               type="text"
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Ask for a meal plan, workout, or log your food..."
-              className="flex-1 px-4 py-2 border bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
-              disabled={loading}
-              aria-label="Ask your AI Weight Loss Coach"
+              onChange={e => setPrompt(e.target.value)}
+              placeholder="Ask a question, or attach a file..."
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+              disabled={loading || isLiveConversation}
             />
-             <button type="button" onClick={() => setIsVideoModalOpen(true)} disabled={loading} className="p-3 text-gray-500 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50" aria-label="Record video update">
-                <CameraIcon className="w-5 h-5" />
+            <button type="button" onClick={handleToggleLiveConversation} className={`p-2 rounded-full transition-colors ${isLiveConversation ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+              <SpeakerWaveIcon className="w-6 h-6" />
             </button>
-            <button
-              type="submit"
-              disabled={loading || !prompt.trim()}
-              className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-              aria-label="Send message"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
+            <button type="submit" disabled={loading || (!prompt.trim() && filesToUpload.length === 0)} className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
             </button>
           </form>
         </div>
       </Card>
-        <VideoUpdateModal
-            isOpen={isVideoModalOpen}
-            onClose={() => setIsVideoModalOpen(false)}
-            onSend={handleSendVideo}
-        />
     </div>
   );
 };
 
-export default AIWeightLossCoach;
+export default AIAssistant;
