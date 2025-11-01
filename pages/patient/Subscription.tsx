@@ -1,56 +1,41 @@
-import React, { useState } from 'react';
-import Card from '../../components/shared/Card';
-import { SubscriptionPlan } from '../../types';
-import { CheckCircleIcon, CreditCardIcon, DownloadIcon, SparklesIcon } from '../../components/shared/Icons';
-import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
-import { useAuth } from '../../hooks/useAuth';
-import Modal from '../../components/shared/Modal';
-import { useApp } from '../../App';
-import PageHeader from '../../components/shared/PageHeader';
-
-interface BillingHistoryItem {
-    id: string;
-    date: string;
-    amount: number;
-    status: 'Paid';
-}
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var react_1 = require("react");
+var Card_1 = require("../../components/shared/Card");
+var Icons_1 = require("../../components/shared/Icons");
+var SubscriptionTierCard_1 = require("../../components/shared/SubscriptionTierCard");
+var useAuth_1 = require("../../hooks/useAuth");
+var Modal_1 = require("../../components/shared/Modal");
+var App_1 = require("../../App");
+var PageHeader_1 = require("../../components/shared/PageHeader");
 // FIX: Populated empty mock data.
-const billingHistory: BillingHistoryItem[] = [
+var billingHistory = [
     { id: 'inv_abc1', date: '2024-07-15', amount: 29.99, status: 'Paid' },
     { id: 'inv_abc2', date: '2024-06-15', amount: 29.99, status: 'Paid' },
 ];
-
-const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: string; onClose: () => void }> = ({ invoice, planName, onClose }) => {
-    if (!invoice) return null;
-
-    const handlePrint = () => {
-        const printContents = document.getElementById('invoice-to-print')?.innerHTML;
-        const originalContents = document.body.innerHTML;
+var InvoiceModal = function (_a) {
+    var invoice = _a.invoice, planName = _a.planName, onClose = _a.onClose;
+    if (!invoice)
+        return null;
+    var handlePrint = function () {
+        var _a;
+        var printContents = (_a = document.getElementById('invoice-to-print')) === null || _a === void 0 ? void 0 : _a.innerHTML;
+        var originalContents = document.body.innerHTML;
         if (printContents) {
             document.body.innerHTML = printContents;
             window.print();
             document.body.innerHTML = originalContents;
             // We need to reload to re-attach React components, this is a simple approach
-            window.location.reload(); 
+            window.location.reload();
         }
     };
-
-    return (
-        <Modal 
-            isOpen={!!invoice} 
-            onClose={onClose} 
-            title={`Invoice #${invoice.id}`}
-            footer={
-                <>
+    return (<Modal_1.default isOpen={!!invoice} onClose={onClose} title={"Invoice #".concat(invoice.id)} footer={<>
                     <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Close</button>
                     <button onClick={handlePrint} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                        <DownloadIcon className="w-4 h-4 mr-2" />
+                        <Icons_1.DownloadIcon className="w-4 h-4 mr-2"/>
                         Print / Save as PDF
                     </button>
-                </>
-            }
-        >
+                </>}>
             <div id="invoice-to-print">
                  <div className="printable-invoice space-y-4 text-sm">
                     <div className="text-center mb-6">
@@ -86,84 +71,67 @@ const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: str
                      <p className="text-xs text-center text-gray-500 pt-4">Thank you for your business!</p>
                 </div>
             </div>
-        </Modal>
-    );
+        </Modal_1.default>);
 };
-
-
-const Subscription: React.FC = () => {
-    const { user, currentSubscription, changeSubscription, patientSubscriptionPlans } = useAuth();
-    const { showToast } = useApp();
-    const [modalState, setModalState] = useState<{ isOpen: boolean; plan: SubscriptionPlan | null }>({ isOpen: false, plan: null });
-    const [selectedInvoice, setSelectedInvoice] = useState<BillingHistoryItem | null>(null);
-
-    const handleChoosePlan = (planId: string) => {
-        const plan = patientSubscriptionPlans.find(p => p.id === planId);
+var Subscription = function () {
+    var _a, _b, _c;
+    var _d = (0, useAuth_1.useAuth)(), user = _d.user, currentSubscription = _d.currentSubscription, changeSubscription = _d.changeSubscription, patientSubscriptionPlans = _d.patientSubscriptionPlans;
+    var showToast = (0, App_1.useApp)().showToast;
+    var _e = (0, react_1.useState)({ isOpen: false, plan: null }), modalState = _e[0], setModalState = _e[1];
+    var _f = (0, react_1.useState)(null), selectedInvoice = _f[0], setSelectedInvoice = _f[1];
+    var handleChoosePlan = function (planId) {
+        var plan = patientSubscriptionPlans.find(function (p) { return p.id === planId; });
         if (plan) {
-            setModalState({ isOpen: true, plan });
+            setModalState({ isOpen: true, plan: plan });
         }
     };
-
-    const handleConfirmChange = () => {
+    var handleConfirmChange = function () {
         if (modalState.plan) {
             changeSubscription(modalState.plan.id);
-            showToast(`Successfully subscribed to ${modalState.plan.name}!`, 'success');
+            showToast("Successfully subscribed to ".concat(modalState.plan.name, "!"), 'success');
             setModalState({ isOpen: false, plan: null });
         }
     };
+    return (<div>
+      <PageHeader_1.default title="My Subscription" subtitle="Manage your plan to unlock features like unlimited video consultations."/>
 
-  return (
-    <div>
-      <PageHeader 
-        title="My Subscription"
-        subtitle="Manage your plan to unlock features like unlimited video consultations."
-      />
-      
-        {!user?.subscription && (
-            <div className="mb-8 p-6 bg-gradient-to-r from-primary-500 to-accent rounded-lg text-white shadow-lg flex items-center justify-between">
+        {!(user === null || user === void 0 ? void 0 : user.subscription) && (<div className="mb-8 p-6 bg-gradient-to-r from-primary-500 to-accent rounded-lg text-white shadow-lg flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold flex items-center"><SparklesIcon className="w-6 h-6 mr-2"/> New Subscriber Offer!</h2>
+                    <h2 className="text-2xl font-bold flex items-center"><Icons_1.SparklesIcon className="w-6 h-6 mr-2"/> New Subscriber Offer!</h2>
                     <p>Get <span className="font-bold">50% OFF</span> your first video consultation call when you subscribe to any plan.</p>
                 </div>
                 <a href="#plans" className="bg-white text-primary-600 font-bold py-2 px-5 rounded-lg shadow hover:bg-primary-50 transition-colors">View Plans</a>
-            </div>
-        )}
+            </div>)}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column */}
         <div className="lg:col-span-1 flex flex-col gap-8">
-           <Card title="Current Plan">
-                {currentSubscription ? (
-                    <>
+           <Card_1.default title="Current Plan">
+                {currentSubscription ? (<>
                         <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg">
                             <h3 className="text-2xl font-bold text-primary-700">{currentSubscription.name}</h3>
-                            <p className="text-gray-600 mt-1">Renews on {user?.subscription?.renewalDate}</p>
+                            <p className="text-gray-600 mt-1">Renews on {(_a = user === null || user === void 0 ? void 0 : user.subscription) === null || _a === void 0 ? void 0 : _a.renewalDate}</p>
                         </div>
                         <div className="mt-4 space-y-4">
                             <div>
                                 <div className="flex justify-between text-sm mb-1"><span className="font-medium">Video Consults</span><span>0 of 5 used</span></div>
-                                <div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-primary-600 h-2 rounded-full" style={{width: '0%'}}></div></div>
+                                <div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-primary-600 h-2 rounded-full" style={{ width: '0%' }}></div></div>
                             </div>
                              <ul className="space-y-3 pt-4 border-t text-sm">
-                                {currentSubscription.features.map(feature => (
-                                    <li key={feature} className="flex items-center text-gray-700">
-                                        <CheckCircleIcon className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" />
+                                {currentSubscription.features.map(function (feature) { return (<li key={feature} className="flex items-center text-gray-700">
+                                        <Icons_1.CheckCircleIcon className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0"/>
                                         <span>{feature}</span>
-                                    </li>
-                                ))}
+                                    </li>); })}
                             </ul>
                         </div>
-                    </>
-                ) : (
-                    <div className="text-center py-4">
+                    </>) : (<div className="text-center py-4">
                         <p className="text-gray-600">You are not currently subscribed to a plan.</p>
                         <a href="#plans" className="mt-2 inline-block text-primary-600 font-semibold hover:underline">Choose a plan to get started</a>
-                    </div>
-                )}
-          </Card>
-          <Card title="Payment Method">
+                    </div>)}
+          </Card_1.default>
+          <Card_1.default title="Payment Method">
               <div className="flex items-center">
-                <CreditCardIcon className="w-8 h-8 text-gray-400 mr-4"/>
+                <Icons_1.CreditCardIcon className="w-8 h-8 text-gray-400 mr-4"/>
                 <div>
                     <p className="font-semibold text-gray-800">Visa ending in 4242</p>
                     <p className="text-sm text-gray-500">Expires 12 / 2026</p>
@@ -172,56 +140,36 @@ const Subscription: React.FC = () => {
                <button className="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg text-sm">
                     Update Payment
                 </button>
-          </Card>
-           <Card title="Billing History">
+          </Card_1.default>
+           <Card_1.default title="Billing History">
                 <div className="space-y-3">
-                    {billingHistory.length > 0 ? billingHistory.map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-sm">
+                    {billingHistory.length > 0 ? billingHistory.map(function (item) { return (<div key={item.id} className="flex justify-between items-center text-sm">
                             <div>
                                 <p className="font-medium text-gray-800">Payment on {item.date}</p>
-                                <button onClick={() => setSelectedInvoice(item)} className="text-primary-600 hover:underline">Download Invoice</button>
+                                <button onClick={function () { return setSelectedInvoice(item); }} className="text-primary-600 hover:underline">Download Invoice</button>
                             </div>
                             <p className="font-semibold text-gray-600">${item.amount.toFixed(2)}</p>
-                        </div>
-                    )) : <p className="text-gray-500 text-sm text-center">No billing history found.</p>}
+                        </div>); }) : <p className="text-gray-500 text-sm text-center">No billing history found.</p>}
                 </div>
-            </Card>
+            </Card_1.default>
         </div>
 
         {/* Right Column */}
         <div id="plans" className="lg:col-span-2">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Upgrade Your Plan</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {patientSubscriptionPlans.map(plan => (
-                    <SubscriptionTierCard
-                        key={plan.id}
-                        plan={plan}
-                        currentPlanName={currentSubscription?.name || ''}
-                        onChoosePlan={handleChoosePlan}
-                    />
-                ))}
+                {patientSubscriptionPlans.map(function (plan) { return (<SubscriptionTierCard_1.default key={plan.id} plan={plan} currentPlanName={(currentSubscription === null || currentSubscription === void 0 ? void 0 : currentSubscription.name) || ''} onChoosePlan={handleChoosePlan}/>); })}
             </div>
         </div>
       </div>
-      <Modal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({isOpen: false, plan: null})}
-        title="Confirm Subscription Change"
-        footer={<>
-            <button onClick={() => setModalState({isOpen: false, plan: null})} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+      <Modal_1.default isOpen={modalState.isOpen} onClose={function () { return setModalState({ isOpen: false, plan: null }); }} title="Confirm Subscription Change" footer={<>
+            <button onClick={function () { return setModalState({ isOpen: false, plan: null }); }} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
             <button onClick={handleConfirmChange} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">Confirm</button>
-        </>}
-      >
-        <p>Are you sure you want to change your plan to <strong>{modalState.plan?.name}</strong> for <strong>{modalState.plan?.price}</strong>?</p>
-      </Modal>
+        </>}>
+        <p>Are you sure you want to change your plan to <strong>{(_b = modalState.plan) === null || _b === void 0 ? void 0 : _b.name}</strong> for <strong>{(_c = modalState.plan) === null || _c === void 0 ? void 0 : _c.price}</strong>?</p>
+      </Modal_1.default>
 
-      <InvoiceModal 
-        invoice={selectedInvoice}
-        planName={currentSubscription?.name || ''}
-        onClose={() => setSelectedInvoice(null)}
-      />
-    </div>
-  );
+      <InvoiceModal invoice={selectedInvoice} planName={(currentSubscription === null || currentSubscription === void 0 ? void 0 : currentSubscription.name) || ''} onClose={function () { return setSelectedInvoice(null); }}/>
+    </div>);
 };
-
-export default Subscription;
+exports.default = Subscription;
