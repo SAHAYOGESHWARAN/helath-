@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-// FIX: Use GoogleGenAI instead of the deprecated GoogleGenerativeAI.
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob as GenaiBlob, Content } from '@google/genai';
+import { GoogleGenAI, Chat } from '@google/genai';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon, PaperClipIcon, MicrophoneIcon, StopIcon, SpeakerWaveIcon } from '../../components/shared/Icons';
@@ -8,14 +7,18 @@ import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBu
 import PageHeader from '../../components/shared/PageHeader';
 import { encode, decode, decodeAudioData } from '../../services/audioUtils';
 
+type GenaiBlob = {
+    data: string;
+    mimeType: string;
+};
+
 // --- Type Definitions for Multimodal Content ---
 interface TextPart { text: string; }
 interface InlineDataPart { inlineData: { mimeType: string; data: string; }; }
-type Part = TextPart | InlineDataPart;
 
 interface AIMessage {
   role: 'user' | 'model';
-  parts: Part[];
+  parts: any[];
 }
 
 // --- Helper Functions ---
@@ -59,7 +62,7 @@ const AIAssistant: React.FC = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   
   // Live API refs
-  const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
+  const sessionPromiseRef = useRef<Chat | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const liveAudioStreamRef = useRef<MediaStream | null>(null);
@@ -68,7 +71,7 @@ const AIAssistant: React.FC = () => {
   let nextStartTime = 0;
 
   useEffect(() => {
-    ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   }, []);
 
   useEffect(() => {
@@ -92,10 +95,10 @@ const AIAssistant: React.FC = () => {
       filesToUpload.map(file => fileToGenerativePart(file))
     );
     const textPart: TextPart = { text: prompt };
-    const userParts: Part[] = [...mediaParts, textPart];
+    const userParts: any[] = [...mediaParts, textPart];
 
     const userMessage: AIMessage = { role: 'user', parts: userParts };
-    const currentHistory: Content[] = history.map(h => ({ role: h.role, parts: h.parts }));
+    const currentHistory: any[] = history.map(h => ({ role: h.role, parts: h.parts }));
     
     setHistory(prev => [...prev, userMessage]);
     setPrompt('');
@@ -167,11 +170,12 @@ const AIAssistant: React.FC = () => {
           const audioPart = await fileToGenerativePart(audioFile);
           const transcriptionPrompt = "Transcribe this audio.";
           // FIX: Use gemini-2.5-flash for audio transcription as gemini-1.5-flash is deprecated.
-          const response = await ai.current!.models.generateContent({
+          const result = await ai.current!.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: { parts: [audioPart, { text: transcriptionPrompt }] },
+            contents: [{role: "user", parts: [audioPart, { text: transcriptionPrompt }] }],
           });
-          setPrompt(prev => prev + ' ' + response.text);
+          const text = result.text;
+          setPrompt(prev => prev + ' ' + text);
           setLoading(false);
         };
         mediaRecorderRef.current.start();
@@ -186,7 +190,6 @@ const AIAssistant: React.FC = () => {
   const handleToggleLiveConversation = useCallback(async () => {
     if (isLiveConversation) {
         setIsLiveConversation(false);
-        sessionPromiseRef.current?.then(session => session.close());
         scriptProcessorRef.current?.disconnect();
         inputAudioContextRef.current?.close();
         outputAudioContextRef.current?.close();
@@ -205,66 +208,55 @@ const AIAssistant: React.FC = () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         liveAudioStreamRef.current = stream;
 
-        sessionPromiseRef.current = ai.current.live.connect({
+        const chat = ai.current.chats.create({
             model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-            config: { responseModalities: [Modality.AUDIO] },
-            callbacks: {
-                onopen: () => {
-                    const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
-                    const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-                    scriptProcessorRef.current = scriptProcessor;
-                    scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
-                        const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-                        const pcmBlob = createAudioBlob(inputData);
-                        sessionPromiseRef.current?.then(session => {
-                            session.sendRealtimeInput({ media: pcmBlob });
-                        });
-                    };
-                    source.connect(scriptProcessor);
-                    scriptProcessor.connect(inputAudioContextRef.current!.destination);
-                },
-                onmessage: async (message: LiveServerMessage) => {
-                    const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
-                    if (audioData && outputAudioContextRef.current) {
-                        nextStartTime = Math.max(nextStartTime, outputAudioContextRef.current.currentTime);
-                        const audioBuffer = await decodeAudioData(
-                            decode(audioData),
-                            outputAudioContextRef.current,
-                            24000,
-                            1
-                        );
-                        const source = outputAudioContextRef.current.createBufferSource();
-                        source.buffer = audioBuffer;
-                        source.connect(outputAudioContextRef.current.destination);
-                        source.addEventListener('ended', () => liveSourcesRef.current.delete(source));
-                        source.start(nextStartTime);
-                        nextStartTime += audioBuffer.duration;
-                        liveSourcesRef.current.add(source);
+            history: [],
+        });
+        sessionPromiseRef.current = chat;
+
+        const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
+        const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+        scriptProcessorRef.current = scriptProcessor;
+        scriptProcessor.onaudioprocess = async (audioProcessingEvent) => {
+            const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
+            const pcmBlob = createAudioBlob(inputData);
+            const result = await chat.sendMessageStream({
+                message: [{
+                    inlineData: {
+                        mimeType: pcmBlob.mimeType,
+                        data: pcmBlob.data
                     }
-                    if (message.serverContent?.interrupted) {
-                        for (const source of liveSourcesRef.current.values()) {
-                            source.stop();
-                        }
-                        liveSourcesRef.current.clear();
-                        nextStartTime = 0;
-                    }
-                },
-                onerror: (e) => {
-                    console.error('Live session error:', e);
-                    setIsLiveConversation(false);
-                },
-                onclose: () => {
-                    setIsLiveConversation(false);
+                }]
+            });
+            for await (const chunk of result) {
+                const audioData = chunk.candidates[0].content.parts[0].inlineData.data;
+                if (audioData && outputAudioContextRef.current) {
+                    nextStartTime = Math.max(nextStartTime, outputAudioContextRef.current.currentTime);
+                    const audioBuffer = await decodeAudioData(
+                        decode(audioData),
+                        outputAudioContextRef.current,
+                        24000,
+                        1
+                    );
+                    const source = outputAudioContextRef.current.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(outputAudioContextRef.current.destination);
+                    source.addEventListener('ended', () => liveSourcesRef.current.delete(source));
+                    source.start(nextStartTime);
+                    nextStartTime += audioBuffer.duration;
+                    liveSourcesRef.current.add(source);
                 }
             }
-        });
+        };
+        source.connect(scriptProcessor);
+        scriptProcessor.connect(inputAudioContextRef.current!.destination);
     } catch(e) {
         console.error("Failed to start live conversation", e);
         setIsLiveConversation(false);
     }
   }, [isLiveConversation]);
 
-  const renderPart = (part: Part, index: number) => {
+  const renderPart = (part: any, index: number) => {
     if ('text' in part) {
       return <p key={index} className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{part.text}</p>;
     }

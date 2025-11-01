@@ -1,16 +1,8 @@
-
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+{
+  "name": "novo",
+  "description": "An all-in-one health and wellness dashboard powered by Gemini. Calculate your BMI, track calories, get personalized workout plans, and chat with a health assistant.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);

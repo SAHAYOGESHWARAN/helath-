@@ -15,7 +15,6 @@ import {
     HeartIcon,
 } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
-// FIX: Use GoogleGenAI instead of the deprecated GoogleGenerativeAI.
 import { GoogleGenAI } from '@google/genai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 import Tabs from '../../components/shared/Tabs';
@@ -95,16 +94,14 @@ const PatientDashboard: React.FC = () => {
     setSummary('');
     setSummaryError('');
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
         const systemInstruction = `You are an AI Health Assistant for NovoPath Medical. Your role is to provide a patient-friendly summary of their electronic medical record. Analyze the provided health data and generate a clear, concise summary covering key health highlights, medications, and general wellness tips. CRITICAL: You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant... consult with your doctor.**"`;
-        const response = await ai.models.generateContent({
-            // FIX: Use gemini-2.5-flash instead of deprecated gemini-1.5-flash
+        const result = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Please summarize this health data for the patient, ${user.name}: Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None'}. Medications: ${user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'None'}.`,
             config: { systemInstruction }
         });
-        // FIX: Correctly access text from response
-        setSummary(response.text);
+        setSummary(result.text);
     } catch (error) {
         console.error("Error generating health summary:", error);
         setSummaryError('Sorry, I was unable to generate your summary at this time.');
