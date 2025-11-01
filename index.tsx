@@ -1,8 +1,10 @@
-{
-  "name": "novo",
-  "description": "An all-in-one health and wellness dashboard powered by Gemini. Calculate your BMI, track calories, get personalized workout plans, and chat with a health assistant.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
