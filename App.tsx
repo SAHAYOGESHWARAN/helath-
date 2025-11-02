@@ -103,15 +103,16 @@ const AppRoutes: React.FC = () => {
   
   if (user) {
     const rolePath = user.role.toLowerCase();
+    const UserLayout = 
+        user.role === UserRole.PATIENT ? <PatientLayout /> :
+        user.role === UserRole.PROVIDER ? <ProviderLayout /> :
+        user.role === UserRole.ADMIN ? <AdminLayout /> :
+        <Navigate to="/login" replace />;
+
     return (
         <Routes>
-            <Route path="/*" element={<Navigate to={`/${rolePath}/dashboard`} replace />} />
-            <Route path={`/${rolePath}/*`} element={
-                user.role === UserRole.PATIENT ? <PatientLayout /> :
-                user.role === UserRole.PROVIDER ? <ProviderLayout /> :
-                user.role === UserRole.ADMIN ? <AdminLayout /> :
-                <Navigate to="/login" replace />
-            } />
+            <Route path={`/${rolePath}/*`} element={UserLayout} />
+            <Route path="*" element={<Navigate to={`/${rolePath}/dashboard`} replace />} />
         </Routes>
     );
   }

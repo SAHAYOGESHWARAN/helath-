@@ -84,6 +84,7 @@ export const useTable = <T extends Record<string, any>>(
                 if (aVal === undefined || aVal === null) return 1;
                 if (bVal === undefined || bVal === null) return -1;
 
+                // Date sorting
                 if (new Date(aVal).toString() !== 'Invalid Date' && new Date(bVal).toString() !== 'Invalid Date') {
                     const dateA = new Date(aVal).getTime();
                     const dateB = new Date(bVal).getTime();
@@ -96,6 +97,7 @@ export const useTable = <T extends Record<string, any>>(
                     return 0;
                 }
 
+                // General sorting
                 if (aVal < bVal) {
                     return sortConfig.direction === 'asc' ? -1 : 1;
                 }
@@ -134,7 +136,6 @@ export const useTable = <T extends Record<string, any>>(
         return React.createElement('span', { className: "ml-1" }, sortConfig.direction === 'asc' ? '▲' : '▼');
     };
 
-    // FIX: Expose columnFilters to allow components to read the current filter state.
     return {
         paginatedItems: paginatedData,
         sortedAndFilteredItems: sortedData,

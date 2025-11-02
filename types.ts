@@ -159,7 +159,7 @@ export interface User {
   licenseNumber?: string;
   isVerified?: boolean;
   subscription?: Subscription;
-
+  
   notificationSettings?: NotificationSettings;
   insurance?: InsuranceInfo;
 }

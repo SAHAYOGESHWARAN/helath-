@@ -1,59 +1,119 @@
-"use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var react_1 = require("react");
-var PageHeader_1 = require("../../components/shared/PageHeader");
-var Card_1 = require("../../components/shared/Card");
-var useAuth_1 = require("../../hooks/useAuth");
-var types_1 = require("../../types");
-var useTable_1 = require("../../hooks/useTable");
-var PaginationControls_1 = require("../../components/shared/PaginationControls");
-var Table_1 = require("../../components/shared/Table");
-var getRolePill = function (role) {
+import React, { useState, useEffect, useMemo } from 'react';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
+import { useAuth } from '../../hooks/useAuth';
+import { User, UserRole } from '../../types';
+import { useTable } from '../../hooks/useTable';
+import PaginationControls from '../../components/shared/PaginationControls';
+import { Table, ColumnDefinition } from '../../components/shared/Table';
+import Modal from '../../components/shared/Modal';
+import { Formik, Form, Field } from 'formik';
+
+const getRolePill = (role: UserRole) => {
     switch (role) {
-        case types_1.UserRole.PATIENT: return 'bg-blue-100 text-blue-800';
-        case types_1.UserRole.PROVIDER: return 'bg-emerald-100 text-emerald-800';
-        case types_1.UserRole.ADMIN: return 'bg-purple-100 text-purple-800';
+        case UserRole.PATIENT: return 'bg-blue-100 text-blue-800';
+        case UserRole.PROVIDER: return 'bg-emerald-100 text-emerald-800';
+        case UserRole.ADMIN: return 'bg-purple-100 text-purple-800';
     }
 };
-var UserManagement = function () {
-    var users = (0, useAuth_1.useAuth)().users;
-    var _a = (0, react_1.useState)('All'), roleFilter = _a[0], setRoleFilter = _a[1];
-    var _b = (0, useTable_1.useTable)(users, 10), paginatedItems = _b.paginatedItems, paginationProps = _b.paginationProps, requestSort = _b.requestSort, getSortArrow = _b.getSortArrow, setColumnFilters = _b.setColumnFilters;
-    (0, react_1.useEffect)(function () {
-        setColumnFilters(function (prev) { return (__assign(__assign({}, prev), { role: roleFilter === 'All' ? '' : roleFilter })); });
+
+const EditUserModal: React.FC<{ user: User | null; onClose: () => void; }> = ({ user, onClose }) => {
+    const { updateUser } = useAuth();
+
+    if (!user) return null;
+
+    return (
+        <Modal isOpen={!!user} onClose={onClose} title={`Edit User: ${user.name}`}>
+            <Formik
+                initialValues={{ name: user.name, role: user.role, status: user.status || 'Active' }}
+                onSubmit={(values) => {
+                    updateUser({ id: user.id, ...values });
+                    onClose();
+                }}
+            >
+                {({ isSubmitting }) => (
+                    <Form className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium">Name</label>
+                            <Field name="name" className="w-full p-2 border rounded" />
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium">Role</label>
+                            <Field as="select" name="role" className="w-full p-2 border rounded">
+                                {Object.values(UserRole).map(role => <option key={role} value={role}>{role}</option>)}
+                            </Field>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium">Status</label>
+                            <Field as="select" name="status" className="w-full p-2 border rounded">
+                                <option value="Active">Active</option>
+                                <option value="Suspended">Suspended</option>
+                                <option value="Inactive">Inactive</option>
+                            </Field>
+                        </div>
+                        <div className="flex justify-end space-x-2 pt-4">
+                            <button type="button" onClick={onClose} className="bg-gray-200 py-2 px-4 rounded-lg">Cancel</button>
+                            <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white py-2 px-4 rounded-lg">Save Changes</button>
+                        </div>
+                    </Form>
+                )}
+            </Formik>
+        </Modal>
+    );
+};
+
+const UserManagement: React.FC = () => {
+    const { users } = useAuth();
+    const [roleFilter, setRoleFilter] = useState<UserRole | 'All'>('All');
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    const { 
+        paginatedItems, 
+        paginationProps, 
+        requestSort, 
+        getSortArrow,
+        setColumnFilters,
+    } = useTable(users, 10);
+    
+    useEffect(() => {
+        setColumnFilters(prev => ({...prev, role: roleFilter === 'All' ? '' : roleFilter}));
     }, [roleFilter, setColumnFilters]);
-    var columns = [
-        { accessorKey: 'name', header: 'Name', cell: function (row) { return <span className="font-medium text-gray-900">{row.name}</span>; } },
+
+    const columns: ColumnDefinition<User>[] = [
+        { accessorKey: 'name', header: 'Name', cell: row => <span className="font-medium text-gray-900">{row.name}</span> },
         { accessorKey: 'email', header: 'Email' },
-        { accessorKey: 'role', header: 'Role', cell: function (row) { return (<span className={"px-2 py-1 text-xs font-semibold rounded-full ".concat(getRolePill(row.role))}>{row.role}</span>); } },
-        { accessorKey: 'status', header: 'Status', cell: function (row) { return row.status; } },
-        { accessorKey: 'actions', header: 'Actions', cell: function () { return (<button className="text-primary-600 hover:underline">Edit</button>); } },
+        { accessorKey: 'role', header: 'Role', cell: row => (
+            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRolePill(row.role)}`}>{row.role}</span>
+        )},
+        { accessorKey: 'status', header: 'Status', cell: row => row.status },
+        { accessorKey: 'actions', header: 'Actions', cell: (row) => (
+            <button onClick={() => setEditingUser(row)} className="text-primary-600 hover:underline">Edit</button>
+        )},
     ];
-    return (<div>
-            <PageHeader_1.default title="User Management" subtitle="View and manage all users on the platform."/>
-            <Card_1.default>
+
+    return (
+        <div>
+            <PageHeader title="User Management" subtitle="View and manage all users on the platform." />
+            <Card>
                 <div className="flex items-center justify-between mb-4">
                      <div className="flex space-x-2">
-                        <button onClick={function () { return setRoleFilter('All'); }} className={"px-3 py-1 text-sm rounded-md ".concat(roleFilter === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-200')}>All Roles</button>
-                        <button onClick={function () { return setRoleFilter(types_1.UserRole.PATIENT); }} className={"px-3 py-1 text-sm rounded-md ".concat(roleFilter === types_1.UserRole.PATIENT ? 'bg-primary-600 text-white' : 'bg-gray-200')}>Patients</button>
-                        <button onClick={function () { return setRoleFilter(types_1.UserRole.PROVIDER); }} className={"px-3 py-1 text-sm rounded-md ".concat(roleFilter === types_1.UserRole.PROVIDER ? 'bg-primary-600 text-white' : 'bg-gray-200')}>Providers</button>
-                        <button onClick={function () { return setRoleFilter(types_1.UserRole.ADMIN); }} className={"px-3 py-1 text-sm rounded-md ".concat(roleFilter === types_1.UserRole.ADMIN ? 'bg-primary-600 text-white' : 'bg-gray-200')}>Admins</button>
+                        <button onClick={() => setRoleFilter('All')} className={`px-3 py-1 text-sm rounded-md ${roleFilter === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>All Roles</button>
+                        <button onClick={() => setRoleFilter(UserRole.PATIENT)} className={`px-3 py-1 text-sm rounded-md ${roleFilter === UserRole.PATIENT ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>Patients</button>
+                        <button onClick={() => setRoleFilter(UserRole.PROVIDER)} className={`px-3 py-1 text-sm rounded-md ${roleFilter === UserRole.PROVIDER ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>Providers</button>
+                        <button onClick={() => setRoleFilter(UserRole.ADMIN)} className={`px-3 py-1 text-sm rounded-md ${roleFilter === UserRole.ADMIN ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>Admins</button>
                     </div>
                 </div>
-                <Table_1.Table columns={columns} data={paginatedItems} requestSort={requestSort} getSortArrow={getSortArrow}/>
-                 <PaginationControls_1.default {...paginationProps}/>
-            </Card_1.default>
-        </div>);
+                <Table<User>
+                    columns={columns}
+                    data={paginatedItems}
+                    requestSort={requestSort}
+                    getSortArrow={getSortArrow}
+                />
+                 <PaginationControls {...paginationProps} />
+            </Card>
+            <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />
+        </div>
+    );
 };
-exports.default = UserManagement;
+
+export default UserManagement;

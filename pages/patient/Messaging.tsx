@@ -1,88 +1,63 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { User, UserRole, Message } from '../../types';
+import { PaperAirplaneIcon, SparklesIcon } from '../../components/shared/Icons';
+import { GoogleGenAI, Content } from '@google/genai';
+
+const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
+
+const formatDateDivider = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Reset time components for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+    const messageDate = new Date(date);
+    messageDate.setHours(0, 0, 0, 0);
+
+    if (messageDate.getTime() === today.getTime()) return 'Today';
+    if (messageDate.getTime() === yesterday.getTime()) return 'Yesterday';
+    return messageDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-var react_1 = require("react");
-var useAuth_1 = require("../../hooks/useAuth");
-var types_1 = require("../../types");
-var Icons_1 = require("../../components/shared/Icons");
-var formatTimestamp = function (timestamp) {
-    var date = new Date(timestamp);
-    var now = new Date();
-    var diff = now.getTime() - date.getTime();
-    var diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    if (diffDays === 1) {
-        return 'Yesterday';
-    }
-    return date.toLocaleDateString();
-};
-var Messaging = function () {
-    var _a = (0, useAuth_1.useAuth)(), user = _a.user, users = _a.users, messages = _a.messages, sendMessage = _a.sendMessage, markMessagesAsRead = _a.markMessagesAsRead;
-    var _b = (0, react_1.useState)(null), selectedProvider = _b[0], setSelectedProvider = _b[1];
-    var _c = (0, react_1.useState)(''), message = _c[0], setMessage = _c[1];
-    var _d = (0, react_1.useState)(false), isLoading = _d[0], setIsLoading = _d[1];
-    var messagesEndRef = (0, react_1.useRef)(null);
-    var providersWithMessages = (0, react_1.useMemo)(function () {
-        if (!user)
-            return [];
-        var providerConversations = new Map();
-        var allMessages = Object.values(messages).flat();
-        allMessages.forEach(function (msg) {
-            var providerId = null;
+
+
+const Messaging: React.FC = () => {
+    const { user, users, messages, sendMessage, markMessagesAsRead } = useAuth();
+    const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
+    const [message, setMessage] = useState('');
+    const [isReplying, setIsReplying] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const ai = useRef<GoogleGenAI | null>(null);
+
+     const providersWithMessages = useMemo(() => {
+        if (!user) return [];
+        const providerConversations = new Map<string, { provider: User; lastMessage: Message | null; unreadCount: number }>();
+        const allMessages: Message[] = Object.values(messages).flat() as Message[];
+        
+        allMessages.forEach(msg => {
+            let providerId: string | null = null;
             if (msg.senderId === user.id) {
                 providerId = msg.receiverId;
-            }
-            else if (msg.receiverId === user.id) {
+            } else if (msg.receiverId === user.id) {
                 providerId = msg.senderId;
             }
+
             if (providerId) {
-                var provider = users.find(function (u) { return u.id === providerId && u.role === types_1.UserRole.PROVIDER; });
+                const provider = users.find(u => u.id === providerId && u.role === UserRole.PROVIDER);
                 if (provider) {
                     if (!providerConversations.has(provider.id)) {
                         providerConversations.set(provider.id, {
-                            provider: provider,
+                            provider,
                             lastMessage: null,
                             unreadCount: 0,
                         });
                     }
-                    var convo = providerConversations.get(provider.id);
+                    const convo = providerConversations.get(provider.id)!;
                     if (!convo.lastMessage || new Date(msg.timestamp) > new Date(convo.lastMessage.timestamp)) {
                         convo.lastMessage = msg;
                     }
@@ -92,134 +67,219 @@ var Messaging = function () {
                 }
             }
         });
-        return Array.from(providerConversations.values()).sort(function (a, b) {
-            if (!a.lastMessage)
-                return 1;
-            if (!b.lastMessage)
-                return -1;
+        
+        return Array.from(providerConversations.values()).sort((a, b) => {
+            if (!a.lastMessage) return 1;
+            if (!b.lastMessage) return -1;
             return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
         });
     }, [users, messages, user]);
-    (0, react_1.useEffect)(function () {
+
+    useEffect(() => {
+        ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    }, []);
+
+    useEffect(() => {
         if (providersWithMessages.length > 0 && !selectedProvider) {
             setSelectedProvider(providersWithMessages[0].provider);
         }
     }, [providersWithMessages, selectedProvider]);
-    (0, react_1.useEffect)(function () {
-        var _a;
-        (_a = messagesEndRef.current) === null || _a === void 0 ? void 0 : _a.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, selectedProvider, isLoading]);
-    (0, react_1.useEffect)(function () {
+    
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, []);
+    
+    useEffect(scrollToBottom, [messages, selectedProvider, isReplying]);
+
+    useEffect(() => {
         if (selectedProvider && user) {
             markMessagesAsRead(selectedProvider.id);
         }
     }, [selectedProvider, user, markMessagesAsRead, messages]);
-    var currentMessages = (0, react_1.useMemo)(function () {
-        if (!selectedProvider || !user)
-            return [];
-        var allMessages = Object.values(messages).flat();
-        var relevantMessages = allMessages.filter(function (m) { return (m.senderId === user.id && m.receiverId === selectedProvider.id) ||
-            (m.senderId === selectedProvider.id && m.receiverId === user.id); });
-        var uniqueMessages = Array.from(new Map(relevantMessages.map(function (m) { return [m.id, m]; })).values());
-        return uniqueMessages.sort(function (a, b) { return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(); });
+
+    const currentMessages = useMemo(() => {
+        if (!selectedProvider || !user) return [];
+        const allMessages: Message[] = Object.values(messages).flat() as Message[];
+        const relevantMessages = allMessages.filter(
+            m => (m.senderId === user.id && m.receiverId === selectedProvider.id) || 
+                 (m.senderId === selectedProvider.id && m.receiverId === user.id)
+        );
+        const uniqueMessages = Array.from(new Map(relevantMessages.map(m => [m.id, m])).values());
+        return uniqueMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     }, [messages, selectedProvider, user]);
-    var handleSendMessage = function (e) { return __awaiter(void 0, void 0, void 0, function () {
-        var messageToSend;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    e.preventDefault();
-                    if (!message.trim() || !user || !selectedProvider)
-                        return [2 /*return*/];
-                    sendMessage({
-                        senderId: user.id,
-                        receiverId: selectedProvider.id,
-                        text: message,
-                    });
-                    messageToSend = message;
-                    setMessage('');
-                    setIsLoading(true);
-                    return [4 /*yield*/, new Promise(function (res) { return setTimeout(res, 1500 + Math.random() * 1000); })];
-                case 1:
-                    _a.sent();
-                    sendMessage({
-                        senderId: selectedProvider.id,
-                        receiverId: user.id,
-                        text: "This is an automated reply to: \"".concat(messageToSend, "\""),
-                    });
-                    setIsLoading(false);
-                    return [2 /*return*/];
-            }
+    
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!message.trim() || !user || !selectedProvider || !ai.current || isReplying) return;
+
+        const userMessageText = message;
+        setMessage('');
+
+        sendMessage({
+            senderId: user.id,
+            receiverId: selectedProvider.id,
+            text: userMessageText,
         });
-    }); };
-    if (!user)
-        return null;
-    return (<div className="flex h-[calc(100vh-6.5rem)] bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+        setIsReplying(true);
+
+        try {
+            const systemInstruction = `You are an AI assistant impersonating a medical provider named ${selectedProvider.name}. A patient, ${user.name}, has sent you a message. Respond concisely and helpfully. The conversation history is provided. Your response should be brief and conversational. IMPORTANT: Do NOT provide medical advice. Instead, encourage the user to schedule an appointment for any medical concerns. Keep responses to 2-3 sentences.`;
+            
+            const historyForGemini: Content[] = currentMessages.map(m => ({
+                role: m.senderId === user.id ? 'user' : 'model',
+                parts: [{ text: m.text }],
+            }));
+            
+            const response = await ai.current.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [...historyForGemini, { role: 'user', parts: [{ text: userMessageText }] }],
+                config: { systemInstruction },
+            });
+
+            const replyText = response.text;
+            
+            sendMessage({
+                senderId: selectedProvider.id,
+                receiverId: user.id,
+                text: replyText,
+            });
+        } catch (error) {
+            console.error("Error generating reply:", error);
+            sendMessage({
+                senderId: selectedProvider.id,
+                receiverId: user.id,
+                text: "I'm sorry, I'm having trouble connecting right now. Please try again later.",
+            });
+        } finally {
+            setIsReplying(false);
+        }
+    };
+
+    if (!user) return null;
+
+    return (
+        <div className="flex h-[calc(100vh-6.5rem)] bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 flex flex-col">
                 <div className="p-4 border-b">
                     <h2 className="text-xl font-bold text-gray-800">Messaging</h2>
                 </div>
                 <div className="overflow-y-auto flex-1">
-                    {providersWithMessages.map(function (_a) {
-            var provider = _a.provider, lastMessage = _a.lastMessage, unreadCount = _a.unreadCount;
-            return (<div key={provider.id} onClick={function () { return setSelectedProvider(provider); }} className={"flex items-center p-3 cursor-pointer border-l-4 ".concat((selectedProvider === null || selectedProvider === void 0 ? void 0 : selectedProvider.id) === provider.id ? 'bg-primary-50 border-primary-600' : 'border-transparent hover:bg-gray-50')}>
-                            <img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full mr-3"/>
+                    {providersWithMessages.map(({ provider, lastMessage, unreadCount }) => (
+                        <div
+                            key={provider.id}
+                            onClick={() => setSelectedProvider(provider)}
+                            className={`flex items-center p-3 cursor-pointer border-l-4 ${selectedProvider?.id === provider.id ? 'bg-primary-50 border-primary-600' : 'border-transparent hover:bg-gray-50'}`}
+                        >
+                            <img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full mr-3" />
                             <div className="flex-1 overflow-hidden">
                                 <div className="flex justify-between items-center">
                                     <p className="font-semibold text-gray-800 truncate">{provider.name}</p>
                                     {lastMessage && <p className="text-xs text-gray-500 flex-shrink-0 ml-2">{formatTimestamp(lastMessage.timestamp)}</p>}
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className="text-sm text-gray-600 truncate">{(lastMessage === null || lastMessage === void 0 ? void 0 : lastMessage.text) || 'No messages yet'}</p>
+                                    <p className="text-sm text-gray-600 truncate">{lastMessage?.text || 'No messages yet'}</p>
                                     {unreadCount > 0 && <span className="bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2">{unreadCount}</span>}
                                 </div>
                             </div>
-                        </div>);
-        })}
+                        </div>
+                    ))}
                 </div>
             </div>
             <div className="w-full md:w-2/3 lg:w-3/4 flex flex-col bg-gray-50">
-                {selectedProvider ? (<>
+                {selectedProvider ? (
+                    <>
                         <div className="p-4 border-b bg-white flex items-center shadow-sm">
-                            <img src={selectedProvider.avatarUrl} alt={selectedProvider.name} className="w-10 h-10 rounded-full mr-3"/>
+                            <img src={selectedProvider.avatarUrl} alt={selectedProvider.name} className="w-10 h-10 rounded-full mr-3" />
                             <div>
                                 <h3 className="font-bold text-gray-800">{selectedProvider.name}</h3>
                                 <p className="text-sm text-gray-500">{selectedProvider.specialty}</p>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                            {currentMessages.map(function (msg) { return (<div key={msg.id} className={"flex items-end gap-3 ".concat(msg.senderId === user.id ? 'justify-end' : 'justify-start')}>
-                                    {msg.senderId !== user.id && <img src={selectedProvider.avatarUrl} alt="provider avatar" className="w-8 h-8 rounded-full flex-shrink-0"/>}
-                                    <div className={"max-w-lg p-3 rounded-2xl ".concat(msg.senderId === user.id ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border')}>
-                                        <p className="text-sm">{msg.text}</p>
-                                        <p className="text-xs opacity-70 mt-1.5 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                    </div>
-                                    {msg.senderId === user.id && <img src={user.avatarUrl} alt="patient avatar" className="w-8 h-8 rounded-full flex-shrink-0"/>}
-                                </div>); })}
-                            {isLoading && (<div className="flex items-end gap-3 justify-start">
-                                    <img src={selectedProvider.avatarUrl} alt="provider avatar" className="w-8 h-8 rounded-full flex-shrink-0"/>
-                                    <div className="max-w-lg p-3 rounded-2xl bg-white text-gray-800 rounded-bl-none border">
+                        <div className="flex-1 overflow-y-auto p-6">
+                           {currentMessages.map((msg, index) => {
+                                const prevMsg = currentMessages[index - 1];
+                                const nextMsg = currentMessages[index + 1];
+                                const isUserMessage = msg.senderId === user.id;
+
+                                const showDateDivider = !prevMsg || new Date(msg.timestamp).toDateString() !== new Date(prevMsg.timestamp).toDateString();
+                                
+                                const isFirstInSequence = !prevMsg || prevMsg.senderId !== msg.senderId || (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime()) > 1000 * 60 * 5;
+                                const isLastInSequence = !nextMsg || nextMsg.senderId !== msg.senderId || (new Date(nextMsg.timestamp).getTime() - new Date(msg.timestamp).getTime()) > 1000 * 60 * 5;
+
+                                const showAvatar = isLastInSequence && !isUserMessage;
+                                const marginTopClass = isFirstInSequence ? 'mt-4' : 'mt-1';
+
+                                let bubbleClasses = 'rounded-xl';
+                                if (isLastInSequence) {
+                                    bubbleClasses = isUserMessage ? 'rounded-xl rounded-br-sm' : 'rounded-xl rounded-bl-sm';
+                                }
+
+                                return (
+                                    <React.Fragment key={msg.id}>
+                                        {showDateDivider && (
+                                            <div className="text-center text-xs text-gray-500 my-4">
+                                                <span className="bg-gray-200 px-3 py-1 rounded-full">{formatDateDivider(new Date(msg.timestamp))}</span>
+                                            </div>
+                                        )}
+                                        <div className={`flex items-end gap-2 ${isUserMessage ? 'justify-end' : 'justify-start'} ${marginTopClass} animate-fade-in-up`}>
+                                            {!isUserMessage && (
+                                                <div className="w-8 flex-shrink-0">
+                                                    {showAvatar && <img src={selectedProvider.avatarUrl} alt="provider avatar" className="w-8 h-8 rounded-full" />}
+                                                </div>
+                                            )}
+                                            <div className={`max-w-lg p-3 ${bubbleClasses} ${isUserMessage ? 'bg-primary-600 text-white' : 'bg-white text-gray-800 border shadow-sm'}`}>
+                                                <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                                                <p className="text-xs opacity-70 mt-1.5 text-right">{formatTimestamp(msg.timestamp)}</p>
+                                            </div>
+                                        </div>
+                                    </React.Fragment>
+                                );
+                           })}
+                            {isReplying && (
+                                <div className="flex items-end gap-3 justify-start mt-4 animate-fade-in-up">
+                                    <img src={selectedProvider.avatarUrl} alt="provider avatar" className="w-8 h-8 rounded-full flex-shrink-0" />
+                                    <div className="max-w-lg p-3 rounded-xl rounded-bl-sm bg-white text-gray-800 border shadow-sm">
                                         <div className="flex items-center space-x-1">
                                             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
+                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></span>
                                         </div>
                                     </div>
-                                </div>)}
-                            <div ref={messagesEndRef}/>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
                         </div>
                         <div className="p-4 border-t bg-white">
                             <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                                <input type="text" value={message} onChange={function (e) { return setMessage(e.target.value); }} placeholder={"Message ".concat(selectedProvider.name, "...")} className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 bg-gray-50" aria-label="Message input"/>
-                                <button type="submit" disabled={!message.trim() || isLoading} className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400 transition-colors" aria-label="Send message">
-                                    <Icons_1.PaperAirplaneIcon className="w-6 h-6"/>
+                                <input
+                                    type="text"
+                                    value={message}
+                                    onChange={e => setMessage(e.target.value)}
+                                    placeholder={`Message ${selectedProvider.name}...`}
+                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 bg-gray-50"
+                                    aria-label="Message input"
+                                    disabled={isReplying}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!message.trim() || isReplying}
+                                    className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400 transition-colors"
+                                    aria-label="Send message"
+                                >
+                                    <PaperAirplaneIcon className="w-6 h-6" />
                                 </button>
                             </form>
                         </div>
-                    </>) : (<div className="flex-1 flex items-center justify-center text-gray-500">
+                    </>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-500">
                         <p>Select a conversation to start messaging.</p>
-                    </div>)}
+                    </div>
+                )}
             </div>
-        </div>);
+        </div>
+    );
 };
-exports.default = Messaging;
+
+export default Messaging;
