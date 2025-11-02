@@ -277,11 +277,4 @@
     "url": "https://aistudiocdn.com/url@^0.11.4"
   }
 }
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
-<body class="bg-slate-50">
-  <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
-</html>
+
