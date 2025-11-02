@@ -86,7 +86,7 @@ export const MOCK_LAB_ORDERS: LabOrder[] = [
 ];
 
 export const MOCK_REFERRALS: Referral[] = [
-    { id: 'ref1', patientId: 'pat1', patientName: 'John Doe', referredTo: 'Dr. Evelyn Reed (Cardiology)', referredFrom: 'Dr. Jane Smith', createdAt: '2024-08-10', status: ReferralStatus.SENT, type: 'Outgoing', reason: 'Follow-up on EKG results', urgency: 'Routine', auditLog: [{ date: '2024-08-10', action: 'Created', status: ReferralStatus.PENDING }, { date: '2024-08-11', action: 'Sent via Fax', status: ReferralStatus.SENT }] },
+    { id: 'ref1', patientId: 'pat1', patientName: 'John Doe', referredTo: 'Dr. Evelyn Reed (Cardiology)', referredFrom: 'Dr. Jane Smith', createdAt: '2024-08-10', status: ReferralStatus.SENT, type: 'Outgoing', reason: 'Follow-up on EKG results', urgency: 'Routine', auditLog: [{ date: '2024-08-10', action: 'Referral Created', status: ReferralStatus.PENDING }, { date: '2024-08-11', action: 'Sent via Fax', status: ReferralStatus.SENT }] },
 ];
 
 export const MOCK_AUDIT_LOG: SystemAuditLog[] = [

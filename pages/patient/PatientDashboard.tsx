@@ -13,9 +13,9 @@ import {
     DocumentTextIcon,
     CurrencyDollarIcon,
     HeartIcon,
+    BeakerIcon,
 } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
-// FIX: Use GoogleGenAI instead of the deprecated GoogleGenerativeAI.
 import { GoogleGenAI } from '@google/genai';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 import Tabs from '../../components/shared/Tabs';
@@ -147,11 +147,12 @@ const PatientDashboard: React.FC = () => {
   ];
   
   const quickActions = [
-      { name: 'Schedule Appointment', href: '/appointments', icon: <CalendarIcon className="w-5 h-5 text-primary-600"/> },
-      { name: 'View Health Records', href: '/emr', icon: <DocumentTextIcon className="w-5 h-5 text-emerald-600"/> },
-      { name: 'Message My Provider', href: '/messaging', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/> },
-      { name: 'Pay My Bill', href: '/payments', icon: <CurrencyDollarIcon className="w-5 h-5 text-amber-600"/> },
-      { name: 'Start a Video Visit', href: '/video-consults', icon: <VideoCameraIcon className="w-5 h-5 text-rose-600"/> },
+      { name: 'Schedule Appointment', href: '/patient/appointments', icon: <CalendarIcon className="w-5 h-5 text-primary-600"/> },
+      { name: 'View Health Records', href: '/patient/emr', icon: <DocumentTextIcon className="w-5 h-5 text-emerald-600"/> },
+      { name: 'View Lab Results', href: '/patient/lab-results', icon: <BeakerIcon className="w-5 h-5 text-indigo-600"/> },
+      { name: 'Message My Provider', href: '/patient/messaging', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/> },
+      { name: 'Pay My Bill', href: '/patient/payments', icon: <CurrencyDollarIcon className="w-5 h-5 text-amber-600"/> },
+      { name: 'Start a Video Visit', href: '/patient/video-consults', icon: <VideoCameraIcon className="w-5 h-5 text-rose-600"/> },
   ];
 
   return (
@@ -167,7 +168,7 @@ const PatientDashboard: React.FC = () => {
                 title="Next Appointment"
                 value={nextAppointment ? new Date(nextAppointment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'None'}
                 label={nextAppointment?.time || ''}
-                link="/appointments"
+                link="/patient/appointments"
                 color="primary"
             />
              <StatCard 
@@ -175,7 +176,7 @@ const PatientDashboard: React.FC = () => {
                 title="Active Medications"
                 value={activeMedicationsCount}
                 label="meds"
-                link="/emr"
+                link="/patient/medications"
                 color="emerald"
             />
              <StatCard 
@@ -183,7 +184,7 @@ const PatientDashboard: React.FC = () => {
                 title={primaryGoal?.title || "No Goals Set"}
                 value={primaryGoal?.current || 0}
                 label={primaryGoal?.unit || 'goals'}
-                link="/emr"
+                link="/patient/goals"
                 color="amber"
             />
              <StatCard 
@@ -191,7 +192,7 @@ const PatientDashboard: React.FC = () => {
                 title="Unread Messages"
                 value={unreadMessages}
                 label="messages"
-                link="/messaging"
+                link="/patient/messaging"
                 color="sky"
             />
         </div>
@@ -240,7 +241,7 @@ const PatientDashboard: React.FC = () => {
                         ) : (
                             <div className="text-center py-4 text-gray-500">
                                 <p className="font-semibold text-gray-700">No Health Goals Yet</p>
-                                <Link to="/emr" className="mt-2 inline-block text-primary-600 font-semibold hover:underline text-sm">
+                                <Link to="/patient/goals" className="mt-2 inline-block text-primary-600 font-semibold hover:underline text-sm">
                                     Set Goals
                                 </Link>
                             </div>

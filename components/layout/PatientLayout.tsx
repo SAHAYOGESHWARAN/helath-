@@ -19,6 +19,7 @@ import Medications from '../../pages/patient/Medications';
 import TaskList from '../../pages/patient/TaskList';
 import HealthGoalsPage from '../../pages/patient/HealthGoalsPage';
 import Insurance from '../../pages/patient/Insurance';
+import LabResults from '../../pages/patient/LabResults';
 
 
 const PatientLayout: React.FC = () => {
@@ -35,6 +36,7 @@ const PatientLayout: React.FC = () => {
               <Route path="appointments" element={<PatientAppointments />} />
               <Route path="emr" element={<EMR />} />
               <Route path="medications" element={<Medications />} />
+              <Route path="lab-results" element={<LabResults />} />
               <Route path="goals" element={<HealthGoalsPage />} />
               <Route path="tasks" element={<TaskList />} />
               <Route path="history" element={<VisitHistory />} />

@@ -3,7 +3,7 @@ import {
   MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS,
   MOCK_REFERRALS, MOCK_AUDIT_LOG
 } from '../mockData';
-import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, Referral, SystemAuditLog, UserRole, InsuranceInfo, MedicalCondition, Allergy, HealthGoal, Task, Subtask, Subscription, ReminderSettings, ReferralStatus, AuditLogEntry } from '../types';
+import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, UserRole, ClaimStatus, ClaimType } from '../types';
 
 const SIMULATED_LATENCY = 150;
 

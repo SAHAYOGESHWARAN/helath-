@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-// FIX: Correctly import GoogleGenAI and Type from @google/genai
 import { GoogleGenAI, Type } from "@google/genai";
 import Modal from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';

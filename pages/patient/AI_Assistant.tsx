@@ -7,6 +7,7 @@ import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBu
 import PageHeader from '../../components/shared/PageHeader';
 import { encode, decode, decodeAudioData } from '../../services/audioUtils';
 import { useApp } from '../../App';
+import MarkdownRenderer from '../../components/shared/MarkdownRenderer';
 
 // --- Type Definitions for Multimodal Content ---
 interface TextPart { text: string; }
@@ -108,12 +109,38 @@ const AIAssistant: React.FC = () => {
       ? 'gemini-2.5-flash'
       : 'gemini-flash-lite-latest';
     
+    const buildHealthSummary = () => {
+        if (!user) return 'No patient data available.';
+        let summary = 'Available patient data:\n';
+        if (user.appointments?.length) {
+          const nextAppt = user.appointments.find(a => new Date(a.date) >= new Date());
+          if (nextAppt) {
+            summary += `- Upcoming Appointment: ${nextAppt.reason} with ${nextAppt.providerName} on ${nextAppt.date}.\n`;
+          }
+        }
+        if (user.labResults?.length) {
+          const latestLab = user.labResults[0];
+          summary += `- Latest Lab Results (${latestLab.date}): ${latestLab.testName} - ${latestLab.components.map(c => `${c.name}: ${c.value}`).join(', ')}.\n`;
+        }
+        if (user.medications?.length) {
+          summary += `- Active Medications: ${user.medications.filter(m => m.status === 'Active').map(m => m.name).join(', ')}.\n`;
+        }
+        return summary;
+      };
+      
+    const systemInstruction = `You are NovoPath Medical's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data. Current user: ${user.name}. Today's date: ${new Date().toLocaleDateString()}.
+    
+    ${buildHealthSummary()}
+    
+    IMPORTANT: Always format your responses using Markdown. Use lists, tables, and code blocks where appropriate to present information clearly. For example, when presenting lab results, use a table. Always include a disclaimer that you are an AI assistant and not a medical professional, and that the user should consult their doctor for medical advice. Do not make up medical information. Use the provided data to answer questions. Be concise.`;
+
     try {
       setHistory(prev => [...prev, { role: 'model', parts: [{ text: '' }] }]);
       
       const resultStream = await ai.current.models.generateContentStream({
         model: modelToUse,
         contents: [...currentHistory, { role: 'user', parts: userParts }],
+        config: { systemInstruction },
       });
 
       let fullText = '';
@@ -266,7 +293,7 @@ const AIAssistant: React.FC = () => {
 
   const renderPart = (part: Part, index: number) => {
     if ('text' in part) {
-      return <p key={index} className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{part.text}</p>;
+      return <MarkdownRenderer key={index} content={part.text} />;
     }
     if (part.inlineData?.mimeType.startsWith('image/')) {
       return <img key={index} src={`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`} alt="user upload" className="rounded-lg max-w-xs mt-2" />;

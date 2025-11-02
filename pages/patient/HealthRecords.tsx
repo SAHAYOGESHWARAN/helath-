@@ -186,7 +186,7 @@ const HealthRecords: React.FC = () => {
                         </li>
                     )) : <li className="text-center text-gray-500 py-4">No active medications.</li>}
                 </ul>
-                <Link to="/medications" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">Manage All Medications &rarr;</Link>
+                <Link to="/patient/medications" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">Manage All Medications &rarr;</Link>
             </div>
         },
         { name: 'Vitals History', icon: <HeartIcon />, content: 
@@ -217,14 +217,14 @@ const HealthRecords: React.FC = () => {
                             {(user?.healthGoals?.length || 0) > 0 ? user.healthGoals.map(goal => <GoalProgress key={goal.id} goal={goal} />)
                             : <p className="text-center text-gray-500 text-sm py-2">No goals set.</p>}
                         </div>
-                        <Link to="/goals" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">Manage Goals &rarr;</Link>
+                        <Link to="/patient/goals" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">Manage Goals &rarr;</Link>
                     </Card>
                     <Card title="My Tasks">
                          <div className="space-y-3">
                             {(user?.tasks?.length || 0) > 0 ? user.tasks.filter(t => !t.completed).slice(0, 3).map(task => <TaskSummary key={task.id} task={task} />)
                             : <p className="text-center text-gray-500 text-sm py-2">No pending tasks.</p>}
                         </div>
-                        <Link to="/tasks" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">Manage All Tasks &rarr;</Link>
+                        <Link to="/patient/tasks" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">Manage All Tasks &rarr;</Link>
                     </Card>
                     <Card title="Recent Lab Results">
                         {user?.labResults && user.labResults.length > 0 ? (
@@ -232,6 +232,7 @@ const HealthRecords: React.FC = () => {
                         ) : (
                             <p className="text-center text-gray-500 text-sm py-2">No lab results available.</p>
                         )}
+                         <Link to="/patient/lab-results" className="mt-4 block text-center text-sm font-semibold text-primary-600 hover:underline">View All Lab Results &rarr;</Link>
                     </Card>
                 </div>
             </div>

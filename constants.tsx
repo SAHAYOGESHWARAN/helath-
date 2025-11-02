@@ -26,6 +26,7 @@ import {
     ClipboardDocumentListIcon,
     DumbbellIcon,
     IdentificationIcon,
+    BeakerIcon,
 } from './components/shared/Icons';
 
 export interface NavItem {
@@ -39,6 +40,7 @@ export const PATIENT_NAV: NavItem[] = [
   { name: 'Appointments', href: 'appointments', icon: <CalendarIcon /> },
   { name: 'EMR Overview', href: 'emr', icon: <DocumentTextIcon /> },
   { name: 'Medications', href: 'medications', icon: <PillIcon /> },
+  { name: 'Lab Results', href: 'lab-results', icon: <BeakerIcon /> },
   { name: 'Health Goals', href: 'goals', icon: <DumbbellIcon /> },
   { name: 'My Tasks', href: 'tasks', icon: <ClipboardDocumentListIcon /> },
   { name: 'Visit History', href: 'history', icon: <DocumentDuplicateIcon /> },
