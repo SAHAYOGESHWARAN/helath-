@@ -24,7 +24,10 @@ dist-ssr
 *.sw?
 
 # Compiled JavaScript files (keep only TypeScript source)
-**/*.js
-!eslint.config.js
-!vite.config.js
-!*.config.js
+# Ignore compiled .js files in source directories
+pages/**/*.js
+components/**/*.js
+hooks/**/*.js
+services/**/*.js
+contexts/**/*.js
+!**/*.config.js
