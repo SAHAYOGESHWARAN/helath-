@@ -78,8 +78,13 @@ const AIAssistant: React.FC = () => {
   let nextStartTime = 0;
 
   useEffect(() => {
-    ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  }, []);
+    try {
+      ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    } catch (error) {
+      console.error("Failed to initialize AI:", error);
+      showToast("Failed to initialize AI assistant. Please refresh the page.", 'error');
+    }
+  }, [showToast]);
 
   useEffect(() => {
     if (user && history.length === 0) {
@@ -170,7 +175,9 @@ const AIAssistant: React.FC = () => {
       }
     } catch (error) {
       console.error("Error generating content:", error);
-      setHistory(prev => [...prev.slice(0, -1), { role: 'model', parts: [{ text: "I'm sorry, I encountered an error. Please try again." }] }]);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      showToast("Failed to generate response. Please try again.", 'error');
+      setHistory(prev => [...prev.slice(0, -1), { role: 'model', parts: [{ text: "I'm sorry, I encountered an error while processing your request. Please try again or contact support if the issue persists." }] }]);
     } finally {
       setLoading(false);
     }
@@ -213,7 +220,8 @@ const AIAssistant: React.FC = () => {
         setIsRecording(true);
       } catch (err) {
         console.error("Microphone access denied:", err);
-        showToast("Microphone access is required. Please enable it in your browser settings.", 'error');
+        const errorMsg = err instanceof Error ? err.message : "Microphone access denied";
+        showToast(`Microphone access is required: ${errorMsg}. Please enable it in your browser settings.`, 'error');
         setIsRecording(false);
       }
     }

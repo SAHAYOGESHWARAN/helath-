@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, Message } from '../../types';
-import { PaperAirplaneIcon, SparklesIcon } from '../../components/shared/Icons';
+import { PaperAirplaneIcon } from '../../components/shared/Icons';
 import { GoogleGenAI, Content } from '@google/genai';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
 
 const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -76,7 +78,11 @@ const Messaging: React.FC = () => {
     }, [users, messages, user]);
 
     useEffect(() => {
-        ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        try {
+            ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        } catch (error) {
+            console.error("Failed to initialize AI:", error);
+        }
     }, []);
 
     useEffect(() => {
@@ -146,20 +152,30 @@ const Messaging: React.FC = () => {
             });
         } catch (error) {
             console.error("Error generating reply:", error);
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
             sendMessage({
                 senderId: selectedProvider.id,
                 receiverId: user.id,
-                text: "I'm sorry, I'm having trouble connecting right now. Please try again later.",
+                text: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact support if the issue persists.",
             });
         } finally {
             setIsReplying(false);
         }
     };
 
-    if (!user) return null;
+    if (!user) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Please log in to access messaging.</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex h-[calc(100vh-6.5rem)] bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="flex flex-col h-full">
+            <PageHeader title="Messaging" subtitle="Connect with your healthcare providers" />
+            <Card className="flex-1 flex p-0 overflow-hidden">
+                <div className="flex h-full w-full bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 flex flex-col">
                 <div className="p-4 border-b">
                     <h2 className="text-xl font-bold text-gray-800">Messaging</h2>
@@ -278,6 +294,8 @@ const Messaging: React.FC = () => {
                     </div>
                 )}
             </div>
+                </div>
+            </Card>
         </div>
     );
 };
