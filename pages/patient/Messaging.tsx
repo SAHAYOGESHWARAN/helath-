@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, Message } from '../../types';
-import { PaperAirplaneIcon } from '../../components/shared/Icons';
+import { PaperAirplaneIcon, CheckCircleIcon, ClockIcon } from '../../components/shared/Icons';
 import { GoogleGenAI, Content } from '@google/genai';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
@@ -33,14 +33,16 @@ const Messaging: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
     const [message, setMessage] = useState('');
     const [isReplying, setIsReplying] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const ai = useRef<GoogleGenAI | null>(null);
 
-     const providersWithMessages = useMemo(() => {
+    const providersWithMessages = useMemo(() => {
         if (!user) return [];
         const providerConversations = new Map<string, { provider: User; lastMessage: Message | null; unreadCount: number }>();
         const allMessages: Message[] = Object.values(messages).flat() as Message[];
-        
+
         allMessages.forEach(msg => {
             let providerId: string | null = null;
             if (msg.senderId === user.id) {
@@ -69,7 +71,7 @@ const Messaging: React.FC = () => {
                 }
             }
         });
-        
+
         return Array.from(providerConversations.values()).sort((a, b) => {
             if (!a.lastMessage) return 1;
             if (!b.lastMessage) return -1;
@@ -90,11 +92,11 @@ const Messaging: React.FC = () => {
             setSelectedProvider(providersWithMessages[0].provider);
         }
     }, [providersWithMessages, selectedProvider]);
-    
+
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
-    
+
     useEffect(scrollToBottom, [messages, selectedProvider, isReplying]);
 
     useEffect(() => {
@@ -107,13 +109,13 @@ const Messaging: React.FC = () => {
         if (!selectedProvider || !user) return [];
         const allMessages: Message[] = Object.values(messages).flat() as Message[];
         const relevantMessages = allMessages.filter(
-            m => (m.senderId === user.id && m.receiverId === selectedProvider.id) || 
-                 (m.senderId === selectedProvider.id && m.receiverId === user.id)
+            m => (m.senderId === user.id && m.receiverId === selectedProvider.id) ||
+                (m.senderId === selectedProvider.id && m.receiverId === user.id)
         );
         const uniqueMessages = Array.from(new Map(relevantMessages.map(m => [m.id, m])).values());
         return uniqueMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     }, [messages, selectedProvider, user]);
-    
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim() || !user || !selectedProvider || !ai.current || isReplying) return;
@@ -131,12 +133,12 @@ const Messaging: React.FC = () => {
 
         try {
             const systemInstruction = `You are an AI assistant impersonating a medical provider named ${selectedProvider.name}. A patient, ${user.name}, has sent you a message. Respond concisely and helpfully. The conversation history is provided. Your response should be brief and conversational. IMPORTANT: Do NOT provide medical advice. Instead, encourage the user to schedule an appointment for any medical concerns. Keep responses to 2-3 sentences.`;
-            
+
             const historyForGemini: Content[] = currentMessages.map(m => ({
                 role: m.senderId === user.id ? 'user' : 'model',
                 parts: [{ text: m.text }],
             }));
-            
+
             const response = await ai.current.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: [...historyForGemini, { role: 'user', parts: [{ text: userMessageText }] }],
@@ -144,7 +146,7 @@ const Messaging: React.FC = () => {
             });
 
             const replyText = response.text;
-            
+
             sendMessage({
                 senderId: selectedProvider.id,
                 receiverId: user.id,
@@ -171,129 +173,279 @@ const Messaging: React.FC = () => {
         );
     }
 
+    const filteredProviders = useMemo(() => {
+        if (!searchQuery.trim()) return providersWithMessages;
+        const query = searchQuery.toLowerCase();
+        return providersWithMessages.filter(({ provider }) =>
+            provider.name.toLowerCase().includes(query) ||
+            provider.specialty?.toLowerCase().includes(query)
+        );
+    }, [providersWithMessages, searchQuery]);
+
     return (
-        <div className="flex flex-col h-full">
-            <PageHeader title="Messaging" subtitle="Connect with your healthcare providers" />
-            <Card className="flex-1 flex p-0 overflow-hidden">
-                <div className="flex h-full w-full bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 flex flex-col">
-                <div className="p-4 border-b">
-                    <h2 className="text-xl font-bold text-gray-800">Messaging</h2>
-                </div>
-                <div className="overflow-y-auto flex-1">
-                    {providersWithMessages.map(({ provider, lastMessage, unreadCount }) => (
-                        <div
-                            key={provider.id}
-                            onClick={() => setSelectedProvider(provider)}
-                            className={`flex items-center p-3 cursor-pointer border-l-4 ${selectedProvider?.id === provider.id ? 'bg-primary-50 border-primary-600' : 'border-transparent hover:bg-gray-50'}`}
-                        >
-                            <img src={provider.avatarUrl} alt={provider.name} className="w-12 h-12 rounded-full mr-3" />
-                            <div className="flex-1 overflow-hidden">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-semibold text-gray-800 truncate">{provider.name}</p>
-                                    {lastMessage && <p className="text-xs text-gray-500 flex-shrink-0 ml-2">{formatTimestamp(lastMessage.timestamp)}</p>}
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-sm text-gray-600 truncate">{lastMessage?.text || 'No messages yet'}</p>
-                                    {unreadCount > 0 && <span className="bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2">{unreadCount}</span>}
-                                </div>
+        <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-primary-50/30">
+            <PageHeader
+                title="Secure Messaging"
+                subtitle="Connect with your healthcare providers in real-time"
+            />
+            <Card className="flex-1 flex p-0 overflow-hidden shadow-xl border-0">
+                <div className="flex h-full w-full bg-white rounded-xl overflow-hidden backdrop-blur-sm">
+                    {/* Enhanced Sidebar */}
+                    <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200/60 flex flex-col bg-gradient-to-b from-white to-gray-50/50">
+                        <div className="p-4 border-b border-gray-200/60 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+                            <div className="flex items-center justify-between mb-3">
+                                <h2 className="text-xl font-bold">Conversations</h2>
+                                <button
+                                    onClick={() => setShowSearch(!showSearch)}
+                                    className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                                    aria-label="Search"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </button>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="w-full md:w-2/3 lg:w-3/4 flex flex-col bg-gray-50">
-                {selectedProvider ? (
-                    <>
-                        <div className="p-4 border-b bg-white flex items-center shadow-sm">
-                            <img src={selectedProvider.avatarUrl} alt={selectedProvider.name} className="w-10 h-10 rounded-full mr-3" />
-                            <div>
-                                <h3 className="font-bold text-gray-800">{selectedProvider.name}</h3>
-                                <p className="text-sm text-gray-500">{selectedProvider.specialty}</p>
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-6">
-                           {currentMessages.map((msg, index) => {
-                                const prevMsg = currentMessages[index - 1];
-                                const nextMsg = currentMessages[index + 1];
-                                const isUserMessage = msg.senderId === user.id;
-
-                                const showDateDivider = !prevMsg || new Date(msg.timestamp).toDateString() !== new Date(prevMsg.timestamp).toDateString();
-                                
-                                const isFirstInSequence = !prevMsg || prevMsg.senderId !== msg.senderId || (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime()) > 1000 * 60 * 5;
-                                const isLastInSequence = !nextMsg || nextMsg.senderId !== msg.senderId || (new Date(nextMsg.timestamp).getTime() - new Date(msg.timestamp).getTime()) > 1000 * 60 * 5;
-
-                                const showAvatar = isLastInSequence && !isUserMessage;
-                                const marginTopClass = isFirstInSequence ? 'mt-4' : 'mt-1';
-
-                                let bubbleClasses = 'rounded-xl';
-                                if (isLastInSequence) {
-                                    bubbleClasses = isUserMessage ? 'rounded-xl rounded-br-sm' : 'rounded-xl rounded-bl-sm';
-                                }
-
-                                return (
-                                    <React.Fragment key={msg.id}>
-                                        {showDateDivider && (
-                                            <div className="text-center text-xs text-gray-500 my-4">
-                                                <span className="bg-gray-200 px-3 py-1 rounded-full">{formatDateDivider(new Date(msg.timestamp))}</span>
-                                            </div>
-                                        )}
-                                        <div className={`flex items-end gap-2 ${isUserMessage ? 'justify-end' : 'justify-start'} ${marginTopClass} animate-fade-in-up`}>
-                                            {!isUserMessage && (
-                                                <div className="w-8 flex-shrink-0">
-                                                    {showAvatar && <img src={selectedProvider.avatarUrl} alt="provider avatar" className="w-8 h-8 rounded-full" />}
-                                                </div>
-                                            )}
-                                            <div className={`max-w-lg p-3 ${bubbleClasses} ${isUserMessage ? 'bg-primary-600 text-white' : 'bg-white text-gray-800 border shadow-sm'}`}>
-                                                <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</p>
-                                                <p className="text-xs opacity-70 mt-1.5 text-right">{formatTimestamp(msg.timestamp)}</p>
-                                            </div>
-                                        </div>
-                                    </React.Fragment>
-                                );
-                           })}
-                            {isReplying && (
-                                <div className="flex items-end gap-3 justify-start mt-4 animate-fade-in-up">
-                                    <img src={selectedProvider.avatarUrl} alt="provider avatar" className="w-8 h-8 rounded-full flex-shrink-0" />
-                                    <div className="max-w-lg p-3 rounded-xl rounded-bl-sm bg-white text-gray-800 border shadow-sm">
-                                        <div className="flex items-center space-x-1">
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></span>
-                                        </div>
-                                    </div>
+                            {showSearch && (
+                                <div className="mt-2 animate-fade-in">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search providers..."
+                                        className="w-full px-3 py-2 rounded-lg bg-white/20 backdrop-blur-sm text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
+                                        autoFocus
+                                    />
                                 </div>
                             )}
-                            <div ref={messagesEndRef} />
                         </div>
-                        <div className="p-4 border-t bg-white">
-                            <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                                <input
-                                    type="text"
-                                    value={message}
-                                    onChange={e => setMessage(e.target.value)}
-                                    placeholder={`Message ${selectedProvider.name}...`}
-                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 bg-gray-50"
-                                    aria-label="Message input"
-                                    disabled={isReplying}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={!message.trim() || isReplying}
-                                    className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:bg-gray-400 transition-colors"
-                                    aria-label="Send message"
-                                >
-                                    <PaperAirplaneIcon className="w-6 h-6" />
-                                </button>
-                            </form>
+                        <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                            {filteredProviders.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    <p className="text-sm">No conversations found</p>
+                                </div>
+                            ) : (
+                                filteredProviders.map(({ provider, lastMessage, unreadCount }) => (
+                                    <div
+                                        key={provider.id}
+                                        onClick={() => setSelectedProvider(provider)}
+                                        className={`flex items-center p-4 cursor-pointer border-l-4 transition-all duration-200 ${selectedProvider?.id === provider.id
+                                            ? 'bg-gradient-to-r from-primary-50 to-primary-100/50 border-primary-600 shadow-sm'
+                                            : 'border-transparent hover:bg-gray-50/80'
+                                            }`}
+                                    >
+                                        <div className="relative">
+                                            <img
+                                                src={provider.avatarUrl}
+                                                alt={provider.name}
+                                                className="w-14 h-14 rounded-full mr-3 ring-2 ring-offset-2 ring-gray-200 shadow-sm"
+                                            />
+                                            {unreadCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center ring-2 ring-white animate-pulse">
+                                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 overflow-hidden min-w-0">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <p className="font-semibold text-gray-800 truncate text-sm">{provider.name}</p>
+                                                {lastMessage && (
+                                                    <p className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                                                        {formatTimestamp(lastMessage.timestamp)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-sm text-gray-600 truncate flex-1">
+                                                    {lastMessage?.text || 'No messages yet'}
+                                                </p>
+                                                {selectedProvider?.id === provider.id && (
+                                                    <CheckCircleIcon className="w-4 h-4 text-primary-600 ml-2 flex-shrink-0" />
+                                                )}
+                                            </div>
+                                            {provider.specialty && (
+                                                <p className="text-xs text-gray-500 mt-1 truncate">{provider.specialty}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
-                    </>
-                ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-500">
-                        <p>Select a conversation to start messaging.</p>
                     </div>
-                )}
-            </div>
+                    {/* Enhanced Chat Area */}
+                    <div className="w-full md:w-2/3 lg:w-3/4 flex flex-col bg-gradient-to-br from-gray-50 via-white to-primary-50/20">
+                        {selectedProvider ? (
+                            <>
+                                <div className="p-4 border-b border-gray-200/60 bg-white/80 backdrop-blur-sm flex items-center justify-between shadow-sm sticky top-0 z-10">
+                                    <div className="flex items-center">
+                                        <div className="relative">
+                                            <img
+                                                src={selectedProvider.avatarUrl}
+                                                alt={selectedProvider.name}
+                                                className="w-12 h-12 rounded-full mr-3 ring-2 ring-primary-200 shadow-md"
+                                            />
+                                            <span className="absolute bottom-0 right-2 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-800 text-lg">{selectedProvider.name}</h3>
+                                            <p className="text-sm text-gray-500 flex items-center">
+                                                <span>{selectedProvider.specialty || 'Healthcare Provider'}</span>
+                                                <span className="mx-2">•</span>
+                                                <span className="text-green-600 text-xs font-medium">Online</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%239C92AC\" fill-opacity=\"0.02\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}>
+                                    {currentMessages.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                                <PaperAirplaneIcon className="w-8 h-8 text-gray-400" />
+                                            </div>
+                                            <p className="text-lg font-medium">No messages yet</p>
+                                            <p className="text-sm mt-1">Start a conversation with {selectedProvider.name}</p>
+                                        </div>
+                                    ) : (
+                                        currentMessages.map((msg, index) => {
+                                            const prevMsg = currentMessages[index - 1];
+                                            const nextMsg = currentMessages[index + 1];
+                                            const isUserMessage = msg.senderId === user.id;
+
+                                            const showDateDivider = !prevMsg || new Date(msg.timestamp).toDateString() !== new Date(prevMsg.timestamp).toDateString();
+
+                                            const isFirstInSequence = !prevMsg || prevMsg.senderId !== msg.senderId || (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime()) > 1000 * 60 * 5;
+                                            const isLastInSequence = !nextMsg || nextMsg.senderId !== msg.senderId || (new Date(nextMsg.timestamp).getTime() - new Date(msg.timestamp).getTime()) > 1000 * 60 * 5;
+
+                                            const showAvatar = isLastInSequence && !isUserMessage;
+                                            const marginTopClass = isFirstInSequence ? 'mt-6' : 'mt-2';
+
+                                            return (
+                                                <React.Fragment key={msg.id}>
+                                                    {showDateDivider && (
+                                                        <div className="text-center my-6">
+                                                            <span className="bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs text-gray-500 font-medium shadow-sm border border-gray-200/50">
+                                                                {formatDateDivider(new Date(msg.timestamp))}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className={`flex items-end gap-3 ${isUserMessage ? 'justify-end' : 'justify-start'} ${marginTopClass} group`}>
+                                                        {!isUserMessage && (
+                                                            <div className="w-10 flex-shrink-0">
+                                                                {showAvatar ? (
+                                                                    <img
+                                                                        src={selectedProvider.avatarUrl}
+                                                                        alt="provider avatar"
+                                                                        className="w-10 h-10 rounded-full ring-2 ring-white shadow-md"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-10"></div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        <div className={`max-w-[70%] md:max-w-lg ${isUserMessage
+                                                            ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-lg'
+                                                            : 'bg-white text-gray-800 shadow-md border border-gray-200/60'
+                                                            } rounded-2xl ${isLastInSequence ? (isUserMessage ? 'rounded-br-md' : 'rounded-bl-md') : ''} px-4 py-3 transform transition-all duration-200 hover:scale-[1.02]`}>
+                                                            <p className="text-sm leading-relaxed" style={{ whiteSpace: 'pre-wrap' }}>
+                                                                {msg.text}
+                                                            </p>
+                                                            <div className={`flex items-center justify-end gap-1 mt-2 ${isUserMessage ? 'text-white/80' : 'text-gray-500'}`}>
+                                                                <p className="text-xs">
+                                                                    {formatTimestamp(msg.timestamp)}
+                                                                </p>
+                                                                {isUserMessage && (
+                                                                    <CheckCircleIcon className="w-3 h-3 ml-1" />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        {isUserMessage && (
+                                                            <div className="w-10 flex-shrink-0">
+                                                                {showAvatar && (
+                                                                    <img
+                                                                        src={user.avatarUrl}
+                                                                        alt="user avatar"
+                                                                        className="w-10 h-10 rounded-full ring-2 ring-white shadow-md"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </React.Fragment>
+                                            );
+                                        })
+                                    )}
+                                    {isReplying && (
+                                        <div className="flex items-end gap-3 justify-start mt-6 animate-fade-in">
+                                            <img
+                                                src={selectedProvider.avatarUrl}
+                                                alt="provider avatar"
+                                                className="w-10 h-10 rounded-full flex-shrink-0 ring-2 ring-white shadow-md"
+                                            />
+                                            <div className="max-w-lg p-4 rounded-2xl rounded-bl-md bg-white text-gray-800 border border-gray-200/60 shadow-md">
+                                                <div className="flex items-center space-x-1.5">
+                                                    <span className="w-2.5 h-2.5 bg-primary-400 rounded-full animate-bounce"></span>
+                                                    <span className="w-2.5 h-2.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                                                    <span className="w-2.5 h-2.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-2">Typing...</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div ref={messagesEndRef} />
+                                </div>
+                                <div className="p-4 border-t border-gray-200/60 bg-white/80 backdrop-blur-sm sticky bottom-0">
+                                    <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+                                        <div className="flex-1 relative">
+                                            <input
+                                                type="text"
+                                                value={message}
+                                                onChange={e => setMessage(e.target.value)}
+                                                placeholder={`Type a message to ${selectedProvider.name}...`}
+                                                className="w-full px-5 py-3.5 pr-12 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50/80 hover:bg-white transition-all text-sm"
+                                                aria-label="Message input"
+                                                disabled={isReplying}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        handleSendMessage(e as any);
+                                                    }
+                                                }}
+                                            />
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                {message.trim() && (
+                                                    <span className="text-xs text-gray-400">
+                                                        Press Enter to send
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={!message.trim() || isReplying}
+                                            className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-3.5 rounded-2xl hover:from-primary-700 hover:to-primary-800 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl disabled:shadow-none transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                                            aria-label="Send message"
+                                        >
+                                            <PaperAirplaneIcon className="w-5 h-5" />
+                                        </button>
+                                    </form>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-gray-50 to-white">
+                                <div className="text-center">
+                                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4 mx-auto">
+                                        <PaperAirplaneIcon className="w-10 h-10 text-gray-400" />
+                                    </div>
+                                    <p className="text-lg font-medium text-gray-600">Select a conversation</p>
+                                    <p className="text-sm text-gray-500 mt-1">Choose a provider to start messaging</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Card>
         </div>
