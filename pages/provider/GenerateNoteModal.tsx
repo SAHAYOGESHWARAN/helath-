@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import Modal from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
 import { SpinnerIcon } from '../../components/shared/Icons';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 
 interface GenerateNoteModalProps {
   isOpen: boolean;

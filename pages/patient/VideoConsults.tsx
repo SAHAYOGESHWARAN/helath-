@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { VideoCameraIcon, CheckCircleIcon, XCircleIcon, ShieldCheckIcon, PhoneIcon } from '../../components/shared/Icons';
 import { SpeakerWaveIcon, MicrophoneIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 
 const VideoConsults: React.FC = () => {
@@ -130,7 +132,7 @@ const VideoConsults: React.FC = () => {
                             </button>
                              {!isSubscribed && (
                                 <p className="text-center text-sm text-gray-600 mt-3">
-                                    Please <Link to="/subscription" className="font-semibold text-primary-600 hover:underline">subscribe to a plan</Link> to enable video consultations.
+                                    Please <Link to="/patient/subscription" className="font-semibold text-primary-600 hover:underline">subscribe to a plan</Link> to enable video consultations.
                                 </p>
                             )}
                         </div>

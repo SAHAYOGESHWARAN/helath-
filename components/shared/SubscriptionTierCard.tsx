@@ -15,7 +15,7 @@ const SubscriptionTierCard: React.FC<SubscriptionTierCardProps> = ({ plan, curre
 
     const cardClasses = `
         border-2 rounded-xl p-6 flex flex-col transition-all duration-300 h-full
-        ${isCurrent ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white'}
+        ${isCurrent ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white hover:shadow-xl hover:-translate-y-1'}
         ${isPopular && !isCurrent ? 'shadow-lg transform scale-105' : 'shadow-sm'}
     `;
 

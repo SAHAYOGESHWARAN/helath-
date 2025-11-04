@@ -8,7 +8,7 @@ import PaginationControls from '../../components/shared/PaginationControls';
 import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import { PaperClipIcon, TrashIcon, FaxIcon, SpinnerIcon } from '../../components/shared/Icons';
 
 const getReferralStatusPill = (status: ReferralStatus) => {

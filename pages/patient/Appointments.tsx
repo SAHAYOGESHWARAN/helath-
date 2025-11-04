@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, ReminderSettings } from '../../types';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import { ClockIcon, VideoCameraIcon, UsersIcon, CameraIcon, ChevronDownIcon, SpinnerIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import VideoUpdateModal from './VideoUpdateModal';
@@ -117,7 +119,7 @@ const PatientAppointments: React.FC = () => {
                             const canJoin = isVirtual && appointmentDateTime.getTime() - Date.now() < 15 * 60 * 1000;
 
                             return (
-                             <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-shadow hover:shadow-md">
+                             <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                                  <summary className="p-4 flex flex-wrap justify-between items-center cursor-pointer list-none gap-y-3">
                                      <div className="flex items-center space-x-4 flex-grow min-w-[250px]">
                                          <div className="flex flex-col items-center justify-center bg-primary-50 text-primary-700 rounded-lg p-3 w-20 text-center">
@@ -141,7 +143,7 @@ const PatientAppointments: React.FC = () => {
                                             </>
                                          )}
                                          {isVirtual && (
-                                            <Link to="/video-consults">
+                                            <Link to="/patient/video-consults">
                                                 <button disabled={!canJoin} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center disabled:bg-gray-300 disabled:cursor-not-allowed">
                                                     <VideoCameraIcon className="w-4 h-4 mr-2" /> Join Call
                                                 </button>
@@ -161,7 +163,7 @@ const PatientAppointments: React.FC = () => {
                      <div className="space-y-4">
                         {sortedAppointments.past.length > 0 ? (
                             sortedAppointments.past.map(appt => (
-                                <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-shadow hover:shadow-md">
+                                <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                                     <summary className="p-4 flex justify-between items-center cursor-pointer list-none">
                                         <div>
                                             <p className="font-bold text-lg">{appt.providerName} - {new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' })}</p>

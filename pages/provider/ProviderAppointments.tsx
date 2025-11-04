@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import Card from '../../components/shared/Card';
 import { Appointment } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import { SpinnerIcon, SearchIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 

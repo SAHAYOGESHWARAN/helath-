@@ -1,4 +1,6 @@
+
 import React from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { NavLink } from 'react-router-dom';
 import { NovoPathIcon, ArrowRightOnRectangleIcon as LogoutIcon } from '../shared/Icons';
 import { useAuth } from '../../hooks/useAuth';

@@ -1,15 +1,22 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob as GenaiBlob, Content } from '@google/genai';
+import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenaiBlob, Content } from "@google/genai";
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon, PaperClipIcon, MicrophoneIcon, StopIcon, SpeakerWaveIcon } from '../../components/shared/Icons';
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 import PageHeader from '../../components/shared/PageHeader';
 import { encode, decode, decodeAudioData } from '../../services/audioUtils';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import MarkdownRenderer from '../../components/shared/MarkdownRenderer';
+import { Appointment } from '../../types';
 
 // --- Type Definitions for Multimodal Content ---
+// Define LiveSession interface locally since it's not exported from @google/genai
+interface LiveSession {
+  sendRealtimeInput: (input: { media: GenaiBlob }) => void;
+  close: () => void;
+}
 interface TextPart { text: string; }
 interface InlineDataPart { inlineData: { mimeType: string; data: string; }; }
 type Part = TextPart | InlineDataPart;
@@ -45,7 +52,8 @@ const createAudioBlob = (data: Float32Array): GenaiBlob => {
 
 
 const AIAssistant: React.FC = () => {
-  const { user } = useAuth();
+  // FIX: Destructure appointments from useAuth to correctly access appointment data.
+  const { user, appointments } = useAuth();
   const { showToast } = useApp();
   const [prompt, setPrompt] = useState('');
   const [history, setHistory] = useState<AIMessage[]>([]);
@@ -112,8 +120,10 @@ const AIAssistant: React.FC = () => {
     const buildHealthSummary = () => {
         if (!user) return 'No patient data available.';
         let summary = 'Available patient data:\n';
-        if (user.appointments?.length) {
-          const nextAppt = user.appointments.find(a => new Date(a.date) >= new Date());
+        // FIX: user.appointments does not exist. Get appointments from useAuth context and filter for the current user.
+        const userAppointments: Appointment[] = appointments.filter((a: Appointment) => a.patientId === user.id);
+        if (userAppointments?.length) {
+          const nextAppt = userAppointments.find(a => new Date(a.date) >= new Date());
           if (nextAppt) {
             summary += `- Upcoming Appointment: ${nextAppt.reason} with ${nextAppt.providerName} on ${nextAppt.date}.\n`;
           }

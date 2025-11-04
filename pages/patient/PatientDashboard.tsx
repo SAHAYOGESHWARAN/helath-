@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,7 +44,7 @@ const GoalProgress: React.FC<{ goal: HealthGoal }> = ({ goal }) => {
 
 const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; label: string; link: string; color: string }> = ({ icon, title, value, label, link, color }) => (
     <Link to={link}>
-        <Card className={`hover:shadow-lg transition-shadow hover:border-${color}-200 h-full`}>
+        <Card className={`transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-${color}-200 h-full`}>
             <div className="flex items-center">
                 <div className={`p-3 rounded-full bg-${color}-100 mr-4`}>{icon}</div>
                 <div>

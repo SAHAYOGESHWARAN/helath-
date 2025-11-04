@@ -1,4 +1,6 @@
+
 import React, { useState, useMemo } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import { Claim, ClaimStatus } from '../../types';
@@ -33,7 +35,7 @@ const ClaimDetailModal: React.FC<{ claim: Claim | null; onClose: () => void; }> 
 
     const handlePayNow = () => {
         onClose();
-        navigate('/payments');
+        navigate('/patient/payments');
     };
 
     return (

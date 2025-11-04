@@ -27,8 +27,8 @@ export const MOCK_USERS: User[] = [
       { id: 'g2', title: 'Weight Loss', current: 185, target: 180, unit: 'lbs' },
     ],
     tasks: [
-      { id: 't1', text: 'Schedule follow-up with Dr. Smith', completed: false, dueDate: '2024-09-10' },
-      { id: 't2', text: 'Pick up Lisinopril prescription', completed: true },
+      { id: 't1', text: 'Schedule follow-up with Dr. Smith', completed: false, dueDate: '2024-09-10', priority: 'High' },
+      { id: 't2', text: 'Pick up Lisinopril prescription', completed: true, priority: 'Medium' },
     ],
     subscription: { planId: 'plan_p2', status: 'Active', renewalDate: '2025-08-15' },
     insurance: { provider: 'Blue Cross Blue Shield', planName: 'PPO Plan A', memberId: 'X123456789', groupId: 'G98765' },

@@ -7,6 +7,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { UserRole } from '../../types';
 import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon, SparklesIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import UniqueLoader from '../../components/shared/UniqueLoader';
 
@@ -96,7 +97,8 @@ const AdminDashboard: React.FC = () => {
                 model: 'gemini-2.5-flash',
                 contents: prompt,
             });
-
+            
+            // FIX: Correctly access the 'text' property from the response object.
             setAiSummary(response.text);
         } catch (error) {
             console.error("Error generating AI summary:", error);
@@ -114,19 +116,19 @@ const AdminDashboard: React.FC = () => {
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="flex items-center p-4">
+                <Card className="flex items-center p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     <div className="p-3 bg-blue-100 rounded-full mr-4"><UsersIcon className="w-6 h-6 text-blue-600" /></div>
                     <div><p className="text-3xl font-bold text-gray-800">{stats.totalUsers}</p><p className="text-gray-500">Total Users</p></div>
                 </Card>
-                <Card className="flex items-center p-4">
+                <Card className="flex items-center p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     <div className="p-3 bg-teal-100 rounded-full mr-4"><CollectionIcon className="w-6 h-6 text-teal-600" /></div>
                     <div><p className="text-3xl font-bold text-gray-800">{stats.totalProviders}</p><p className="text-gray-500">Active Providers</p></div>
                 </Card>
-                 <Card className="flex items-center p-4">
+                 <Card className="flex items-center p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     <div className="p-3 bg-emerald-100 rounded-full mr-4"><CurrencyDollarIcon className="w-6 h-6 text-emerald-600" /></div>
                     <div><p className="text-3xl font-bold text-gray-800">${stats.monthlyRevenue.toFixed(2)}</p><p className="text-gray-500">Est. Monthly Revenue</p></div>
                 </Card>
-                <Card className="flex items-center p-4">
+                <Card className="flex items-center p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     <div className="p-3 bg-amber-100 rounded-full mr-4"><ShieldExclamationIcon className="w-6 h-6 text-amber-600" /></div>
                     <div><p className="text-3xl font-bold text-gray-800">{stats.pendingVerifications}</p><p className="text-gray-500">Pending Verifications</p></div>
                 </Card>

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
@@ -6,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, LabOrder } from '../../types';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import { TrashIcon, DocumentTextIcon, SpinnerIcon } from '../../components/shared/Icons';
 
 const LabOrderSchema = Yup.object().shape({
@@ -126,7 +127,7 @@ const NewLabOrderModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ 
                         
                         <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
                             <button type="button" onClick={onClose} className="bg-gray-200 py-2 px-4 rounded-lg font-bold">Cancel</button>
-                            <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white py-2 px-4 rounded-lg font-bold w-32 flex justify-center">
+                            <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg w-32 flex justify-center">
                                 {isSubmitting ? <SpinnerIcon /> : 'Place Order'}
                             </button>
                         </div>

@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { BellIcon, ChevronDownIcon, SearchIcon, ArrowRightOnRectangleIcon as LogoutIcon, UserCircleIcon as ProfileIcon, CogIcon } from '../shared/Icons';

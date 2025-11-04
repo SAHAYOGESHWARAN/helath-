@@ -1,4 +1,6 @@
+
 import React from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import { NovoPathLogoIcon, UserIcon, BriefcaseIcon, CogIcon } from '../../components/shared/Icons';
 

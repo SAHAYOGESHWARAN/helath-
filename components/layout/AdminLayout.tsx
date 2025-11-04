@@ -1,5 +1,6 @@
 
 import React from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';

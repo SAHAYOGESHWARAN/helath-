@@ -1,4 +1,6 @@
+
 import React, { useState, useMemo } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -10,7 +12,7 @@ import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, L
 import { HeartIcon, PillIcon, ExclamationTriangleIcon, DumbbellIcon, ClipboardDocumentListIcon, BeakerIcon } from '../../components/shared/Icons';
 import Tabs from '../../components/shared/Tabs';
 import Modal from '../../components/shared/Modal';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 
 const VitalsChart: React.FC<{ data: VitalsRecord[] }> = ({ data }) => {
     const chartData = data.slice(0, 7).reverse().map(v => ({
@@ -38,7 +40,7 @@ const VitalsChart: React.FC<{ data: VitalsRecord[] }> = ({ data }) => {
 };
 
 const LabResultCard: React.FC<{ result: LabResult }> = ({ result }) => (
-    <Card title={`${result.testName} - ${new Date(result.date).toLocaleDateString('en-US', {timeZone: 'UTC'})}`} className="bg-white">
+    <Card title={`${result.testName} - ${new Date(result.date).toLocaleDateString('en-US', {timeZone: 'UTC'})}`} className="bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
         <table className="w-full text-sm">
             <tbody>
                 {result.components.map(c => (
@@ -141,12 +143,24 @@ const GoalProgress: React.FC<{ goal: HealthGoal }> = ({ goal }) => {
     );
 };
 
-const TaskSummary: React.FC<{ task: Task }> = ({ task }) => (
-    <div className="flex items-center text-sm">
-        <input type="checkbox" readOnly checked={task.completed} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-        <span className={`ml-2 ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>{task.text}</span>
-    </div>
-);
+const TaskSummary: React.FC<{ task: Task }> = ({ task }) => {
+    const isOverdue = !task.completed && task.dueDate ? new Date(task.dueDate) < new Date() : false;
+    return (
+        <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center flex-grow min-w-0">
+                <input type="checkbox" readOnly checked={task.completed} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 flex-shrink-0" />
+                <span className={`ml-2 truncate ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>{task.text}</span>
+            </div>
+            {task.dueDate && (
+                <span className={`ml-2 flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
+                    task.completed ? 'text-gray-400' : isOverdue ? 'text-red-600 bg-red-100' : 'text-gray-500'
+                }`}>
+                    {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                </span>
+            )}
+        </div>
+    );
+};
 
 
 const HealthRecords: React.FC = () => {

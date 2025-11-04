@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Task, Subtask } from '../../types';
+import { Task, Subtask, TaskPriority } from '../../types';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
-import { ClipboardDocumentListIcon, PlusIcon, TrashIcon } from '../../components/shared/Icons';
+import { ClipboardDocumentListIcon, PlusIcon, TrashIcon, FlagIcon } from '../../components/shared/Icons';
 
 const SubtaskItem: React.FC<{
   task: Task;
@@ -37,16 +37,25 @@ const SubtaskItem: React.FC<{
   );
 };
 
+const PriorityIndicator: React.FC<{ priority?: TaskPriority }> = ({ priority = 'Medium' }) => {
+    const colorClass = {
+        High: 'text-red-500',
+        Medium: 'text-amber-500',
+        Low: 'text-blue-500',
+    }[priority];
+    return <FlagIcon className={`w-5 h-5 ${colorClass}`} />;
+};
 
 const TaskItem: React.FC<{
   task: Task;
   onToggle: (id: string) => void;
+  onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
   onAddSubtask: (taskId: string, text: string) => void;
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onDeleteSubtask: (taskId: string, subtaskId: string) => void;
   isJustCompleted: boolean;
   onAnimationEnd: () => void;
-}> = ({ task, onToggle, onAddSubtask, onToggleSubtask, onDeleteSubtask, isJustCompleted, onAnimationEnd }) => {
+}> = ({ task, onToggle, onUpdateTask, onAddSubtask, onToggleSubtask, onDeleteSubtask, isJustCompleted, onAnimationEnd }) => {
   const isOverdue = !task.completed && task.dueDate ? new Date(task.dueDate) < new Date() : false;
   const [newSubtaskText, setNewSubtaskText] = useState('');
   
@@ -78,12 +87,25 @@ const TaskItem: React.FC<{
           className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
           aria-labelledby={`task-${task.id}`}
         />
-        <span
-          id={`task-${task.id}`}
-          className={`ml-3 flex-grow text-gray-800 ${task.completed ? 'line-through text-gray-500' : 'font-medium'}`}
+        <div className="ml-3 flex items-center gap-2 flex-grow min-w-0">
+            <PriorityIndicator priority={task.priority} />
+            <span
+              id={`task-${task.id}`}
+              className={`flex-grow text-gray-800 ${task.completed ? 'line-through text-gray-500' : 'font-medium'}`}
+            >
+              {task.text}
+            </span>
+        </div>
+        <select 
+            value={task.priority || 'Medium'}
+            onChange={(e) => onUpdateTask(task.id, { priority: e.target.value as TaskPriority })}
+            className="text-xs bg-transparent border-0 rounded-md focus:ring-1 focus:ring-primary-500 p-1 mr-2"
+            aria-label={`Priority for ${task.text}`}
         >
-          {task.text}
-        </span>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+        </select>
         {task.dueDate && (
           <span
             className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -123,12 +145,31 @@ const TaskItem: React.FC<{
 };
 
 const TaskList: React.FC = () => {
-  const { user, addTask, toggleTaskCompletion, addSubtask, toggleSubtaskCompletion, deleteSubtask } = useAuth();
-  const [newTaskText, setNewTaskText] = useState('');
-  const [newDueDate, setNewDueDate] = useState('');
+  const { user, addTask, updateTask, toggleTaskCompletion, addSubtask, toggleSubtaskCompletion, deleteSubtask } = useAuth();
+  const [newTask, setNewTask] = useState({ text: '', dueDate: '', priority: 'Medium' as TaskPriority });
   const [justCompleted, setJustCompleted] = useState<Set<string>>(new Set());
 
   const tasks = useMemo(() => user?.tasks || [], [user]);
+  
+  const priorityOrder: Record<TaskPriority, number> = { High: 1, Medium: 2, Low: 3 };
+
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        if (!a.completed) {
+            const priorityA = priorityOrder[a.priority || 'Medium'];
+            const priorityB = priorityOrder[b.priority || 'Medium'];
+            if (priorityA !== priorityB) return priorityA - priorityB;
+            if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+            if (a.dueDate) return -1;
+            if (b.dueDate) return 1;
+        }
+        if (a.dueDate && b.dueDate) return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+        if (a.dueDate) return -1;
+        if (b.dueDate) return 1;
+        return 0;
+    });
+  }, [tasks]);
 
   const { completedCount, totalCount, progress } = useMemo(() => {
     const total = tasks.length;
@@ -142,10 +183,18 @@ const TaskList: React.FC = () => {
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskText.trim()) return;
-    addTask({ text: newTaskText, dueDate: newDueDate || undefined });
-    setNewTaskText('');
-    setNewDueDate('');
+    if (!newTask.text.trim()) return;
+    addTask({
+      text: newTask.text,
+      dueDate: newTask.dueDate || undefined,
+      priority: newTask.priority,
+    });
+    setNewTask({ text: '', dueDate: '', priority: 'Medium' });
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      setNewTask(prev => ({...prev, [name]: value}));
   };
 
   const handleToggle = (taskId: string) => {
@@ -178,14 +227,13 @@ const TaskList: React.FC = () => {
         </div>
 
         <div className="space-y-2 mb-6">
-          {tasks.length > 0 ? (
-            tasks
-              .sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1))
-              .map(task => (
+          {sortedTasks.length > 0 ? (
+            sortedTasks.map(task => (
                 <TaskItem
                   key={task.id}
                   task={task}
                   onToggle={handleToggle}
+                  onUpdateTask={updateTask}
                   onAddSubtask={addSubtask}
                   onToggleSubtask={toggleSubtaskCompletion}
                   onDeleteSubtask={deleteSubtask}
@@ -212,15 +260,22 @@ const TaskList: React.FC = () => {
           <div className="flex items-center gap-3">
             <input
               type="text"
-              value={newTaskText}
-              onChange={e => setNewTaskText(e.target.value)}
+              name="text"
+              value={newTask.text}
+              onChange={handleInputChange}
               placeholder="Add a new task..."
               className="flex-grow p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
             />
+             <select name="priority" value={newTask.priority} onChange={handleInputChange} className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
             <input
               type="date"
-              value={newDueDate}
-              onChange={e => setNewDueDate(e.target.value)}
+              name="dueDate"
+              value={newTask.dueDate}
+              onChange={handleInputChange}
               className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
               aria-label="Due date"
             />

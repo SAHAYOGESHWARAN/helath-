@@ -5,7 +5,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { Medication } from '../../types';
 import { PillIcon, CheckCircleIcon, PlusIcon, PencilAltIcon, TrashIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -70,7 +70,7 @@ const MedicationCard: React.FC<{
     onEdit: (med: Medication) => void;
     onDelete: (med: Medication) => void;
 }> = ({ med, onRequestRefill, onEdit, onDelete }) => (
-    <div className="p-4 border border-gray-200 rounded-lg bg-white flex flex-col sm:flex-row justify-between sm:items-center">
+    <div className="p-4 border border-gray-200 rounded-lg bg-white flex flex-col sm:flex-row justify-between sm:items-center transition-all duration-300 hover:shadow-md hover:-translate-y-1">
         <div className="flex items-center space-x-4">
             <div className={`p-3 rounded-full ${med.status === 'Active' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500'}`}>
                 <PillIcon />

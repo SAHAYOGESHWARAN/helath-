@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -16,11 +17,12 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import SkeletonCard from '../../components/shared/skeletons/SkeletonCard';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment } from '../../types';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 
 const KpiCard: React.FC<{icon: React.ReactNode, title: string, value: string | number, colorClassName: string;}> = ({icon, title, value, colorClassName}) => (
-    <Card className={`flex items-center p-4 border-l-4 ${colorClassName}`}>
+    <Card className={`flex items-center p-4 border-l-4 ${colorClassName} transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
       <div className="mr-4">{icon}</div>
       <div>
         <p className="text-3xl font-bold text-gray-800">{value}</p>
@@ -112,9 +114,9 @@ const ProviderDashboard: React.FC = () => {
             });
 
         const activities = [
-            ...allMessages.slice(0, 2).map(m => ({ id: `msg-${m.id}`, type: 'New Message', description: `From ${m.patientName}`, time: '5m ago', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, link: '/messaging' })),
-            ...progressNotes.filter(n => n.status === "Signed").slice(0, 1).map(n => ({ id: `note-${n.id}`, type: 'Note Signed', description: `For ${n.patientName}`, time: '45m ago', icon: <CheckCircleIcon className="w-5 h-5 text-emerald-600"/>, link: `/patients/${n.patientId}` })),
-            ...appointments.filter(a => a.status === 'Completed').slice(0, 2).map(a => ({ id: `appt-${a.id}`, type: 'Appointment Complete', description: `${a.patientName} - ${a.reason}`, time: '2h ago', icon: <CalendarIcon className="w-5 h-5 text-gray-500"/>, link: `/patients/${a.patientId}` }))
+            ...allMessages.slice(0, 2).map(m => ({ id: `msg-${m.id}`, type: 'New Message', description: `From ${m.patientName}`, time: '5m ago', icon: <ChatBubbleLeftRightIcon className="w-5 h-5 text-sky-600"/>, link: '/provider/messaging' })),
+            ...progressNotes.filter(n => n.status === "Signed").slice(0, 1).map(n => ({ id: `note-${n.id}`, type: 'Note Signed', description: `For ${n.patientName}`, time: '45m ago', icon: <CheckCircleIcon className="w-5 h-5 text-emerald-600"/>, link: `/provider/patients/${n.patientId}` })),
+            ...appointments.filter(a => a.status === 'Completed').slice(0, 2).map(a => ({ id: `appt-${a.id}`, type: 'Appointment Complete', description: `${a.patientName} - ${a.reason}`, time: '2h ago', icon: <CalendarIcon className="w-5 h-5 text-gray-500"/>, link: `/provider/patients/${a.patientId}` }))
         ];
         return activities.sort(() => Math.random() - 0.5); // Randomize for demo
     }, [messages, progressNotes, appointments, users]);
@@ -167,9 +169,9 @@ const ProviderDashboard: React.FC = () => {
                                 </div>
                                 <div className="flex items-center space-x-2">
                                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusPill(appt.checkInStatus || appt.status)}`}>{appt.checkInStatus || appt.status}</span>
-                                     <Link to={`/patients/${appt.patientId}`} className="text-primary-600 hover:underline text-xs font-semibold">View Chart</Link>
+                                     <Link to={`/provider/patients/${appt.patientId}`} className="text-primary-600 hover:underline text-xs font-semibold">View Chart</Link>
                                      {appt.location === 'Virtual' && (
-                                         <Link to="/video-consults" className="bg-emerald-500 text-white px-2 py-1 rounded-md text-xs font-bold hover:bg-emerald-600">
+                                         <Link to="/provider/video-consults" className="bg-emerald-500 text-white px-2 py-1 rounded-md text-xs font-bold hover:bg-emerald-600">
                                              Start Visit
                                          </Link>
                                      )}

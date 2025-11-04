@@ -1,8 +1,10 @@
+
 import React from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole } from '../../types';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import { useTable } from '../../hooks/useTable';
 import PaginationControls from '../../components/shared/PaginationControls';
@@ -58,7 +60,7 @@ const SubscriptionManagement: React.FC = () => {
             <Card>
                 <div className="flex justify-between items-center mb-4">
                     <p className="text-gray-600">A list of all providers with an active or past subscription plan.</p>
-                    <Link to="/plans" className="text-primary-600 font-semibold hover:underline">
+                    <Link to="/admin/plans" className="text-primary-600 font-semibold hover:underline">
                         Manage Subscription Plans &rarr;
                     </Link>
                 </div>

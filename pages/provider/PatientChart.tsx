@@ -1,4 +1,6 @@
+
 import React, { useMemo } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import PageHeader from '../../components/shared/PageHeader';
@@ -45,11 +47,11 @@ const PatientChart: React.FC = () => {
     return (
         <div className="animate-fade-in-up">
             <PageHeader title={patient.name} subtitle={`DOB: ${patient.dob} | Patient ID: ${patient.id}`}>
-                <Link to="/messaging" state={{ patientId: patient.id }} className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg shadow-sm hover:bg-gray-100 flex items-center">
+                <Link to="/provider/messaging" state={{ patientId: patient.id }} className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg shadow-sm hover:bg-gray-100 flex items-center">
                     <ChatBubbleLeftRightIcon className="w-5 h-5 mr-2" />
                     Message
                 </Link>
-                <Link to="/progress-notes" state={{ patientId: patient.id }} className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg shadow-sm hover:bg-gray-100 flex items-center">
+                <Link to="/provider/progress-notes" state={{ patientId: patient.id }} className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg shadow-sm hover:bg-gray-100 flex items-center">
                     <PencilAltIcon className="w-5 h-5 mr-2" />
                     New Note
                 </Link>

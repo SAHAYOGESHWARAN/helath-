@@ -1,6 +1,6 @@
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import * as api from '../services/apiService';
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog } from '../types';
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, TaskPriority } from '../types';
 
 export interface AuthContextType {
   user: User | null;
@@ -51,6 +51,7 @@ export interface AuthContextType {
   deleteHealthGoal: (goalId: string) => void;
 
   addTask: (task: Omit<Task, 'id' | 'completed'>) => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => void;
   toggleTaskCompletion: (taskId: string) => void;
   addSubtask: (taskId: string, text: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
@@ -300,6 +301,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addTask = useCallback((task: Omit<Task, 'id' | 'completed'>) => {
         updateUser(currentUser => ({ tasks: [...(currentUser.tasks || []), { ...task, id: `task_${Date.now()}`, completed: false }] }));
     }, [updateUser]);
+    
+    const updateTask = useCallback((taskId: string, updates: Partial<Task>) => {
+        updateUser(currentUser => ({
+            tasks: currentUser.tasks?.map(t => t.id === taskId ? { ...t, ...updates } : t)
+        }));
+    }, [updateUser]);
 
     const toggleTaskCompletion = useCallback((taskId: string) => {
         updateUser(currentUser => ({ tasks: currentUser.tasks?.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t) }));
@@ -394,6 +401,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateHealthGoal,
         deleteHealthGoal,
         addTask,
+        updateTask,
         toggleTaskCompletion,
         addSubtask,
         toggleSubtaskCompletion,

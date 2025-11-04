@@ -1,4 +1,6 @@
+
 import React, { useRef, useEffect, useState } from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import {
     NovoPathLogoIcon,
@@ -194,65 +196,35 @@ const WelcomePage: React.FC = () => {
             <div className="container mx-auto px-6">
                 <AnimatedSection>
                     <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <span className="font-bold text-primary-600">FOR PATIENTS</span>
-                            <h2 className="text-3xl font-bold text-gray-900 mt-2">Take Control of Your Health</h2>
-                            <p className="mt-4 text-gray-600">NovoPath gives you the tools to be an active participant in your healthcare. From scheduling appointments to understanding your results with our AI Assistant, managing your health has never been more intuitive.</p>
-                            <ul className="mt-6 space-y-3">
-                                <li className="flex items-center"><CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3"/>Access your complete health history, anytime.</li>
-                                <li className="flex items-center"><CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3"/>Schedule and manage virtual or in-person visits.</li>
-                                <li className="flex items-center"><CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3"/>Securely message your provider and get answers fast.</li>
+                        <div className="text-center md:text-left">
+                            <span className="text-primary-600 font-semibold uppercase tracking-wider">For Patients</span>
+                            <h3 className="text-3xl font-bold text-gray-900 mt-2">Take Control of Your Health Journey</h3>
+                            <p className="mt-4 text-gray-600">NovoPath gives you direct access to your health information and care team. Schedule appointments, view results, and get personalized insights, all from one secure app.</p>
+                            <ul className="mt-6 space-y-3 text-left">
+                                <li className="flex items-start">
+                                    <CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0" />
+                                    <span>Easily book and manage both virtual and in-person appointments with your providers.</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0" />
+                                    <span>Get summaries of your health records powered by Gemini, making complex information easy to understand.</span>
+                                </li>
                             </ul>
+                            <Link to="/register/patient" className="mt-8 inline-block bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-primary-700 transition-all">Sign Up as a Patient</Link>
                         </div>
-                        <div className="flex justify-center">
-                            <img src="https://storage.googleapis.com/aistudio-hosting/generative-ai-for-developers/14a028a7-75b2-4d1a-8869-79841f39f074.png" alt="Patient Dashboard Mockup" className="rounded-2xl mockup-shadow" />
+                         <div className="relative h-96">
+                            <div className="absolute inset-0 bg-primary-100 rounded-3xl transform -rotate-3"></div>
+                            <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop" alt="Patient using tablet" className="absolute inset-0 w-full h-full object-cover rounded-2xl shadow-2xl transform rotate-2 hover:rotate-0 transition-transform duration-300" />
                         </div>
-                    </div>
-                </AnimatedSection>
-            </div>
-        </section>
-
-        {/* Feature Spotlight: For Providers */}
-         <section className="py-24 bg-gray-50">
-            <div className="container mx-auto px-6">
-                <AnimatedSection>
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                         <div className="flex justify-center md:order-2">
-                            <img src="https://storage.googleapis.com/aistudio-hosting/generative-ai-for-developers/89759e66-6ba3-40e1-8a38-54c30310842e.png" alt="Provider EMR Mockup" className="rounded-2xl mockup-shadow" />
-                        </div>
-                        <div className="md:order-1">
-                            <span className="font-bold text-primary-600">FOR PROVIDERS</span>
-                            <h2 className="text-3xl font-bold text-gray-900 mt-2">Streamline Your Practice</h2>
-                            <p className="mt-4 text-gray-600">Our intelligent EMR is designed to reduce administrative burden so you can focus on what matters most: your patients. Generate SOAP notes from transcripts, manage billing, and handle e-prescribing from one central hub.</p>
-                            <ul className="mt-6 space-y-3">
-                                <li className="flex items-center"><CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3"/>AI-assisted note generation and summarization.</li>
-                                <li className="flex items-center"><CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3"/>Integrated e-prescribing and lab ordering.</li>
-                                <li className="flex items-center"><CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3"/>Automated billing and streamlined claims process.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </AnimatedSection>
-            </div>
-        </section>
-        
-        {/* Final CTA */}
-        <section className="py-20 bg-primary-600">
-            <div className="container mx-auto px-6 text-center">
-                 <AnimatedSection>
-                    <h2 className="text-3xl font-bold text-white">Ready to Transform Your Healthcare Experience?</h2>
-                    <p className="mt-4 text-lg text-primary-100 max-w-2xl mx-auto">Join NovoPath today and discover a smarter way to manage health for yourself or your practice.</p>
-                    <div className="mt-8">
-                        <Link to="/register" className="bg-white text-primary-600 font-bold py-3 px-8 rounded-lg hover:bg-primary-50 transition-all transform hover:scale-105 shadow-2xl">
-                            Sign Up Now
-                        </Link>
                     </div>
                 </AnimatedSection>
             </div>
         </section>
       </main>
+      
       <Footer />
     </div>
   );
 };
-  
+
 export default WelcomePage;

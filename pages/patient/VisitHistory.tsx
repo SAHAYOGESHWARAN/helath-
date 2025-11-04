@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { jsPDF } from 'jspdf';
 import Card from '../../components/shared/Card';
@@ -69,7 +70,7 @@ const VisitHistory: React.FC = () => {
                 <div className="space-y-4">
                     {pastAppointments.length > 0 ? (
                         pastAppointments.map(appt => (
-                            <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-shadow hover:shadow-md">
+                            <details key={appt.id} className="group border border-gray-200 rounded-lg bg-white transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                                 <summary className="p-4 flex justify-between items-center cursor-pointer list-none">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
                                         <p className="font-bold text-lg text-gray-800">{new Date(appt.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>

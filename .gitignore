@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Compiled JavaScript files (keep only TypeScript source)
+**/*.js
+!eslint.config.js
+!vite.config.js
+!*.config.js

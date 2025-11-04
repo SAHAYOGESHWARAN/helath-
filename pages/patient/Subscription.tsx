@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
@@ -5,7 +6,7 @@ import { CheckCircleIcon, CreditCardIcon, DownloadIcon, SparklesIcon } from '../
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 import PageHeader from '../../components/shared/PageHeader';
 
 interface BillingHistoryItem {

@@ -5,6 +5,7 @@ import { ChevronLeftIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
+// FIX: Use `react-router-dom` for web-specific components.
 import { useNavigate } from 'react-router-dom';
 
 interface CalendarAppointment {
@@ -214,7 +215,7 @@ const AppointmentDetailsModal: React.FC<{ appointment: CalendarAppointment | nul
     
     const viewChart = () => {
         onClose();
-        navigate(`/patients/${appointment.patientId}`);
+        navigate(`/provider/patients/${appointment.patientId}`);
     };
 
     return (

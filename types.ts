@@ -103,12 +103,15 @@ export interface Subtask {
   completed: boolean;
 }
 
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+
 export interface Task {
   id: string;
   text: string;
   completed: boolean;
   dueDate?: string; // YYYY-MM-DD
   subtasks?: Subtask[];
+  priority?: TaskPriority;
 }
 
 export interface NotificationSettings {

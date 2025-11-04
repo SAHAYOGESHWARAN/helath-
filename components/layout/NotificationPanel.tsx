@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { BellIcon, XMarkIcon } from '../shared/Icons';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 
 interface NotificationPanelProps {

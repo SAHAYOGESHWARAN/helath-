@@ -1,7 +1,8 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Modal from '../../components/shared/Modal';
 import { CameraIcon, StopIcon, ArrowPathIcon, PaperAirplaneIcon } from '../../components/shared/Icons';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 
 interface VideoUpdateModalProps {
   isOpen: boolean;

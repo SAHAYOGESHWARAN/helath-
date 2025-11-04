@@ -1,10 +1,12 @@
+
 import React from 'react';
+// FIX: Use `react-router-dom` for web-specific components.
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { NovoPathLogoIcon, SpinnerIcon, EnvelopeIcon, LockClosedIcon } from '../../components/shared/Icons';
-import { useApp } from '../../App';
+import { useApp } from '../../contexts/AppContext';
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Email is required'),
