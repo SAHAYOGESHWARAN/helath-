@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 // FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, ReminderSettings } from '../../types';
 import { useApp } from '../../contexts/AppContext.tsx';

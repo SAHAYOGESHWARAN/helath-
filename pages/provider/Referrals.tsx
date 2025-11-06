@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { Referral, ReferralStatus, User, UserRole } from '../../types';
 import { useTable } from '../../hooks/useTable';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePatientData } from '../../hooks/usePatientData';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import UniqueLoader from '../../components/shared/UniqueLoader';
 import RealtimeVitals from '../../components/shared/RealtimeVitals';

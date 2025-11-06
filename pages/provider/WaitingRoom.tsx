@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { ClockIcon, UsersIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 

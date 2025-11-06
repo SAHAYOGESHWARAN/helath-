@@ -4,7 +4,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
 import { useApp } from '../../contexts/AppContext.tsx';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 
 const ProviderSubscription: React.FC = () => {
   const { user, providerSubscriptionPlans, changeSubscription } = useAuth();

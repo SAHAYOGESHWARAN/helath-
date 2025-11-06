@@ -4,7 +4,7 @@ import { User, UserRole, Message } from '../../types';
 import { PaperAirplaneIcon, CheckCircleIcon, ClockIcon } from '../../components/shared/Icons';
 import { GoogleGenAI, Content } from '@google/genai';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 
 const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);

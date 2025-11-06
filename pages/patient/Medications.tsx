@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Medication } from '../../types';
 import { PillIcon, CheckCircleIcon, PlusIcon, PencilAltIcon, TrashIcon } from '../../components/shared/Icons';

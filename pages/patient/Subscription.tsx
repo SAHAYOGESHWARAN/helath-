@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
 import { CheckCircleIcon, CreditCardIcon, DownloadIcon, SparklesIcon } from '../../components/shared/Icons';
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';

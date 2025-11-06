@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { Claim, ClaimStatus, ClaimType, UserRole } from '../../types';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.tsx';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext.tsx';
 import LoginPage from './pages/auth/LoginPage';
 import PatientLayout from './components/layout/PatientLayout';

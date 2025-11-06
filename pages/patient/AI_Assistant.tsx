@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenaiBlob, Content } from "@google/genai";
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon, PaperClipIcon, MicrophoneIcon, StopIcon, SpeakerWaveIcon } from '../../components/shared/Icons';
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';

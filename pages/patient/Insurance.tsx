@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../contexts/AppContext.tsx';
 import { InsuranceInfo } from '../../types';

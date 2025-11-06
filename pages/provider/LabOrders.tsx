@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import Modal from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, LabOrder } from '../../types';

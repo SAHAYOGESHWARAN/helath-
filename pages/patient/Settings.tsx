@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import Card from '../../components/shared/Card';
-import PageHeader from '../../components/shared/PageHeader';
+import { Card } from '../../components/shared/Card';
+import { Tabs } from '../../components/shared/Tabs';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { useApp } from '../../contexts/AppContext.tsx';
 import { useAuth } from '../../hooks/useAuth';

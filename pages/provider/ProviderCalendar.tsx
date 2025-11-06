@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { ChevronLeftIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';

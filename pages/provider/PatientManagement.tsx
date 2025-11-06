@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Use `react-router-dom` for web-specific components.
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { User, UserRole } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import PageHeader from '../../components/shared/PageHeader';

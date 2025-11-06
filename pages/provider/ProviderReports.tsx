@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import PageHeader from '../../components/shared/PageHeader';
 

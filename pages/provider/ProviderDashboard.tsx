@@ -19,7 +19,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { Appointment } from '../../types';
 // FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 
 const KpiCard: React.FC<{icon: React.ReactNode, title: string, value: string | number, colorClassName: string;}> = ({icon, title, value, colorClassName}) => (
     <Card className={`flex items-center p-4 border-l-4 ${colorClassName} transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>

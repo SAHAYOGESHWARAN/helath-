@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
+import { Tabs } from '../../components/shared/Tabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../contexts/AppContext.tsx';
-import Tabs from '../../components/shared/Tabs';
 import { UserCircleIcon, BellIcon, ShieldCheckIcon } from '../../components/shared/Icons';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { Formik, Form, Field, ErrorMessage } from 'formik';

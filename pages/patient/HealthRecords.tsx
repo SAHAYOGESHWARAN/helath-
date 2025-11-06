@@ -5,14 +5,14 @@ import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { VitalsRecord, LabResult, MedicalCondition, Allergy, HealthGoal, Task } from '../../types';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
 import { HeartIcon, PillIcon, ExclamationTriangleIcon, DumbbellIcon, ClipboardDocumentListIcon, BeakerIcon } from '../../components/shared/Icons';
-import Tabs from '../../components/shared/Tabs';
-import Modal from '../../components/shared/Modal';
+import { Card } from '../../components/shared/Card';
+import { Tabs } from '../../components/shared/Tabs';
 import { useApp } from '../../contexts/AppContext.tsx';
+import Modal from '../../components/shared/Modal';
 
 const VitalsChart: React.FC<{ data: VitalsRecord[] }> = ({ data }) => {
     const chartData = data.slice(0, 7).reverse().map(v => ({

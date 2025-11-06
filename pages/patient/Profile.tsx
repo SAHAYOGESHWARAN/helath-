@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { User } from '../../types';
 import VideoUpdateModal from './VideoUpdateModal';
 import { CameraIcon } from '../../components/shared/Icons';

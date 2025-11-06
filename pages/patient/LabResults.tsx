@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { LabResult } from '../../types';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import Modal from '../../components/shared/Modal';
 import { BeakerIcon, DownloadIcon } from '../../components/shared/Icons';
 

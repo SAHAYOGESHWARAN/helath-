@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { HealthGoal } from '../../types';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';

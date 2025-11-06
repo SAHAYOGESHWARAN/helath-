@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 // FIX: Replaced MailIcon with EnvelopeIcon and aliased it as MailIcon
 import { AcademicCapIcon, BriefcaseIcon, EnvelopeIcon as MailIcon, PhoneIcon } from '../../components/shared/Icons';

@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { jsPDF } from 'jspdf';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
 import { Appointment } from '../../types';

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { ProgressNote } from '../../types';
 import { useAuth } from '../../hooks/useAuth';

@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import PageHeader from '../../components/shared/PageHeader';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { UserRole } from '../../types';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
 import { PillIcon, HeartIcon, ChatBubbleLeftRightIcon, PencilAltIcon as PencilSquareIcon } from '../../components/shared/Icons';

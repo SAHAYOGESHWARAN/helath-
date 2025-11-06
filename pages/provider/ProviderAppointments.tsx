@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import Card from '../../components/shared/Card';
+import { Card } from '../../components/shared/Card';
 import { Appointment } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
