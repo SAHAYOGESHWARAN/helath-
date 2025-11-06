@@ -19,6 +19,7 @@ import WaitingRoom from '../../pages/provider/WaitingRoom';
 import ProviderProfile from '../../pages/provider/ProviderProfile';
 import ProviderSettings from '../../pages/provider/ProviderSettings';
 import PatientChart from '../../pages/provider/PatientChart';
+import EMRProvider from '../../pages/provider/EMRProvider';
 import LabOrders from '../../pages/provider/LabOrders';
 import Messaging from '../../pages/provider/Messaging';
 import Inbox from '../../pages/provider/Inbox';
@@ -37,6 +38,7 @@ const ProviderLayout: React.FC = () => {
             <Route path="appointments" element={<ProviderAppointments />} />
             <Route path="patients" element={<PatientManagement />} />
             <Route path="patients/:patientId" element={<PatientChart />} />
+            <Route path="emr/:patientId" element={<EMRProvider />} />
             <Route path="progress-notes" element={<ProgressNotes />} />
             <Route path="e-prescribing" element={<EPrescribing />} />
             <Route path="lab-orders" element={<LabOrders />} />
