@@ -23,6 +23,7 @@ import EMRProvider from '../../pages/provider/EMRProvider';
 import LabOrders from '../../pages/provider/LabOrders';
 import Messaging from '../../pages/provider/Messaging';
 import Inbox from '../../pages/provider/Inbox';
+import PatientMedicalRecordPage from '../../pages/provider/PatientMedicalRecordPage';
 
 const ProviderLayout: React.FC = () => {
   return (
@@ -38,6 +39,7 @@ const ProviderLayout: React.FC = () => {
             <Route path="appointments" element={<ProviderAppointments />} />
             <Route path="patients" element={<PatientManagement />} />
             <Route path="patients/:patientId" element={<PatientChart />} />
+            <Route path="record/:patientId" element={<PatientMedicalRecordPage />} />
             <Route path="emr/:patientId" element={<EMRProvider />} />
             <Route path="progress-notes" element={<ProgressNotes />} />
             <Route path="e-prescribing" element={<EPrescribing />} />

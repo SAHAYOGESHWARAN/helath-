@@ -12,7 +12,7 @@ import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, L
 import { HeartIcon, PillIcon, ExclamationTriangleIcon, DumbbellIcon, ClipboardDocumentListIcon, BeakerIcon } from '../../components/shared/Icons';
 import Tabs from '../../components/shared/Tabs';
 import Modal from '../../components/shared/Modal';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 
 const VitalsChart: React.FC<{ data: VitalsRecord[] }> = ({ data }) => {
     const chartData = data.slice(0, 7).reverse().map(v => ({

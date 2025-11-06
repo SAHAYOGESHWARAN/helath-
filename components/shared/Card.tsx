@@ -1,31 +1,19 @@
 import React from 'react';
 
-interface CardProps {
-  title?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-}
-
-const Card: React.FC<CardProps> = ({ title, children, className, style }) => {
-  return (
-    <div
-      style={style}
-      className={`
-      bg-white 
-      border border-gray-200 rounded-xl shadow-sm
-      ${className || ''}
-    `}>
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 tracking-wide">{title}</h2>
-        </div>
-      )}
-      <div className="p-6">
+export const Card: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => (
+    <div className={`bg-white border border-gray-200 rounded-xl shadow-sm ${className}`}>
         {children}
-      </div>
     </div>
-  );
-};
+);
 
-export default Card;
+export const CardHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div className="px-6 py-4 border-b border-gray-200">{children}</div>
+);
+
+export const CardTitle: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => (
+    <h2 className={`text-xl font-bold text-gray-800 tracking-wide ${className}`}>{children}</h2>
+);
+
+export const CardContent: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div className="p-6">{children}</div>
+);

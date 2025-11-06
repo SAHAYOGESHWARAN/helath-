@@ -6,7 +6,7 @@ import { CheckCircleIcon, CreditCardIcon, DownloadIcon, SparklesIcon } from '../
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 import PageHeader from '../../components/shared/PageHeader';
 
 interface BillingHistoryItem {

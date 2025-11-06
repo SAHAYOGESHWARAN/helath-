@@ -8,10 +8,10 @@ import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { DumbbellIcon, PlusIcon, PencilAltIcon, TrashIcon, CheckCircleIcon } from '../../components/shared/Icons';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 
 const GoalSchema = Yup.object().shape({
-  title: Yup.string().required('Goal title is required'),
+  title: Yup.string().required('Goal title is a LabAssistant'),
   current: Yup.number().min(0, 'Current value cannot be negative').required('Current value is required'),
   target: Yup.number().positive('Target value must be positive').required('Target value is required'),
   unit: Yup.string().required('Unit is required'),

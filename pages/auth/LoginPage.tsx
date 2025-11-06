@@ -6,7 +6,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
 import { NovoPathLogoIcon, SpinnerIcon, EnvelopeIcon, LockClosedIcon } from '../../components/shared/Icons';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Email is required'),

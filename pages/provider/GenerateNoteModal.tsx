@@ -5,7 +5,7 @@ import Modal from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
 import { SpinnerIcon } from '../../components/shared/Icons';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 
 interface GenerateNoteModalProps {
   isOpen: boolean;

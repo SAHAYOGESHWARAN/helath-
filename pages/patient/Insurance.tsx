@@ -4,7 +4,7 @@ import * as Yup from 'yup';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 import { InsuranceInfo } from '../../types';
 import { SpinnerIcon } from '../../components/shared/Icons';
 

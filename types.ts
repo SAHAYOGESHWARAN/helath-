@@ -189,6 +189,27 @@ export interface Appointment {
   videoUpdates?: { id: string; date: string; videoUrl: string }[];
 }
 
+export interface PatientNote {
+  id: string;
+  encounterId: string;
+  authorId: string;
+  type: 'HPI' | 'ROS' | 'PhysicalExam' | 'AssessmentPlan';
+  content: string;
+  timestamp: string;
+  isSigned: boolean;
+}
+
+export interface Encounter {
+  id: string;
+  patientId: string;
+  providerId: string;
+  date: string;
+  type: 'Office Visit' | 'Telehealth' | 'Procedure';
+  chiefComplaint: string;
+  notes: PatientNote[];
+  status: 'InProgress' | 'Completed' | 'Cancelled';
+}
+
 export enum ClaimStatus {
   DRAFT = 'DRAFT',
   SUBMITTED = 'SUBMITTED',

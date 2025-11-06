@@ -1,8 +1,8 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext.tsx';
 import { useAuth } from './hooks/useAuth';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { NotificationProvider } from './contexts/NotificationContext.tsx';
 import LoginPage from './pages/auth/LoginPage';
 import PatientLayout from './components/layout/PatientLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
@@ -17,7 +17,7 @@ import WelcomePage from './pages/WelcomePage';
 import FeaturesPage from './pages/FeaturesPage';
 import TestimonialsPage from './pages/TestimonialsPage';
 import ForProvidersPage from './pages/ForProvidersPage';
-import { AppProvider } from './contexts/AppContext';
+import { AppProvider } from './contexts/AppContext.tsx';
 
 const AppRoutes: React.FC = () => {
   const { user, loading } = useAuth();

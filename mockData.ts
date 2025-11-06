@@ -1,4 +1,4 @@
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog } from './types';
+import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, Encounter } from './types';
 
 export const MOCK_USERS: User[] = [
   { 
@@ -98,4 +98,22 @@ export const MOCK_AUDIT_LOG: SystemAuditLog[] = [
     { id: 6, timestamp: '2024-08-14 14:05:56', user: 'Alex Johnson', userRole: UserRole.ADMIN, action: 'Login Failed', details: 'Failed login attempt for user: admin_support' },
     { id: 7, timestamp: '2024-08-14 11:55:03', user: 'John Doe', userRole: UserRole.PATIENT, action: 'Payment Submitted', details: 'Submitted payment of $50.00' },
     { id: 8, timestamp: '2024-08-13 18:00:00', user: 'System', userRole: 'System', action: 'Data Export', details: 'Weekly analytics data exported by automated job' },
+];
+
+export const MOCK_ENCOUNTERS: Encounter[] = [
+  {
+    id: 'enc1',
+    patientId: 'pat1',
+    providerId: 'pro1',
+    date: '2024-08-15',
+    type: 'Office Visit',
+    chiefComplaint: 'Follow-up for hypertension',
+    status: 'InProgress',
+    notes: [
+      { id: 'note_hpi_1', encounterId: 'enc1', authorId: 'pro1', type: 'HPI', content: 'Patient reports consistent blood pressure readings at home. No new complaints.', timestamp: '2024-08-15T10:35:00Z', isSigned: false },
+      { id: 'note_ros_1', encounterId: 'enc1', authorId: 'pro1', type: 'ROS', content: 'All systems reviewed and are negative.', timestamp: '2024-08-15T10:40:00Z', isSigned: false },
+      { id: 'note_exam_1', encounterId: 'enc1', authorId: 'pro1', type: 'PhysicalExam', content: 'Vital signs stable. Cardiovascular exam unremarkable.', timestamp: '2024-08-15T10:45:00Z', isSigned: false },
+      { id: 'note_ap_1', encounterId: 'enc1', authorId: 'pro1', type: 'AssessmentPlan', content: 'Continue current medication. Follow up in 3 months.', timestamp: '2024-08-15T10:50:00Z', isSigned: false },
+    ],
+  },
 ];

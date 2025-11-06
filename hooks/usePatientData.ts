@@ -1,91 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './useAuth';
-import useEMRIntegration from './useEMRIntegration';
-import { User, Appointment, Prescription, LabResult, VitalsRecord } from '../types';
+import { useState, useEffect } from 'react';
+import { User, Appointment, Claim, Prescription } from '../types';
+import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PRESCRIPTIONS } from '../mockData';
 
-export const usePatientData = (patientId?: string) => {
-  const { user } = useAuth();
-  const {
-    syncPatientData,
-    syncAppointments,
-    syncPrescriptions,
-    syncLabResults,
-    syncVitals,
-    state: emrState,
-  } = useEMRIntegration();
+export const usePatientData = (patientId: string | undefined) => {
+    const [patient, setPatient] = useState<User | null>(null);
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [claims, setClaims] = useState<Claim[]>([]);
+    const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const [patientData, setPatientData] = useState<User | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-  const [labResults, setLabResults] = useState<LabResult[]>([]);
-  const [vitals, setVitals] = useState<VitalsRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    useEffect(() => {
+        if (!patientId) {
+            setLoading(false);
+            return;
+        }
 
-  const id = patientId || user?.id;
+        const fetchPatientData = async () => {
+            setLoading(true);
+            try {
+                // Simulate API call
+                await new Promise(res => setTimeout(res, 500));
 
-  const fetchData = useCallback(async () => {
-    if (!id) return;
+                const patientData = MOCK_USERS.find(p => p.id === patientId);
+                setPatient(patientData || null);
 
-    setLoading(true);
-    setError(null);
+                const patientAppointments = MOCK_APPOINTMENTS.filter(a => a.patientId === patientId);
+                setAppointments(patientAppointments);
 
-    try {
-      const [
-        patientRes,
-        appointmentsRes,
-        prescriptionsRes,
-        labResultsRes,
-        vitalsRes,
-      ] = await Promise.all([
-        syncPatientData(id),
-        syncAppointments(id),
-        syncPrescriptions(id),
-        syncLabResults(id),
-        syncVitals(id),
-      ]);
+                const patientClaims = MOCK_CLAIMS.filter(c => c.patientId === patientId);
+                setClaims(patientClaims);
 
-      if (patientRes.success && patientRes.data) {
-        setPatientData(patientRes.data);
-      } else if (patientRes.error) {
-        setError(patientRes.error.message);
-      }
+                const patientPrescriptions = MOCK_PRESCRIPTIONS.filter(p => p.patientId === patientId);
+                setPrescriptions(patientPrescriptions);
 
-      if (appointmentsRes.success && appointmentsRes.data) {
-        setAppointments(appointmentsRes.data);
-      }
+            } catch (error) {
+                console.error("Failed to fetch patient data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-      if (prescriptionsRes.success && prescriptionsRes.data) {
-        setPrescriptions(prescriptionsRes.data);
-      }
+        fetchPatientData();
+    }, [patientId]);
 
-      if (labResultsRes.success && labResultsRes.data) {
-        setLabResults(labResultsRes.data);
-      }
-
-      if (vitalsRes.success && vitalsRes.data) {
-        setVitals(vitalsRes.data);
-      }
-    } catch (err) {
-      setError('An unexpected error occurred while fetching patient data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, syncPatientData, syncAppointments, syncPrescriptions, syncLabResults, syncVitals]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return {
-    patientData,
-    appointments,
-    prescriptions,
-    labResults,
-    vitals,
-    loading,
-    error,
-    emrState,
-    refetch: fetchData,
-  };
+    return { patient, appointments, claims, prescriptions, loading };
 };

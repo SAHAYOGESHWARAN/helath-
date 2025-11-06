@@ -5,7 +5,7 @@ import { ProgressNote } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { DocumentTextIcon, SparklesIcon } from '../../components/shared/Icons';
 import GenerateNoteModal from './GenerateNoteModal';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 
 const getStatusPill = (status: ProgressNote['status']) => {
     switch (status) {

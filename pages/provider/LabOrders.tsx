@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, LabOrder } from '../../types';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 import { TrashIcon, DocumentTextIcon, SpinnerIcon } from '../../components/shared/Icons';
 
 const LabOrderSchema = Yup.object().shape({

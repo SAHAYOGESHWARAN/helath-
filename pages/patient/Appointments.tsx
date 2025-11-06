@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, ReminderSettings } from '../../types';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../contexts/AppContext.tsx';
 import { ClockIcon, VideoCameraIcon, UsersIcon, CameraIcon, ChevronDownIcon, SpinnerIcon } from '../../components/shared/Icons';
 import { useAuth } from '../../hooks/useAuth';
 import VideoUpdateModal from './VideoUpdateModal';
