@@ -62,11 +62,14 @@ export interface Lifestyle {
 }
 
 export interface VitalsRecord {
+    id: string;
+    patientId?: string;
     date: string;
-    bloodPressure: string; // e.g. "120/80"
+    bloodPressure: string;
     heartRate: number;
-    weight: number; // in lbs
-    bmi?: number;
+    weight: number;
+    bmi: number;
+    recordedAt?: string;
 }
 
 export interface LabResultComponent {
@@ -78,8 +81,10 @@ export interface LabResultComponent {
 
 export interface LabResult {
     id: string;
+    patientId?: string;
     testName: string;
     date: string;
+    result?: string;
     components: LabResultComponent[];
 }
 
@@ -131,7 +136,7 @@ export interface InsuranceInfo {
 
 export interface User {
   id: string;
-  name: string;
+  name?: string;
   email: string;
   password?: string;
   role: UserRole;
@@ -175,7 +180,7 @@ export interface Appointment {
   providerName: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:MM AM/PM
-  reason: string;
+  reason?: string;
   location: 'Clinic' | 'Virtual' | 'Hospital';
   status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed';
   duration: number; // in minutes
@@ -271,7 +276,7 @@ export interface ProgressNote {
 
 export interface Prescription {
     id: string;
-    patientId: string;
+    patientId?: string;
     patientName: string;
     drug: string;
     dosage: string;
@@ -350,4 +355,59 @@ export interface ReminderSettings {
   };
   timeOption: '1h' | '24h' | '2d' | '3d' | 'custom';
   customDateTime: string | null;
+}
+
+// New interfaces for advanced EMR features
+export interface RiskScore {
+  id: string;
+  patientId: string;
+  score: number; // 0-100
+  level: 'Low' | 'Medium' | 'High' | 'Critical';
+  factors: string[];
+  lastUpdated: string;
+}
+
+export interface PredictiveAnalytics {
+  userGrowthPrediction: number;
+  revenueProjection: number;
+  churnRate: number;
+  confidence: number; // 0-100
+}
+
+export interface RealTimeVitals {
+  patientId: string;
+  timestamp: string;
+  heartRate?: number;
+  bloodPressure?: string;
+  oxygenSaturation?: number;
+  temperature?: number;
+  deviceId: string;
+}
+
+export interface CareSuggestion {
+  id: string;
+  patientId: string;
+  type: 'Medication' | 'Lifestyle' | 'Follow-up' | 'Prevention';
+  title: string;
+  description: string;
+  priority: 'Low' | 'Medium' | 'High';
+  generatedAt: string;
+}
+
+export interface SystemHealth {
+  uptime: number; // in hours
+  errorRate: number; // percentage
+  responseTime: number; // in ms
+  activeUsers: number;
+  lastUpdated: string;
+}
+
+export interface PredictiveAlert {
+  id: string;
+  patientId: string;
+  type: 'Health Risk' | 'Medication Adherence' | 'Appointment Reminder';
+  message: string;
+  severity: 'Low' | 'Medium' | 'High';
+  triggeredAt: string;
+  actionRequired: boolean;
 }

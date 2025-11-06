@@ -6,7 +6,7 @@
  */
 
 import { LabResult, LabResultComponent, LabOrder } from '../types';
-import { getEMRAPIClient, EMRAPIResponse } from './emrApiClient';
+import { EMRAPIClient } from './emrApiClient';
 
 // Third-party lab result format (varies by provider)
 export interface ThirdPartyLabResult {
@@ -60,7 +60,7 @@ export interface LabDataMappingRules {
   };
   normalizationRules?: {
     unitConversions?: Record<string, string>;
-    valueTransformations?: Record<string, (value: any) => any>;
+    valueTransformations?: Record<string, (value: unknown) => unknown>;
   };
 }
 
@@ -82,8 +82,8 @@ export interface LabImportResult {
  */
 export class LaboratoryIntegrationService {
   private providers: Map<string, LabIntegrationProvider> = new Map();
-  private pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
-  private emrClient = getEMRAPIClient();
+  private pollingIntervals: Map<string, ReturnType<typeof setInterval>> = new Map();
+  private emrClient = EMRAPIClient.getInstance();
 
   /**
    * Register a laboratory integration provider
@@ -198,11 +198,14 @@ export class LaboratoryIntegrationService {
       }
 
       // Apply normalization rules
-      let normalizedValue = result.value;
+      let normalizedValue: string | number = result.value;
       if (mappingRules.normalizationRules?.valueTransformations) {
         const transform = mappingRules.normalizationRules.valueTransformations[result.componentName];
         if (transform) {
-          normalizedValue = transform(result.value);
+          const transformed = transform(result.value);
+          if (typeof transformed === 'string' || typeof transformed === 'number') {
+            normalizedValue = transformed;
+          }
         }
       }
 

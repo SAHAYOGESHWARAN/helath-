@@ -39,7 +39,7 @@ export interface UseEMRIntegrationReturn {
   syncAll: (patientId?: string) => Promise<void>;
   
   // Auto-sync
-  startAutoSync: (intervalMs?: number) => void;
+  startAutoSync: (intervalMs?: number) => () => void; // returns stop fn
   stopAutoSync: () => void;
   isAutoSyncActive: boolean;
   
@@ -48,10 +48,14 @@ export interface UseEMRIntegrationReturn {
   
   // Integration service instance
   service: EMRIntegrationService | null;
+
+  // Observability (simple listener API)
+  addProgressListener: (l: (progress: { type: string; message?: string }) => void) => void;
+  removeProgressListener: (l: (progress: { type: string; message?: string }) => void) => void;
 }
 
 /**
- * Hook for EMR Integration
+ * Hook for EMR Integration (improved)
  */
 export const useEMRIntegration = (): UseEMRIntegrationReturn => {
   const { user } = useAuth();
@@ -64,25 +68,124 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
   
   const [isAutoSyncActive, setIsAutoSyncActive] = useState(false);
   const serviceRef = useRef<EMRIntegrationService | null>(null);
+  const mountedRef = useRef(true);
+  const intervalRef = useRef<number | null>(null);
+  const ongoingRef = useRef<Map<string, Promise<any>>>(new Map());
+  const controllersRef = useRef<Map<string, AbortController>>(new Map());
+  const listenersRef = useRef<Set<(p: { type: string; message?: string }) => void>>(new Set());
 
-  // Initialize service
   useEffect(() => {
+    mountedRef.current = true;
     try {
       serviceRef.current = getEMRIntegrationService();
-      
-      // Check connection on mount
-      serviceRef.current.checkEMRHealth().then(isHealthy => {
-        setState(prev => ({ ...prev, isConnected: isHealthy }));
+      // initial health check
+      serviceRef.current.checkEMRHealth?.().then(isHealthy => {
+        if (!mountedRef.current) return;
+        setState(prev => ({ ...prev, isConnected: !!isHealthy }));
+      }).catch(err => {
+        if (!mountedRef.current) return;
+        setState(prev => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
       });
     } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'Failed to initialize EMR integration',
-      }));
+      if (mountedRef.current) {
+        setState(prev => ({
+          ...prev,
+          error: error instanceof Error ? error.message : 'Failed to initialize EMR integration',
+        }));
+      }
     }
+
+    return () => {
+      mountedRef.current = false;
+      // stop any auto-sync interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // abort controllers (best-effort)
+      controllersRef.current.forEach(ctrl => {
+        try { ctrl.abort(); } catch { /* ignore */ }
+      });
+      controllersRef.current.clear();
+      ongoingRef.current.clear();
+      listenersRef.current.clear();
+    };
   }, []);
 
-  // Sync patient data
+  // utility: notify listeners
+  const notify = useCallback((p: { type: string; message?: string }) => {
+    listenersRef.current.forEach(l => {
+      try { l(p); } catch { /* swallow listener errors */ }
+    });
+  }, []);
+
+  // helper: centralized retry wrapper with exponential backoff
+  async function runWithRetry<T>(fn: () => Promise<T>, retries = 2, baseDelay = 200): Promise<T> {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await fn();
+      } catch (err) {
+        attempt++;
+        if (attempt > retries) throw err;
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+
+  // centralized sync runner to avoid duplication and concurrent identical requests
+  async function doSync<T>(key: string, runner: (signal?: AbortSignal) => Promise<EMRAPIResponse<T>>): Promise<EMRAPIResponse<T>> {
+    // dedupe concurrent same-key requests
+    const existing = ongoingRef.current.get(key);
+    if (existing) return existing as Promise<EMRAPIResponse<T>>;
+
+    const controller = new AbortController();
+    controllersRef.current.set(key, controller);
+
+    const p = (async () => {
+      if (!mountedRef.current) {
+        throw new Error('unmounted');
+      }
+      // mark syncing state
+      if (mountedRef.current) {
+        setState(prev => ({ ...prev, isSyncing: true, error: null }));
+        notify({ type: 'start', message: key });
+      }
+      try {
+        const result = await runWithRetry(() => runner(controller.signal));
+        if (mountedRef.current) {
+          setState(prev => ({
+            ...prev,
+            isSyncing: false,
+            lastSyncTime: new Date(),
+            isConnected: result?.success ?? prev.isConnected,
+            error: result?.error?.message || null,
+          }));
+          notify({ type: 'success', message: key });
+        }
+        return result;
+      } catch (err) {
+        if (mountedRef.current) {
+          setState(prev => ({
+            ...prev,
+            isSyncing: false,
+            error: err instanceof Error ? err.message : 'Unknown error',
+          }));
+          notify({ type: 'error', message: key });
+        }
+        throw err;
+      } finally {
+        controllersRef.current.delete(key);
+        ongoingRef.current.delete(key);
+      }
+    })();
+
+    ongoingRef.current.set(key, p);
+    return p;
+  }
+
+  // per-operation wrappers
   const syncPatientData = useCallback(async (patientId?: string): Promise<EMRAPIResponse<User>> => {
     const id = patientId || user?.id;
     if (!id) {
@@ -92,41 +195,17 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-
-    setState(prev => ({ ...prev, isSyncing: true, error: null }));
-    
-    try {
-      const response = await serviceRef.current?.syncPatientData(id);
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSyncTime: new Date(),
-        isConnected: response?.success ?? false,
-        error: response?.error?.message || null,
-      }));
-      return response || {
+    const svc = serviceRef.current;
+    if (!svc?.syncPatientData) {
+      return {
         success: false,
         error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
-      return {
-        success: false,
-        error: {
-          code: 'SYNC_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        timestamp: new Date().toISOString(),
-      };
     }
+    return doSync< User >(`patient:${id}`, (signal) => svc.syncPatientData(id/*, { signal }*/));
   }, [user?.id]);
 
-  // Sync appointments
   const syncAppointments = useCallback(async (patientId?: string): Promise<EMRAPIResponse<Appointment[]>> => {
     const id = patientId || user?.id;
     if (!id) {
@@ -136,40 +215,17 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-
-    setState(prev => ({ ...prev, isSyncing: true, error: null }));
-    
-    try {
-      const response = await serviceRef.current?.syncAppointments(id);
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSyncTime: new Date(),
-        isConnected: response?.success ?? false,
-      }));
-      return response || {
+    const svc = serviceRef.current;
+    if (!svc?.syncAppointments) {
+      return {
         success: false,
         error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
-      return {
-        success: false,
-        error: {
-          code: 'SYNC_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        timestamp: new Date().toISOString(),
-      };
     }
+    return doSync< Appointment[] >(`appointments:${id}`, (signal) => svc.syncAppointments(id/*, { signal }*/));
   }, [user?.id]);
 
-  // Sync prescriptions
   const syncPrescriptions = useCallback(async (patientId?: string): Promise<EMRAPIResponse<Prescription[]>> => {
     const id = patientId || user?.id;
     if (!id) {
@@ -179,39 +235,17 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-
-    setState(prev => ({ ...prev, isSyncing: true }));
-    
-    try {
-      const response = await serviceRef.current?.syncPrescriptions(id);
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSyncTime: new Date(),
-      }));
-      return response || {
+    const svc = serviceRef.current;
+    if (!svc?.syncPrescriptions) {
+      return {
         success: false,
         error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
-      return {
-        success: false,
-        error: {
-          code: 'SYNC_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        timestamp: new Date().toISOString(),
-      };
     }
+    return doSync< Prescription[] >(`prescriptions:${id}`, (signal) => svc.syncPrescriptions(id/*, { signal }*/));
   }, [user?.id]);
 
-  // Sync lab results
   const syncLabResults = useCallback(async (patientId?: string): Promise<EMRAPIResponse<LabResult[]>> => {
     const id = patientId || user?.id;
     if (!id) {
@@ -221,39 +255,17 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-
-    setState(prev => ({ ...prev, isSyncing: true }));
-    
-    try {
-      const response = await serviceRef.current?.syncLabResults(id);
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSyncTime: new Date(),
-      }));
-      return response || {
+    const svc = serviceRef.current;
+    if (!svc?.syncLabResults) {
+      return {
         success: false,
         error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
-      return {
-        success: false,
-        error: {
-          code: 'SYNC_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        timestamp: new Date().toISOString(),
-      };
     }
+    return doSync< LabResult[] >(`lab:${id}`, (signal) => svc.syncLabResults(id/*, { signal }*/));
   }, [user?.id]);
 
-  // Sync vitals
   const syncVitals = useCallback(async (patientId?: string): Promise<EMRAPIResponse<VitalsRecord[]>> => {
     const id = patientId || user?.id;
     if (!id) {
@@ -263,85 +275,91 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-
-    setState(prev => ({ ...prev, isSyncing: true }));
-    
-    try {
-      const response = await serviceRef.current?.syncVitals(id);
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSyncTime: new Date(),
-      }));
-      return response || {
+    const svc = serviceRef.current;
+    if (!svc?.syncVitals) {
+      return {
         success: false,
         error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
-      return {
-        success: false,
-        error: {
-          code: 'SYNC_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        timestamp: new Date().toISOString(),
-      };
     }
+    return doSync< VitalsRecord[] >(`vitals:${id}`, (signal) => svc.syncVitals(id/*, { signal }*/));
   }, [user?.id]);
 
-  // Sync all data
   const syncAll = useCallback(async (patientId?: string): Promise<void> => {
     const id = patientId || user?.id;
     if (!id) return;
-
-    setState(prev => ({ ...prev, isSyncing: true, error: null }));
-    
-    try {
-      await serviceRef.current?.syncAllPatientData(id);
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSyncTime: new Date(),
-      }));
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
+    const svc = serviceRef.current;
+    if (!svc?.syncAllPatientData) {
+      setState(prev => ({ ...prev, error: 'EMR service not available' }));
+      return;
     }
+    await doSync<void>(`all:${id}`, async (signal) => {
+      await svc.syncAllPatientData(id/*, { signal }*/);
+      return { success: true, timestamp: new Date().toISOString() } as EMRAPIResponse<void>;
+    });
   }, [user?.id]);
 
-  // Auto-sync
+  // Auto-sync: returns a stop function
   const startAutoSync = useCallback((intervalMs: number = 60000) => {
     const id = user?.id;
-    if (!id) return;
+    if (!id || !serviceRef.current) return () => {};
+    // clear previous
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
-    serviceRef.current?.startAutoSync(id, intervalMs);
+    const doTick = () => {
+      // fire syncAll but don't await
+      syncAll(id).catch(() => { /* errors reflected in state/listeners */ });
+    };
+
+    // run immediately then schedule
+    doTick();
+    const iid = window.setInterval(doTick, intervalMs);
+    intervalRef.current = iid;
     setIsAutoSyncActive(true);
-  }, [user?.id]);
+    notify({ type: 'autosync:start', message: `interval=${intervalMs}` });
+
+    const stop = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setIsAutoSyncActive(false);
+      notify({ type: 'autosync:stop' });
+    };
+
+    return stop;
+  }, [user?.id, syncAll, notify]);
 
   const stopAutoSync = useCallback(() => {
-    serviceRef.current?.stopAutoSync();
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setIsAutoSyncActive(false);
-  }, []);
+    notify({ type: 'autosync:stop' });
+  }, [notify]);
 
-  // Health check
   const checkHealth = useCallback(async (): Promise<boolean> => {
     try {
-      const isHealthy = await serviceRef.current?.checkEMRHealth();
-      setState(prev => ({ ...prev, isConnected: isHealthy ?? false }));
-      return isHealthy ?? false;
+      const isHealthy = await serviceRef.current?.checkEMRHealth?.();
+      if (mountedRef.current) setState(prev => ({ ...prev, isConnected: !!isHealthy }));
+      return !!isHealthy;
     } catch {
-      setState(prev => ({ ...prev, isConnected: false }));
+      if (mountedRef.current) setState(prev => ({ ...prev, isConnected: false }));
       return false;
     }
+  }, []);
+
+  const addProgressListener = useCallback((l: (p: { type: string; message?: string }) => void) => {
+    listenersRef.current.add(l);
+  }, []);
+
+  const removeProgressListener = useCallback((l: (p: { type: string; message?: string }) => void) => {
+    listenersRef.current.delete(l);
   }, []);
 
   return {
@@ -357,6 +375,8 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
     isAutoSyncActive,
     checkHealth,
     service: serviceRef.current,
+    addProgressListener,
+    removeProgressListener,
   };
 };
 

@@ -17,7 +17,7 @@ import {
   LabOrder,
   User,
 } from '../types';
-import { getEMRAPIClient, EMRAPIResponse } from './emrApiClient';
+import { EMRAPIClient, EMRAPIResponse } from './emrApiClient';
 import { getPatientRecordService } from './patientRecordService';
 
 // Visit workflow data
@@ -55,7 +55,7 @@ export interface WorkflowStatus {
  * Clinical Workflow Service Class
  */
 export class ClinicalWorkflowService {
-  private emrClient = getEMRAPIClient();
+  private emrClient = EMRAPIClient.getInstance();
   private patientRecordService = getPatientRecordService();
   private activeWorkflows: Map<string, VisitWorkflow> = new Map();
 

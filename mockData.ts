@@ -11,9 +11,9 @@ export const MOCK_USERS: User[] = [
       { id: 'med3', name: 'Aspirin 81mg', dosage: '1 tablet', frequency: 'Once daily', status: 'Inactive' },
     ],
     vitals: [
-        { date: '2024-08-01', bloodPressure: '118/78', heartRate: 72, weight: 185, bmi: 24.5 },
-        { date: '2024-05-15', bloodPressure: '122/80', heartRate: 75, weight: 188, bmi: 25.1 },
-        { date: '2024-02-10', bloodPressure: '125/82', heartRate: 70, weight: 190, bmi: 25.4 },
+        { id: 'v1', date: '2024-08-01', bloodPressure: '118/78', heartRate: 72, weight: 185, bmi: 24.5 },
+        { id: 'v2', date: '2024-05-15', bloodPressure: '122/80', heartRate: 75, weight: 188, bmi: 25.1 },
+        { id: 'v3', date: '2024-02-10', bloodPressure: '125/82', heartRate: 70, weight: 190, bmi: 25.4 },
     ],
     labResults: [
         {id: 'lab1', testName: 'Lipid Panel', date: '2024-07-25', components: [

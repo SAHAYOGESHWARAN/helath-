@@ -19,6 +19,16 @@ import {
   BillingInvoice
 } from '../types';
 
+// Web API types for browser compatibility
+type RequestInit = {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  signal?: AbortSignal;
+};
+
+type HeadersInit = Record<string, string>;
+
 // API Configuration Interface
 export interface EMRAPIConfig {
   baseUrl: string;
@@ -28,26 +38,27 @@ export interface EMRAPIConfig {
   enableCaching?: boolean;
 }
 
+// API Error Response Structure
+export interface EMRAPIError { code?: string; message: string; }
+
 // API Response Wrapper
 export interface EMRAPIResponse<T> {
   success: boolean;
   data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: any;
-  };
-  timestamp: string;
+  error?: EMRAPIError;
+  timestamp?: string;
   requestId?: string;
 }
 
-// FHIR-Compatible Response Structure
+/**
+ * FHIR-Compatible Response Structure
+ */
 export interface FHIRBundle {
   resourceType: string;
   type: string;
   total: number;
   entry: Array<{
-    resource: any;
+    resource: Record<string, unknown>;
     fullUrl?: string;
   }>;
 }
@@ -57,8 +68,12 @@ export interface FHIRBundle {
  * Handles all communication with the EMR system
  */
 export class EMRAPIClient {
+  // Static method to get an instance
+  static getInstance(config?: EMRAPIConfig): EMRAPIClient {
+    return new EMRAPIClient(config || { baseUrl: '', apiKey: '' });
+  }
   private config: Required<EMRAPIConfig>;
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(config: EMRAPIConfig) {
@@ -125,7 +140,7 @@ export class EMRAPIClient {
         
         // Don't retry on client errors (4xx)
         if (error instanceof Error && 'status' in error) {
-          const status = (error as any).status;
+          const status = (error as { status: number }).status;
           if (status >= 400 && status < 500) {
             break;
           }
@@ -454,25 +469,4 @@ export class EMRAPIClient {
     this.cache.delete(key);
   }
 }
-
-// Singleton instance factory
-let emrApiClientInstance: EMRAPIClient | null = null;
-
-/**
- * Get or create EMR API client instance
- */
-export const getEMRAPIClient = (config?: EMRAPIConfig): EMRAPIClient => {
-  if (!emrApiClientInstance) {
-    if (!config) {
-      config = {
-        baseUrl: process.env.VITE_EMR_API_URL || '',
-        apiKey: process.env.VITE_EMR_API_KEY || '',
-      };
-    }
-    emrApiClientInstance = new EMRAPIClient(config);
-  }
-  return emrApiClientInstance;
-};
-
-export default EMRAPIClient;
 

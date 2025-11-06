@@ -29,7 +29,7 @@ import {
   Lifestyle,
   HealthGoal
 } from '../types';
-import { getEMRAPIClient, EMRAPIResponse } from './emrApiClient';
+import { EMRAPIClient, EMRAPIResponse } from './emrApiClient';
 
 // Comprehensive patient record
 export interface ConsolidatedPatientRecord {
@@ -102,7 +102,7 @@ export interface ConsolidatedPatientRecord {
  * Patient Record Service Class
  */
 export class PatientRecordService {
-  private emrClient = getEMRAPIClient();
+  private emrClient = EMRAPIClient.getInstance();
   private cache: Map<string, { record: ConsolidatedPatientRecord; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
