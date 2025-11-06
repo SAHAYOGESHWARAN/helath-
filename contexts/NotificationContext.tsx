@@ -1,17 +1,7 @@
-import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { useState, ReactNode, useCallback, useEffect } from 'react';
 import { Notification, UserRole } from '../types';
 import { useAuth } from '../hooks/useAuth';
-
-interface NotificationContextType {
-  notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearAll: () => void;
-  removeNotification: (id: string) => void;
-}
-
-export const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+import { NotificationContext } from './NotificationContext';
 
 const PATIENT_PROVIDER_MOCK_NOTIFICATIONS: Notification[] = [
     { id: '1', type: 'Lab Result', title: 'New Lab Results', message: 'Your recent lipid panel results are now available.', timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), isRead: false, link: '#/records' },

@@ -37,8 +37,8 @@ const EMRProvider: React.FC = () => {
   const timelineRecords = React.useMemo(() => {
     const allRecords = [
       ...(appointments || []).map(a => ({ id: a.id, type: 'Appointment', date: a.date, title: a.reason, details: a.visitSummary || 'No summary.' })),
-      ...(prescriptions || []).map(p => ({ id: p.id, type: 'Medication', date: p.date, title: `${p.name} ${p.dosage}`, details: `Status: ${p.status}` })),
-      ...(labResults || []).map(l => ({ id: l.id, type: 'Lab Result', date: l.date, title: l.testName, details: `Result: ${l.value} ${l.units}` })),
+      ...(prescriptions || []).map(p => ({ id: p.id, type: 'Medication', date: p.datePrescribed, title: `${p.drug} ${p.dosage}`, details: `Status: ${p.status}` })),
+      ...(labResults || []).map(l => ({ id: l.id, type: 'Lab Result', date: l.date, title: l.testName, details: `Result: ${l.result}` })),
       ...(vitals || []).map(v => ({ id: v.id, type: 'Vitals', date: v.date, title: 'Vitals Recorded', details: `BP: ${v.bloodPressure}, HR: ${v.heartRate}` })),
     ];
     return allRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

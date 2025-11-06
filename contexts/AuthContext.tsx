@@ -1,6 +1,7 @@
-import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import * as api from '../services/apiService';
 import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, TaskPriority } from '../types';
+import { AuthContext } from './AuthContext';
 
 export interface AuthContextType {
   user: User | null;
@@ -62,7 +63,6 @@ export interface AuthContextType {
   auditLog: SystemAuditLog[];
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);

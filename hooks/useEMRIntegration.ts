@@ -29,6 +29,7 @@ export interface EMRIntegrationState {
 export interface UseEMRIntegrationReturn {
   // State
   state: EMRIntegrationState;
+  isConnected: boolean; // Add isConnected directly to the return type
   
   // Sync functions
   syncPatientData: (patientId?: string) => Promise<EMRAPIResponse<User>>;
@@ -38,6 +39,15 @@ export interface UseEMRIntegrationReturn {
   syncVitals: (patientId?: string) => Promise<EMRAPIResponse<VitalsRecord[]>>;
   syncAll: (patientId?: string) => Promise<void>;
   
+  // New EMR functions
+  requestAmendment: (patientId: string, amendment: string) => Promise<EMRAPIResponse<{ success: boolean }>>;
+  getIntegrationStatus: () => Promise<EMRAPIResponse<{ status: string, isConnected: boolean }>>;
+  fetchAuditLogs: () => Promise<EMRAPIResponse<any[]>>;
+  setIntegrationSettings: (settings: any) => Promise<EMRAPIResponse<{ success: boolean }>>;
+  reconnect: () => Promise<EMRAPIResponse<{ success: boolean }>>;
+  syncNow: () => Promise<void>; // Added syncNow for manual sync
+
+
   // Auto-sync
   startAutoSync: (intervalMs?: number) => () => void; // returns stop fn
   stopAutoSync: () => void;
@@ -203,87 +213,39 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-    return doSync< User >(`patient:${id}`, (signal) => svc.syncPatientData(id, { signal }));
+    return doSync<User>(`patient:${id}`, (signal) => svc.syncPatientData(id, { signal }));
   }, [user?.id]);
 
   const syncAppointments = useCallback(async (patientId?: string): Promise<EMRAPIResponse<Appointment[]>> => {
     const id = patientId || user?.id;
-    if (!id) {
-      return {
-        success: false,
-        error: { code: 'NO_PATIENT_ID', message: 'Patient ID is required' },
-        timestamp: new Date().toISOString(),
-      };
-    }
+    if (!id) return { success: false, error: { message: 'Patient ID is required' } };
     const svc = serviceRef.current;
-    if (!svc?.syncAppointments) {
-      return {
-        success: false,
-        error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
-        timestamp: new Date().toISOString(),
-      };
-    }
-    return doSync< Appointment[] >(`appointments:${id}`, (signal) => svc.syncAppointments(id, { signal }));
+    if (!svc?.syncAppointments) return { success: false, error: { message: 'EMR service not available' } };
+    return doSync<Appointment[]>(`appointments:${id}`, (signal) => svc.syncAppointments(id, { signal }));
   }, [user?.id]);
 
   const syncPrescriptions = useCallback(async (patientId?: string): Promise<EMRAPIResponse<Prescription[]>> => {
     const id = patientId || user?.id;
-    if (!id) {
-      return {
-        success: false,
-        error: { code: 'NO_PATIENT_ID', message: 'Patient ID is required' },
-        timestamp: new Date().toISOString(),
-      };
-    }
+    if (!id) return { success: false, error: { message: 'Patient ID is required' } };
     const svc = serviceRef.current;
-    if (!svc?.syncPrescriptions) {
-      return {
-        success: false,
-        error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
-        timestamp: new Date().toISOString(),
-      };
-    }
-    return doSync< Prescription[] >(`prescriptions:${id}`, (signal) => svc.syncPrescriptions(id, { signal }));
+    if (!svc?.syncPrescriptions) return { success: false, error: { message: 'EMR service not available' } };
+    return doSync<Prescription[]>(`prescriptions:${id}`, (signal) => svc.syncPrescriptions(id, { signal }));
   }, [user?.id]);
 
   const syncLabResults = useCallback(async (patientId?: string): Promise<EMRAPIResponse<LabResult[]>> => {
     const id = patientId || user?.id;
-    if (!id) {
-      return {
-        success: false,
-        error: { code: 'NO_PATIENT_ID', message: 'Patient ID is required' },
-        timestamp: new Date().toISOString(),
-      };
-    }
+    if (!id) return { success: false, error: { message: 'Patient ID is required' } };
     const svc = serviceRef.current;
-    if (!svc?.syncLabResults) {
-      return {
-        success: false,
-        error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
-        timestamp: new Date().toISOString(),
-      };
-    }
-    return doSync< LabResult[] >(`lab:${id}`, (signal) => svc.syncLabResults(id, { signal }));
+    if (!svc?.syncLabResults) return { success: false, error: { message: 'EMR service not available' } };
+    return doSync<LabResult[]>(`lab:${id}`, (signal) => svc.syncLabResults(id, { signal }));
   }, [user?.id]);
 
   const syncVitals = useCallback(async (patientId?: string): Promise<EMRAPIResponse<VitalsRecord[]>> => {
     const id = patientId || user?.id;
-    if (!id) {
-      return {
-        success: false,
-        error: { code: 'NO_PATIENT_ID', message: 'Patient ID is required' },
-        timestamp: new Date().toISOString(),
-      };
-    }
+    if (!id) return { success: false, error: { message: 'Patient ID is required' } };
     const svc = serviceRef.current;
-    if (!svc?.syncVitals) {
-      return {
-        success: false,
-        error: { code: 'SERVICE_ERROR', message: 'EMR service not available' },
-        timestamp: new Date().toISOString(),
-      };
-    }
-    return doSync< VitalsRecord[] >(`vitals:${id}`, (signal) => svc.syncVitals(id, { signal }));
+    if (!svc?.syncVitals) return { success: false, error: { message: 'EMR service not available' } };
+    return doSync<VitalsRecord[]>(`vitals:${id}`, (signal) => svc.syncVitals(id, { signal }));
   }, [user?.id]);
 
   const syncAll = useCallback(async (patientId?: string): Promise<void> => {
@@ -294,11 +256,51 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
       setState(prev => ({ ...prev, error: 'EMR service not available' }));
       return;
     }
-    await doSync<void>(`all:${id}`, async (signal) => {
+    await doSync<any>(`all:${id}`, async (signal) => {
       await svc.syncAllPatientData(id, { signal });
-      return { success: true, timestamp: new Date().toISOString() } as EMRAPIResponse<void>;
+      return { success: true, timestamp: new Date().toISOString() };
     });
   }, [user?.id]);
+
+  const requestAmendment = useCallback(async (patientId: string, amendment: string) => {
+    const svc = serviceRef.current;
+    if (!svc?.requestAmendment) return { success: false, error: { message: 'Service not available' } };
+    return doSync('requestAmendment', () => svc.requestAmendment(patientId, amendment));
+  }, []);
+
+  const getIntegrationStatus = useCallback(async () => {
+    const svc = serviceRef.current;
+    if (!svc?.getIntegrationStatus) return { success: false, error: { message: 'Service not available' } };
+    const res = await svc.getIntegrationStatus();
+    if (res.success && mountedRef.current) {
+      setState(prev => ({ ...prev, isConnected: res.data.isConnected }));
+    }
+    return res;
+  }, []);
+
+  const fetchAuditLogs = useCallback(async () => {
+    const svc = serviceRef.current;
+    if (!svc?.fetchAuditLogs) return { success: false, error: { message: 'Service not available' } };
+    return doSync('fetchAuditLogs', () => svc.fetchAuditLogs());
+  }, []);
+
+  const setIntegrationSettings = useCallback(async (settings: any) => {
+    const svc = serviceRef.current;
+    if (!svc?.setIntegrationSettings) return { success: false, error: { message: 'Service not available' } };
+    return doSync('setIntegrationSettings', () => svc.setIntegrationSettings(settings));
+  }, []);
+
+  const reconnect = useCallback(async () => {
+    const svc = serviceRef.current;
+    if (!svc?.reconnect) return { success: false, error: { message: 'Service not available' } };
+    const res = await svc.reconnect();
+    if (res.success && mountedRef.current) {
+      setState(prev => ({ ...prev, isConnected: true, error: null }));
+    }
+    return res;
+  }, []);
+
+  const syncNow = useCallback(() => syncAll(), [syncAll]);
 
   // Auto-sync: returns a stop function
   const startAutoSync = useCallback((intervalMs: number = 60000) => {
@@ -364,12 +366,19 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
 
   return {
     state,
+    isConnected: state.isConnected,
     syncPatientData,
     syncAppointments,
     syncPrescriptions,
     syncLabResults,
     syncVitals,
     syncAll,
+    requestAmendment,
+    getIntegrationStatus,
+    fetchAuditLogs,
+    setIntegrationSettings,
+    reconnect,
+    syncNow,
     startAutoSync,
     stopAutoSync,
     isAutoSyncActive,

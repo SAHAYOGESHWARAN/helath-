@@ -5,8 +5,8 @@ import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import UniqueLoader from '../../components/shared/UniqueLoader';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RefreshIcon, CloudIcon, PlayIcon, StopIcon } from '../../components/shared/Icons';
-import Link from 'next/link';
+import { ArrowPathIcon as RefreshIcon, GlobeAltIcon as CloudIcon, CogIcon as PlayIcon, StopIcon } from '../../components/shared/Icons';
+import { Link } from 'react-router-dom';
 
 const EMRAdmin: React.FC = () => {
   const { users } = useAuth();
@@ -42,17 +42,17 @@ const EMRAdmin: React.FC = () => {
   const overall = useMemo(() => {
     const avg = qualitySeries.length ? Math.round(qualitySeries.reduce((s, p) => s + p.score, 0) / qualitySeries.length) : 0;
     return {
-      connected: Boolean(emr.isConnected?.() ?? true),
+      connected: emr.isConnected,
       dataQuality: avg,
       syncedPatients: Math.round((users || []).filter(u => u.role === 'PATIENT').length * 0.92),
     };
-  }, [qualitySeries, emr, users]);
+  }, [qualitySeries, emr.isConnected, users]);
 
   const handleSyncNow = async () => {
     setLoading(true);
     try {
-      const r = await (emr.syncNow?.() ?? Promise.resolve({ status: 'ok', jobId: 'mock' }));
-      setLogs(prev => [{ id: String(Date.now()), time: new Date().toISOString(), status: 'Started', details: `Job ${r.jobId || 'mock'}` }, ...prev].slice(0,20));
+      await emr.syncNow?.();
+      setLogs(prev => [{ id: String(Date.now()), time: new Date().toISOString(), status: 'Started', details: `Job mock` }, ...prev].slice(0,20));
       // simulate update to chart
       setQualitySeries(s => [...s.slice(1), { date: new Date().toISOString().slice(0,10), score: 85 }]);
     } catch (e) {

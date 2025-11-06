@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { VitalsRecord } from '../../types';
-import { Card } from './Card';
+import Card from './Card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface RealtimeVitalsProps {

@@ -1,11 +1,11 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { GoogleGenerativeAI } from '@google/genai';
+import { GoogleGenerativeAI } from "@google/genai";
 import { useAuth } from '../../hooks/useAuth';
 import { useEMRIntegration } from '../../hooks/useEMRIntegration';
 import Card from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { UserRole, SystemHealth, PredictiveAnalytics } from '../../types';
-import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon, SparklesIcon, CogIcon, ExclamationTriangleIcon, ArrowTrendingUpIcon, CloudIcon, RefreshIcon, PlayIcon, StopIcon } from '../../components/shared/Icons';
+import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon, SparklesIcon, CogIcon, ExclamationTriangleIcon, ArrowTrendingUpIcon, GlobeAltIcon as CloudIcon, ArrowPathIcon as RefreshIcon, CogIcon as PlayIcon, StopIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
 // FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
@@ -119,43 +119,56 @@ const AdminDashboard: React.FC = () => {
         setIsSummaryLoading(true);
         setAiSummary('');
         setSummaryError('');
-        try {
-            const apiKey = process.env.VITE_API_KEY;
-            if (!apiKey) {
-                throw new Error("VITE_API_KEY is not set.");
-            }
 
-            const genAI = new GoogleGenerativeAI(apiKey);
+        if (!import.meta.env.VITE_API_KEY) {
+            setSummaryError("API key is not configured. Please set VITE_API_KEY in your .env file.");
+            setIsSummaryLoading(false);
+            return;
+        }
+
+        try {
+            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY);
             const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
             const prompt = `
-                You are a business analyst for NovoPath Medical, a healthcare platform.
-                Analyze the following key metrics and provide a concise summary of insights in 3-4 bullet points.
-                Highlight key trends, successes, and potential areas for focus.
-                Format the response as simple text with bullet points (using *).
+                Analyze the following metrics for the NovoPath Medical platform and provide a concise, insightful summary (around 100-150 words) for an administrator.
+                Focus on key trends, potential areas of concern, and actionable recommendations. Be professional and data-driven.
 
-                Metrics:
-                - Total Users: ${stats.totalUsers}
-                - Total Providers: ${stats.totalProviders}
-                - Total Patients: ${stats.totalPatients}
+                **Key Metrics:**
+                - Total Users: ${stats.totalUsers} (${stats.totalProviders} Providers, ${stats.totalPatients} Patients)
                 - Pending Provider Verifications: ${stats.pendingVerifications}
                 - Estimated Monthly Revenue: $${stats.monthlyRevenue.toFixed(2)}
-                - Revenue trend over past months: ${JSON.stringify(revenueData)}
-                - User distribution: ${JSON.stringify(userRoleData)}
+
+                **Monthly Revenue Growth:**
+                ${revenueData.map(d => `${d.month}: $${d.revenue.toFixed(2)}`).join('\n')}
+
+                **User Distribution:**
+                ${userRoleData.map(d => `${d.name}: ${d.value}`).join(', ')}
+
+                **System Health:**
+                - Uptime: ${systemHealth?.uptime}%
+                - API Error Rate: ${systemHealth?.errorRate}%
+                - Average Response Time: ${systemHealth?.responseTime}ms
+
+                **Predictive Analytics:**
+                - 3-Month User Growth Prediction: +${Math.round(predictiveAnalytics?.userGrowthPrediction || 0)} users
+                - Revenue Projection: $${Math.round(predictiveAnalytics?.revenueProjection || 0)}
+                - Predicted Churn Rate: ${predictiveAnalytics?.churnRate}%
+
+                Based on this data, what are the most critical insights an administrator should be aware of?
             `;
 
             const result = await model.generateContent(prompt);
             const response = result.response;
             const text = response.text();
-            
-            setAiSummary(text || 'No summary returned.');
+            setAiSummary(text);
         } catch (error) {
             console.error("Error generating AI summary:", error);
-            setSummaryError('Failed to generate insights. Please try again. Make sure the API key is configured correctly.');
+            setSummaryError('Failed to generate insights. Please check the API key and try again.');
         } finally {
             setIsSummaryLoading(false);
         }
-    }, [stats, revenueData, userRoleData]);
+    }, [stats, revenueData, userRoleData, systemHealth, predictiveAnalytics]);
 
     return (
         <div className="animate-fade-in-up">

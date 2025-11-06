@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useEMRIntegration } from '../../hooks/useEMRIntegration';
-import { Card } from './Card';
+import Card from './Card';
 
 interface AmendmentRequestFormProps {
   patientId: string;
@@ -25,7 +25,8 @@ const AmendmentRequestForm: React.FC<AmendmentRequestFormProps> = ({ patientId, 
     }),
     onSubmit: async (values) => {
       if (requestAmendment) {
-        await requestAmendment(patientId, recordId, values.reason, values.description);
+        const amendment = `Record ID: ${recordId}, Type: ${recordType}, Reason: ${values.reason} - Description: ${values.description}`;
+        await requestAmendment(patientId, amendment);
         setIsSubmitted(true);
       }
     },

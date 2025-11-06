@@ -7,7 +7,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { UserRole } from '../../types';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
-import { PillIcon, HeartIcon, ChatBubbleLeftRightIcon, PencilSquareIcon } from '../../components/shared/Icons';
+import { PillIcon, HeartIcon, ChatBubbleLeftRightIcon, PencilAltIcon as PencilSquareIcon } from '../../components/shared/Icons';
 
 const PatientChart: React.FC = () => {
     const { patientId } = useParams<{ patientId: string }>();
