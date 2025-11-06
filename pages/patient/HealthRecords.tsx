@@ -81,7 +81,7 @@ const SelfReportModal: React.FC<{isOpen: boolean, onClose: () => void}> = ({ isO
                     initialValues={{ name: '', status: 'Active', ageOfOnset: '', notes: '' }}
                     validationSchema={ConditionSchema}
                     onSubmit={(values) => {
-                        addCondition({ ...values, ageOfOnset: Number(values.ageOfOnset) || undefined, status: 'Active' });
+                        addCondition({ ...values, ageOfOnset: values.ageOfOnset ? Number(values.ageOfOnset) : undefined, status: 'Active' });
                         showToast('Condition reported successfully.', 'success');
                         onClose();
                     }}

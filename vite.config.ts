@@ -9,10 +9,13 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        watch: {
+          ignored: ['vite.config.ts', 'vite.config.mts'],
+        },
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.VITE_API_KEY),
+        'process.env.VITE_API_KEY': JSON.stringify(env.VITE_API_KEY),
         'process.env.VITE_EMR_API_URL': JSON.stringify(env.VITE_EMR_API_URL || ''),
         'process.env.VITE_EMR_API_KEY': JSON.stringify(env.VITE_EMR_API_KEY || ''),
       },

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/genai';
 import { useAuth } from '../../hooks/useAuth';
 import { useEMRIntegration } from '../../hooks/useEMRIntegration';
 import Card from '../../components/shared/Card';
@@ -8,7 +8,7 @@ import { UserRole, SystemHealth, PredictiveAnalytics } from '../../types';
 import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon, SparklesIcon, CogIcon, ExclamationTriangleIcon, ArrowTrendingUpIcon, CloudIcon, RefreshIcon, PlayIcon, StopIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
 // FIX: Use `react-router-dom` for web-specific components.
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import UniqueLoader from '../../components/shared/UniqueLoader';
 
 const AdminDashboard: React.FC = () => {
@@ -120,7 +120,14 @@ const AdminDashboard: React.FC = () => {
         setAiSummary('');
         setSummaryError('');
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_API_KEY });
+            const apiKey = process.env.VITE_API_KEY;
+            if (!apiKey) {
+                throw new Error("VITE_API_KEY is not set.");
+            }
+
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
             const prompt = `
                 You are a business analyst for NovoPath Medical, a healthcare platform.
                 Analyze the following key metrics and provide a concise summary of insights in 3-4 bullet points.
@@ -137,42 +144,14 @@ const AdminDashboard: React.FC = () => {
                 - User distribution: ${JSON.stringify(userRoleData)}
             `;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
+            const result = await model.generateContent(prompt);
+            const response = result.response;
+            const text = response.text();
             
-            // FIX: Correctly access the 'text' property from the response object.
-            // Try several common response shapes from the GenAI client,
-            // then fall back to a short JSON string so UI doesn't break.
-            const respAny = response as any;
-            const tryFindText = () => {
-                // candidate/content style
-                if (Array.isArray(respAny?.candidates) && respAny.candidates[0]) {
-                    const c = respAny.candidates[0];
-                    if (typeof c?.content === 'string') return c.content;
-                    if (Array.isArray(c?.content)) {
-                        const t = c.content.find((x: any) => typeof x?.text === 'string');
-                        if (t) return t.text;
-                    }
-                }
-                // output/content style
-                if (Array.isArray(respAny?.output) && respAny.output[0]) {
-                    const o = respAny.output[0];
-                    if (Array.isArray(o?.content)) {
-                        const t = o.content.find((x: any) => typeof x?.text === 'string');
-                        if (t) return t.text;
-                    }
-                }
-                // direct text property
-                if (typeof respAny?.text === 'string') return respAny.text;
-                return null;
-            };
-            const text = tryFindText() || JSON.stringify(respAny).slice(0, 2000);
             setAiSummary(text || 'No summary returned.');
         } catch (error) {
             console.error("Error generating AI summary:", error);
-            setSummaryError('Failed to generate insights. Please try again.');
+            setSummaryError('Failed to generate insights. Please try again. Make sure the API key is configured correctly.');
         } finally {
             setIsSummaryLoading(false);
         }

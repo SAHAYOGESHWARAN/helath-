@@ -203,7 +203,7 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-    return doSync< User >(`patient:${id}`, (signal) => svc.syncPatientData(id/*, { signal }*/));
+    return doSync< User >(`patient:${id}`, (signal) => svc.syncPatientData(id, { signal }));
   }, [user?.id]);
 
   const syncAppointments = useCallback(async (patientId?: string): Promise<EMRAPIResponse<Appointment[]>> => {
@@ -223,7 +223,7 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-    return doSync< Appointment[] >(`appointments:${id}`, (signal) => svc.syncAppointments(id/*, { signal }*/));
+    return doSync< Appointment[] >(`appointments:${id}`, (signal) => svc.syncAppointments(id, { signal }));
   }, [user?.id]);
 
   const syncPrescriptions = useCallback(async (patientId?: string): Promise<EMRAPIResponse<Prescription[]>> => {
@@ -243,7 +243,7 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-    return doSync< Prescription[] >(`prescriptions:${id}`, (signal) => svc.syncPrescriptions(id/*, { signal }*/));
+    return doSync< Prescription[] >(`prescriptions:${id}`, (signal) => svc.syncPrescriptions(id, { signal }));
   }, [user?.id]);
 
   const syncLabResults = useCallback(async (patientId?: string): Promise<EMRAPIResponse<LabResult[]>> => {
@@ -263,7 +263,7 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-    return doSync< LabResult[] >(`lab:${id}`, (signal) => svc.syncLabResults(id/*, { signal }*/));
+    return doSync< LabResult[] >(`lab:${id}`, (signal) => svc.syncLabResults(id, { signal }));
   }, [user?.id]);
 
   const syncVitals = useCallback(async (patientId?: string): Promise<EMRAPIResponse<VitalsRecord[]>> => {
@@ -283,7 +283,7 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
         timestamp: new Date().toISOString(),
       };
     }
-    return doSync< VitalsRecord[] >(`vitals:${id}`, (signal) => svc.syncVitals(id/*, { signal }*/));
+    return doSync< VitalsRecord[] >(`vitals:${id}`, (signal) => svc.syncVitals(id, { signal }));
   }, [user?.id]);
 
   const syncAll = useCallback(async (patientId?: string): Promise<void> => {
@@ -295,7 +295,7 @@ export const useEMRIntegration = (): UseEMRIntegrationReturn => {
       return;
     }
     await doSync<void>(`all:${id}`, async (signal) => {
-      await svc.syncAllPatientData(id/*, { signal }*/);
+      await svc.syncAllPatientData(id, { signal });
       return { success: true, timestamp: new Date().toISOString() } as EMRAPIResponse<void>;
     });
   }, [user?.id]);

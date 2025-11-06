@@ -7,7 +7,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
 import { UserRole } from '../../types';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
-import { PillIcon, HeartIcon, ChatBubbleLeftRightIcon, PencilAltIcon } from '../../components/shared/Icons';
+import { PillIcon, HeartIcon, ChatBubbleLeftRightIcon, PencilSquareIcon } from '../../components/shared/Icons';
 
 const PatientChart: React.FC = () => {
     const { patientId } = useParams<{ patientId: string }>();
@@ -52,7 +52,7 @@ const PatientChart: React.FC = () => {
                     Message
                 </Link>
                 <Link to="/provider/progress-notes" state={{ patientId: patient.id }} className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg shadow-sm hover:bg-gray-100 flex items-center">
-                    <PencilAltIcon className="w-5 h-5 mr-2" />
+                    <PencilSquareIcon className="w-5 h-5 mr-2" />
                     New Note
                 </Link>
             </PageHeader>
