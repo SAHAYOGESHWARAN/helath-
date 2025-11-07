@@ -2,7 +2,6 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, Message } from '../../types';
 import { PaperAirplaneIcon, CheckCircleIcon, ClockIcon } from '../../components/shared/Icons';
-import { GoogleGenAI, Content } from '@google/genai';
 import PageHeader from '../../components/shared/PageHeader';
 import { Card } from '../../components/shared/Card';
 
@@ -29,14 +28,13 @@ const formatDateDivider = (date: Date) => {
 
 
 const Messaging: React.FC = () => {
-    const { user, users, messages, sendMessage, markMessagesAsRead } = useAuth();
+    const { user, users, messages, sendMessage, markMessagesAsRead, socketStatus } = useAuth();
     const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
     const [message, setMessage] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const ai = useRef<GoogleGenAI | null>(null);
 
     const providersWithMessages = useMemo(() => {
         if (!user) return [];
@@ -79,13 +77,7 @@ const Messaging: React.FC = () => {
         });
     }, [users, messages, user]);
 
-    useEffect(() => {
-        try {
-            ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        } catch (error) {
-            console.error("Failed to initialize AI:", error);
-        }
-    }, []);
+    // AI generation is proxied to a server endpoint. No client-side SDK initialization here.
 
     useEffect(() => {
         if (providersWithMessages.length > 0 && !selectedProvider) {
@@ -118,7 +110,7 @@ const Messaging: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!message.trim() || !user || !selectedProvider || !ai.current || isReplying) return;
+    if (!message.trim() || !user || !selectedProvider || isReplying) return;
 
         const userMessageText = message;
         setMessage('');
@@ -134,18 +126,48 @@ const Messaging: React.FC = () => {
         try {
             const systemInstruction = `You are an AI assistant impersonating a medical provider named ${selectedProvider.name}. A patient, ${user.name}, has sent you a message. Respond concisely and helpfully. The conversation history is provided. Your response should be brief and conversational. IMPORTANT: Do NOT provide medical advice. Instead, encourage the user to schedule an appointment for any medical concerns. Keep responses to 2-3 sentences.`;
 
-            const historyForGemini: Content[] = currentMessages.map(m => ({
+            const historyForGemini: any[] = currentMessages.map(m => ({
                 role: m.senderId === user.id ? 'user' : 'model',
                 parts: [{ text: m.text }],
             }));
 
-            const response = await ai.current.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [...historyForGemini, { role: 'user', parts: [{ text: userMessageText }] }],
-                config: { systemInstruction },
+            // Proxy the generation request to a small server-side endpoint so the client
+            // doesn't need to bundle the @google/genai SDK.
+            const token = typeof window !== 'undefined' ? sessionStorage.getItem('novopath-token') : undefined;
+            const resp = await fetch('/api/genai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                body: JSON.stringify({
+                    model: 'gemini-2.5-flash',
+                    history: [...historyForGemini, { role: 'user', parts: [{ text: userMessageText }] }],
+                    prompt: userMessageText,
+                    systemInstruction,
+                }),
             });
 
-            const replyText = response.text;
+            let replyText: string | undefined;
+            if (!resp.ok) throw new Error(`GenAI server returned ${resp.status}`);
+            const data = await resp.json();
+            replyText = data?.text || data?.result;
+
+            // Fallback: if server didn't respond with text, try a lightweight mock endpoint
+            if (!replyText) {
+                try {
+                    const mockResp = await fetch('/api/genai-mock', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                        body: JSON.stringify({ prompt: userMessageText }),
+                    });
+                    if (mockResp.ok) {
+                        const mockData = await mockResp.json();
+                        replyText = mockData?.text;
+                    }
+                } catch (err) {
+                    // ignore mock fallback error
+                }
+            }
+
+            if (!replyText) replyText = 'Sorry, I could not generate a reply.';
 
             sendMessage({
                 senderId: selectedProvider.id,
@@ -154,7 +176,6 @@ const Messaging: React.FC = () => {
             });
         } catch (error) {
             console.error("Error generating reply:", error);
-            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
             sendMessage({
                 senderId: selectedProvider.id,
                 receiverId: user.id,
@@ -286,7 +307,13 @@ const Messaging: React.FC = () => {
                                             <span className="absolute bottom-0 right-2 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-800 text-lg">{selectedProvider.name}</h3>
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="font-bold text-gray-800 text-lg">{selectedProvider.name}</h3>
+                                                {/* Socket status badge */}
+                                                <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm ${socketStatus === 'connected' ? 'bg-green-100 text-green-800' : socketStatus === 'reconnecting' ? 'bg-yellow-100 text-yellow-800' : socketStatus === 'connecting' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
+                                                    {socketStatus ? `Realtime: ${socketStatus.charAt(0).toUpperCase() + socketStatus.slice(1)}` : 'Realtime: Unknown'}
+                                                </span>
+                                            </div>
                                             <p className="text-sm text-gray-500 flex items-center">
                                                 <span>{selectedProvider.specialty || 'Healthcare Provider'}</span>
                                                 <span className="mx-2">•</span>

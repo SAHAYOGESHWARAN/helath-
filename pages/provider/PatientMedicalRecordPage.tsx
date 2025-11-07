@@ -3,11 +3,10 @@ import { useParams } from 'react-router-dom';
 import { usePatientData } from '../../hooks/usePatientData';
 import { PatientProvider } from '../../contexts/PatientContext';
 import { EncounterProvider } from '../../contexts/EncounterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/shared/Card';
+import Card, { CardContent, CardHeader, CardTitle } from '../../components/shared/Card';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/shared/Avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/shared/Tabs';
+import Tabs, { TabsContent, TabsList, TabsTrigger } from '../../components/shared/Tabs';
 import { Badge } from '../../components/shared/Badge';
-import { Icons } from '../../components/shared/Icons';
 
 const PatientMedicalRecordPage: React.FC = () => {
     const { patientId } = useParams<{ patientId: string }>();
@@ -53,7 +52,8 @@ const PatientHeader: React.FC<{ patient: any }> = ({ patient }) => (
 );
 
 const EncounterDetails: React.FC = () => {
-    const { encounters } = usePatientData(useParams<{ patientId: string }>().patientId);
+    const { patient } = usePatientData(useParams<{ patientId: string }>().patientId);
+    const encounters = (patient as any)?.encounters || [];
 
     return (
         <Tabs defaultValue="encounters">

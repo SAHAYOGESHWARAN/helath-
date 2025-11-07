@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState, ReactNode, useCallback, useEffect, createContext } from 'react';
 import { Notification, UserRole } from '../types';
 import { useAuth } from '../hooks/useAuth';

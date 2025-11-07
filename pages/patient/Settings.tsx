@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
-import { Card } from '../../components/shared/Card';
-import { Tabs } from '../../components/shared/Tabs';
+import Card from '../../components/shared/Card';
+import PageHeader from '../../components/shared/PageHeader';
+import Tabs from '../../components/shared/Tabs';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { useApp } from '../../contexts/AppContext.tsx';
 import { useAuth } from '../../hooks/useAuth';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { SpinnerIcon, CreditCardIcon, ShieldCheckIcon, BellIcon } from '../../components/shared/Icons';
-import Tabs from '../../components/shared/Tabs';
+// Tabs imported above as default
 import { InsuranceInfo } from '../../types';
 
 const PasswordSchema = Yup.object().shape({

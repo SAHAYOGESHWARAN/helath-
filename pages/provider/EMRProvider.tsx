@@ -22,17 +22,14 @@ const EMRProvider: React.FC = () => {
     );
   }
 
-  const {
-    patientData,
-    appointments,
-    prescriptions,
-    labResults,
-    vitals,
-    loading,
-    error,
-    emrState,
-    refetch,
-  } = usePatientData(patientId);
+  const { patient, appointments, prescriptions, claims, labResults, vitals, loading } = usePatientData(patientId);
+
+  const [emrState, setEmrState] = useState<{ isConnected: boolean; isSyncing: boolean; lastSyncTime: string | null }>({ isConnected: false, isSyncing: false, lastSyncTime: null });
+  const error = null;
+  const refetch = async () => {
+    // no-op for mock data; in a real app re-run the hook or trigger a refresh
+    return;
+  };
 
   const timelineRecords = React.useMemo(() => {
     const allRecords = [
@@ -54,7 +51,7 @@ const EMRProvider: React.FC = () => {
 
   return (
     <div className="animate-fade-in-up">
-      <PageHeader title={`${patientData?.name || 'Patient'}'s Health Record`} subtitle="View synced EMR records and manage sharing & corrections." />
+  <PageHeader title={`${patient?.name || 'Patient'}'s Health Record`} subtitle="View synced EMR records and manage sharing & corrections." />
 
       {error && <Card className="bg-red-100 text-red-700 p-4 mb-6">{error}</Card>}
 

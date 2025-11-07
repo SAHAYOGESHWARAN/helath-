@@ -1,6 +1,6 @@
 import React from 'react';
 import Toast from './Toast';
-import { ToastMessage } from '../../contexts/AppContext';
+import { ToastMessage } from '../../contexts/AppContext.tsx';
 
 const Toaster: React.FC<{ toasts: ToastMessage[]; onRemove: (id: number) => void }> = ({ toasts, onRemove }) => {
   return (

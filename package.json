@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+  "mock-ws": "node ./scripts/mock-ws-server.js",
+  "genai-server": "node ./server-genai.cjs",
+  "genai-test": "node ./scripts/run-genai-test.cjs",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

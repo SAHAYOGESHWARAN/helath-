@@ -9,8 +9,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { VitalsRecord, LabResult, MedicalCondition, Allergy, HealthGoal, Task } from '../../types';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
 import { HeartIcon, PillIcon, ExclamationTriangleIcon, DumbbellIcon, ClipboardDocumentListIcon, BeakerIcon } from '../../components/shared/Icons';
-import { Card } from '../../components/shared/Card';
-import { Tabs } from '../../components/shared/Tabs';
+import Card from '../../components/shared/Card';
+import Tabs from '../../components/shared/Tabs';
 import { useApp } from '../../contexts/AppContext.tsx';
 import Modal from '../../components/shared/Modal';
 

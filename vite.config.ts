@@ -9,6 +9,15 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        // Proxy API calls to the GenAI server during development
+        proxy: {
+          '/api': {
+            target: 'http://localhost:4000',
+            changeOrigin: true,
+            secure: false,
+            rewrite: (path) => path.replace(/^\/api/, '/api')
+          }
+        },
         watch: {
           ignored: ['vite.config.ts', 'vite.config.mts'],
         },

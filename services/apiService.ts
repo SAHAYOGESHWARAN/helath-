@@ -4,6 +4,7 @@ import {
   MOCK_REFERRALS, MOCK_AUDIT_LOG
 } from '../mockData';
 import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, UserRole, ClaimStatus, ClaimType } from '../types';
+import { eventBus, EVENTS } from './eventBus';
 
 const SIMULATED_LATENCY = 150;
 
@@ -24,12 +25,13 @@ const apiRequest = <T>(data: T): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(JSON.parse(JSON.stringify(data))), SIMULATED_LATENCY));
 
 // --- Auth Endpoints ---
-export const apiLogin = (email: string, password?: string): Promise<User | null> => {
-  const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (foundUser && (!password || foundUser.password === password)) {
-    return apiRequest(foundUser);
-  }
-  return apiRequest(null);
+export const apiLogin = (email: string, password?: string): Promise<{ user: User; token: string } | null> => {
+    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (foundUser && (!password || foundUser.password === password)) {
+        const token = `demo-jwt-${foundUser.id}-${Date.now()}`;
+        return apiRequest({ user: foundUser, token });
+    }
+    return apiRequest(null);
 };
 
 export const apiRegister = (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole): Promise<User> => {
@@ -91,6 +93,8 @@ export const apiAddAppointment = (appointment: Omit<Appointment, 'id'>): Promise
         id: `appt_${Date.now()}`,
     };
     appointments.push(newAppointment);
+    // publish appointment.created for realtime
+    eventBus.publish(EVENTS.APPOINTMENT_CREATED, newAppointment);
     return apiRequest(newAppointment);
 };
 
@@ -103,6 +107,9 @@ export const apiConfirmAppointment = (appointmentId: string): Promise<Appointmen
         }
         return a;
     });
+    if (updatedAppt) {
+        try { eventBus.publish(EVENTS.APPOINTMENT_UPDATED, updatedAppt); } catch (e) { /* ignore */ }
+    }
     return apiRequest(updatedAppt);
 };
 
@@ -115,6 +122,9 @@ export const apiCancelAppointment = (appointmentId: string): Promise<Appointment
         }
         return a;
     });
+    if (updatedAppt) {
+        try { eventBus.publish(EVENTS.APPOINTMENT_UPDATED, updatedAppt); } catch (e) { /* ignore */ }
+    }
     return apiRequest(updatedAppt);
 };
 
@@ -163,6 +173,7 @@ export const apiMakePayment = (invoiceId: string, amount: number): Promise<Billi
 export const apiAddProgressNote = (note: Omit<ProgressNote, 'id'>): Promise<ProgressNote> => {
     const newNote: ProgressNote = { ...note, id: `note_${Date.now()}` };
     progressNotes.push(newNote);
+    eventBus.publish(EVENTS.NOTE_CREATED, newNote);
     return apiRequest(newNote);
 };
 
@@ -176,6 +187,8 @@ export const apiSendMessage = (message: Omit<Message, 'id' | 'timestamp' | 'isRe
     const newMessage: Message = { ...message, id: `msg_${Date.now()}`, timestamp: new Date().toISOString(), isRead: false };
     const key = [message.senderId, message.receiverId].sort().join('-');
     messages[key] = [...(messages[key] || []), newMessage];
+    // publish message.created so other clients can react
+    eventBus.publish(EVENTS.MESSAGE_CREATED, newMessage);
     return apiRequest(newMessage);
 };
 
@@ -188,6 +201,7 @@ export const apiMarkMessagesAsRead = (userId: string, contactId: string): Promis
 export const apiAddLabOrder = (order: Omit<LabOrder, 'id'>): Promise<LabOrder> => {
     const newOrder: LabOrder = { ...order, id: `lo_${Date.now()}` };
     labOrders.push(newOrder);
+    eventBus.publish(EVENTS.LAB_ORDER_CREATED, newOrder);
     return apiRequest(newOrder);
 };
 

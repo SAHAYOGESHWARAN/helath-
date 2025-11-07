@@ -48,26 +48,31 @@ The EMR (Electronic Medical Records) API integration provides a secure, scalable
 ## Features
 
 ### 1. **Secure Authentication**
+
 - API key-based authentication
 - Secure key storage and rotation
 - Request signing and validation
 
 ### 2. **Real-time Synchronization**
+
 - Automatic data sync at configurable intervals
 - Manual sync on demand
 - Bidirectional data flow (read/write)
 
 ### 3. **RESTful API**
+
 - Standard HTTP methods (GET, POST, PATCH, DELETE)
 - Consistent response format
 - Comprehensive error handling
 
 ### 4. **FHIR Compatibility**
+
 - FHIR R4 compliant endpoints
 - Resource transformation
 - Future-ready for HL7 integration
 
 ### 5. **Error Handling & Recovery**
+
 - Automatic retry with exponential backoff
 - Request caching
 - Offline capability support
@@ -86,6 +91,8 @@ VITE_EMR_API_KEY=your-secure-api-key-here
 # Optional: API Key from environment (for server-side)
 EMR_API_KEY=your-server-side-api-key
 ```
+
+Tip: A minimal `.env.example` is included at the project root. Copy it to `.env` and fill in your values.
 
 ### 2. Install Dependencies
 
@@ -305,12 +312,14 @@ All API responses follow this structure:
 ## Security Best Practices
 
 1. **API Key Management**
+
    - Never commit API keys to version control
    - Use environment variables for keys
    - Rotate keys regularly
    - Use different keys for different environments
 
 2. **Request Security**
+
    - Always use HTTPS
    - Validate all input data
    - Implement rate limiting
@@ -368,11 +377,13 @@ const isConnected = await integrationService.checkEMRHealth();
 ### Common Issues
 
 1. **API Key Not Working**
+
    - Verify key is correct in environment variables
    - Check key hasn't expired
    - Ensure key has proper permissions
 
 2. **Connection Timeout**
+
    - Check network connectivity
    - Verify EMR API URL is correct
    - Increase timeout in configuration
@@ -395,7 +406,7 @@ const isConnected = await integrationService.checkEMRHealth();
 ## Support
 
 For issues or questions:
+
 - Check the API documentation
 - Review error logs
 - Contact the EMR API team
-

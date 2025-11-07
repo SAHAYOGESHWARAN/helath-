@@ -1,6 +1,7 @@
 import React from 'react';
-import { Card } from '../../components/shared/Card';
-import { Tabs } from '../../components/shared/Tabs';
+import Card from '../../components/shared/Card';
+import Tabs from '../../components/shared/Tabs';
+import PageHeader from '../../components/shared/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { ChatBubbleLeftRightIcon, BeakerIcon, ArrowRightOnRectangleIcon, PencilAltIcon } from '../../components/shared/Icons';

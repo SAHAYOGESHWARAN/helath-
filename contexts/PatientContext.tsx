@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Encounter } from '../types';
 import { MOCK_USERS, MOCK_ENCOUNTERS } from '../mockData';

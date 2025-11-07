@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { VitalsRecord } from '../../types';
 import Card from './Card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -13,23 +12,21 @@ const RealtimeVitals: React.FC<RealtimeVitalsProps> = ({ patientId }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const client = new W3CWebSocket(`ws://localhost:8080/vitals/${patientId}`);
+    const ws = new WebSocket(`ws://localhost:8080/vitals/${patientId}`);
 
-    client.onopen = () => {
-      setIsConnected(true);
+    ws.onopen = () => setIsConnected(true);
+    ws.onmessage = (event) => {
+      try {
+        const newVitals: VitalsRecord = typeof event.data === 'string' ? JSON.parse(event.data) : JSON.parse(String(event.data));
+        setVitals((prevVitals) => [...prevVitals, newVitals]);
+      } catch (err) {
+        // ignore parse errors
+      }
     };
-
-    client.onmessage = (message) => {
-      const newVitals: VitalsRecord = JSON.parse(message.data.toString());
-      setVitals((prevVitals) => [...prevVitals, newVitals]);
-    };
-
-    client.onclose = () => {
-      setIsConnected(false);
-    };
+    ws.onclose = () => setIsConnected(false);
 
     return () => {
-      client.close();
+      try { ws.close(); } catch { /* ignore */ }
     };
   }, [patientId]);
 

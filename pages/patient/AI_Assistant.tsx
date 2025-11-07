@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenaiBlob, Content } from "@google/genai";
+import { getGenAIClient } from '../../services/gemini';
 import { Card } from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { SparklesIcon, GlobeAltIcon, PaperClipIcon, MicrophoneIcon, StopIcon, SpeakerWaveIcon } from '../../components/shared/Icons';
@@ -14,7 +14,7 @@ import { Appointment } from '../../types';
 // --- Type Definitions for Multimodal Content ---
 // Define LiveSession interface locally since it's not exported from @google/genai
 interface LiveSession {
-  sendRealtimeInput: (input: { media: GenaiBlob }) => void;
+  sendRealtimeInput: (input: { media: any }) => void;
   close: () => void;
 }
 interface TextPart { text: string; }
@@ -38,7 +38,7 @@ const fileToGenerativePart = async (file: File) => {
   };
 };
 
-const createAudioBlob = (data: Float32Array): GenaiBlob => {
+const createAudioBlob = (data: Float32Array): any => {
   const l = data.length;
   const int16 = new Int16Array(l);
   for (let i = 0; i < l; i++) {
@@ -60,7 +60,7 @@ const AIAssistant: React.FC = () => {
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ai = useRef<GoogleGenAI | null>(null);
+  const ai = useRef<any | null>(null);
 
   // --- Audio & Live Conversation State ---
   const [isRecording, setIsRecording] = useState(false);
@@ -78,12 +78,14 @@ const AIAssistant: React.FC = () => {
   let nextStartTime = 0;
 
   useEffect(() => {
-    try {
-      ai.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    } catch (error) {
-      console.error("Failed to initialize AI:", error);
-      showToast("Failed to initialize AI assistant. Please refresh the page.", 'error');
-    }
+    (async () => {
+      try {
+        ai.current = await getGenAIClient();
+      } catch (error) {
+        console.error("Failed to initialize AI:", error);
+        showToast("Failed to initialize AI assistant. Please refresh the page.", 'error');
+      }
+    })();
   }, [showToast]);
 
   useEffect(() => {
@@ -110,7 +112,7 @@ const AIAssistant: React.FC = () => {
     const userParts: Part[] = [...mediaParts, textPart];
 
     const userMessage: AIMessage = { role: 'user', parts: userParts };
-    const currentHistory: Content[] = history.map(h => ({ role: h.role, parts: h.parts }));
+  const currentHistory: any[] = history.map(h => ({ role: h.role, parts: h.parts }));
 
     setHistory(prev => [...prev, userMessage]);
     setPrompt('');
@@ -251,7 +253,7 @@ const AIAssistant: React.FC = () => {
 
       sessionPromiseRef.current = ai.current.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-        config: { responseModalities: [Modality.AUDIO] },
+        config: { responseModalities: ['AUDIO'] },
         callbacks: {
           onopen: () => {
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
@@ -267,7 +269,7 @@ const AIAssistant: React.FC = () => {
             source.connect(scriptProcessor);
             scriptProcessor.connect(inputAudioContextRef.current!.destination);
           },
-          onmessage: async (message: LiveServerMessage) => {
+          onmessage: async (message: any) => {
             const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
             if (audioData && outputAudioContextRef.current) {
               nextStartTime = Math.max(nextStartTime, outputAudioContextRef.current.currentTime);
