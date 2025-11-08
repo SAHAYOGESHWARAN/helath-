@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Appointment, Claim, Prescription, LabResult, VitalsRecord } from '@/types';
-import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PRESCRIPTIONS } from '../../mockData';
+import { MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PRESCRIPTIONS } from '@/mockData';
 
 export const usePatientData = (patientId: string | undefined) => {
     const [patient, setPatient] = useState<User | null>(null);

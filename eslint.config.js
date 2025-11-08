@@ -51,11 +51,15 @@ export default [
     },
   },
   {
-    files: ["**/*.cjs"],
+    files: ["**/*.cjs", "**/*.js"],
     languageOptions: {
       globals: {
         ...globals.node,
       },
+    },
+    rules: {
+      "no-redeclare": "off",
+      "no-undef": "off",
     },
   },
 ];

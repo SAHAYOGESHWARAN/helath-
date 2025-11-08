@@ -2,7 +2,7 @@ import {
   MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS,
   MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS,
   MOCK_REFERRALS, MOCK_AUDIT_LOG
-} from '../../mockData';
+} from '@/mockData';
 import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, UserRole, ClaimStatus, ClaimType } from '@/types';
 import { eventBus, EVENTS } from '@/services/eventBus';
 

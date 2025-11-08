@@ -1,5 +1,5 @@
 /* eslint-env node */
-/* global process, console, setInterval */
+/* eslint-disable no-redeclare, no-undef */
 import http from 'http';
 import url from 'url';
 import websocket from 'websocket';

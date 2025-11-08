@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Encounter, PatientNote } from '@/types';
-import { MOCK_ENCOUNTERS } from '../../mockData';
+import { MOCK_ENCOUNTERS } from '../mockData';
 import { socketService } from '@/services/socketService';
 
 interface EncounterContextType {
