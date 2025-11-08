@@ -5,15 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-  "mock-ws": "node ./scripts/mock-ws-server.js",
-  "genai-server": "node ./server-genai.cjs",
-  "genai-test": "node ./scripts/run-genai-test.cjs",
+    "mock-ws": "node ./scripts/mock-ws-server.js",
+    "genai-server": "node ./server-genai.cjs",
+    "genai-test": "node ./scripts/run-genai-test.cjs",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@google/genai": "^1.28.0",
+    "eslint-plugin-react": "^7.37.5",
     "formik": "^2.4.6",
     "jspdf": "^3.0.3",
     "react": "^18.2.0",

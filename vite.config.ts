@@ -4,34 +4,32 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'url';
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-      server: {
-        port: 3000,
-        host: '0.0.0.0',
-        // Proxy API calls to the GenAI server during development
-        proxy: {
-          '/api': {
-            target: 'http://localhost:4000',
-            changeOrigin: true,
-            secure: false,
-            rewrite: (path) => path.replace(/^\/api/, '/api')
-          }
-        },
-        watch: {
-          ignored: ['vite.config.ts', 'vite.config.mts'],
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    server: {
+      port: 3000,
+      host: '0.0.0.0',
+      proxy: {
+        '/api': {
+          target: 'http://localhost:4000',
+          changeOrigin: true,
+          secure: false,
         },
       },
-      plugins: [react()],
-      define: {
-        'process.env.VITE_API_KEY': JSON.stringify(env.VITE_API_KEY),
-        'process.env.VITE_EMR_API_URL': JSON.stringify(env.VITE_EMR_API_URL || ''),
-        'process.env.VITE_EMR_API_KEY': JSON.stringify(env.VITE_EMR_API_KEY || ''),
+      watch: {
+        ignored: ['vite.config.ts', 'tsconfig.json'],
       },
-      resolve: {
-        alias: {
-          '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), './src'),
-        }
-      }
-    };
+    },
+    plugins: [react()],
+    define: {
+      'import.meta.env.VITE_API_KEY': JSON.stringify(env.VITE_API_KEY),
+      'import.meta.env.VITE_EMR_API_URL': JSON.stringify(env.VITE_EMR_API_URL || ''),
+      'import.meta.env.VITE_EMR_API_KEY': JSON.stringify(env.VITE_EMR_API_KEY || ''),
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), './src'),
+      },
+    },
+  };
 });

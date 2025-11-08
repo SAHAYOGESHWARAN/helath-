@@ -1,5 +1,4 @@
 /* eslint-env node */
-/* global process, console, require */
 const express = require('express');
 const cors = require('cors');
 
@@ -35,18 +34,23 @@ async function main() {
   app.use(cors({ origin: true }));
   app.use(express.json());
 
-  let client;
-  try {
-    client = await createClient();
-    console.log('GenAI client initialized');
-  } catch (err) {
-    console.error('Failed to initialize GenAI client:', err);
-  }
+  // Delay creating the GenAI client until it's first needed to keep startup fast.
+  let client = null;
 
   app.post('/api/genai', async (req, res) => {
     const { model, history, prompt, systemInstruction } = req.body || {};
+    // Dev-only: require an Authorization header (Bearer <token>) so the endpoint isn't fully public in local dev
+    const auth = req.get('authorization');
+    if (!auth) return res.status(401).json({ error: 'Unauthorized: missing Authorization header' });
+    // Lazy-initialize the GenAI client so the server can start fast in dev.
     if (!client) {
-      return res.status(500).json({ error: 'GenAI client not initialized on server' });
+      try {
+        client = await createClient();
+        console.log('GenAI client initialized on demand');
+      } catch (err) {
+        console.error('Failed to initialize GenAI client:', err);
+        return res.status(500).json({ error: 'GenAI client initialization failed' });
+      }
     }
 
     try {
@@ -58,6 +62,24 @@ async function main() {
       console.error('GenAI error:', err);
       res.status(500).json({ error: (err && err.message) || 'Generation error' });
     }
+  });
+
+  // Lightweight mock endpoint that can be used when the real GenAI client isn't available
+  app.post('/api/genai-mock', (req, res) => {
+    const { prompt } = req.body || {};
+    const text = prompt ? `(mock reply) ${prompt.split('').reverse().join('').slice(0, 200)}` : '(mock reply) Hello!';
+    res.json({ text });
+  });
+
+  // Keep the process alive and log unhandled errors for easier debugging in dev
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception in GenAI server:', err);
+    // don't exit in dev
+  });
+
+  process.on('unhandledRejection', (reason, p) => {
+    console.error('Unhandled Rejection at Promise', p, 'reason:', reason);
+    // don't exit in dev
   });
 
   app.listen(PORT, () => {
