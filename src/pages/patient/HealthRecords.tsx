@@ -11,7 +11,7 @@ import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, L
 import { HeartIcon, PillIcon, ExclamationTriangleIcon, DumbbellIcon, ClipboardDocumentListIcon, BeakerIcon } from '../../components/shared/Icons';
 import Card from '../../components/shared/Card';
 import Tabs from '../../components/shared/Tabs';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 import Modal from '../../components/shared/Modal';
 
 const VitalsChart: React.FC<{ data: VitalsRecord[] }> = ({ data }) => {

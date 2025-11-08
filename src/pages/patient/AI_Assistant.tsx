@@ -7,7 +7,7 @@ import { SparklesIcon, GlobeAltIcon, PaperClipIcon, MicrophoneIcon, StopIcon, Sp
 import SkeletonChatBubble from '../../components/shared/skeletons/SkeletonChatBubble';
 import PageHeader from '../../components/shared/PageHeader';
 import { encode, decode, decodeAudioData } from '../../services/audioUtils';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 import MarkdownRenderer from '../../components/shared/MarkdownRenderer';
 import { Appointment } from '../../types';
 

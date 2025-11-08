@@ -8,7 +8,7 @@ import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { DumbbellIcon, PlusIcon, PencilAltIcon, TrashIcon, CheckCircleIcon } from '../../components/shared/Icons';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 
 const GoalSchema = Yup.object().shape({
   title: Yup.string().required('Goal title is a LabAssistant'),

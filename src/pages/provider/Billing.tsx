@@ -7,7 +7,7 @@ import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { TrashIcon, CurrencyDollarIcon } from '../../components/shared/Icons';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 import { useTable } from '../../hooks/useTable';
 import PaginationControls from '../../components/shared/PaginationControls';
 import { Table, ColumnDefinition } from '../../components/shared/Table';

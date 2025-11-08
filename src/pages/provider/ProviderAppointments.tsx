@@ -4,7 +4,7 @@ import { Card } from '../../components/shared/Card';
 import { Appointment } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 import { SpinnerIcon, SearchIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 

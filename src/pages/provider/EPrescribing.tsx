@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 import { PillIcon } from '../../components/shared/Icons';
 import { useTable } from '../../hooks/useTable';
 import PaginationControls from '../../components/shared/PaginationControls';

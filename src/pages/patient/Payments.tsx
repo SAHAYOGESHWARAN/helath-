@@ -4,7 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Card } from '../../components/shared/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { useApp } from '../../contexts/AppContext.tsx';
+import { useApp } from '../../contexts/AppContext';
 import { SpinnerIcon, DownloadIcon, CreditCardIcon } from '../../components/shared/Icons';
 import { BillingInvoice } from '../../types';
 import Modal from '../../components/shared/Modal';
