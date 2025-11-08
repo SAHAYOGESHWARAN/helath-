@@ -2,6 +2,9 @@
   "name": "novo-path-clinic-platform",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=18 <21"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
