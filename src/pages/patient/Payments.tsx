@@ -11,28 +11,17 @@ import Modal from '../../components/shared/Modal';
 import PageHeader from '../../components/shared/PageHeader';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { Table, ColumnDefinition } from '../../components/shared/Table';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import axios from 'axios';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const PaymentSchema = Yup.object().shape({
   nameOnCard: Yup.string()
     .min(3, 'Name is too short')
     .matches(/(\s)/, { message: 'Please enter your full name as it appears on the card', excludeEmptyString: true })
     .required('Name on card is required'),
-  cardNumber: Yup.string()
-    .matches(/^[0-9]{16}$/, 'Card number must be 16 digits')
-    .required('Card number is required'),
-  expiryDate: Yup.string()
-    .matches(/^(0[1-9]|1[0-2])\s?\/\s?([0-9]{2})$/, 'Use MM / YY format')
-    .test('is-not-expired', 'Card has expired', (value) => {
-      if (!value || !/^(0[1-9]|1[0-2])\s?\/\s?([0-9]{2})$/.test(value)) return false;
-      const [month, year] = value.split('/').map(s => parseInt(s.trim(), 10));
-      const expiry = new Date(2000 + year, month - 1);
-      const lastDayOfMonth = new Date(expiry.getFullYear(), expiry.getMonth() + 1, 0);
-      return lastDayOfMonth >= new Date();
-    })
-    .required('Expiry date is required'),
-  cvc: Yup.string()
-    .matches(/^\d{3,4}$/, 'CVC must be 3-4 digits')
-    .required('CVC is required'),
   amount: Yup.number()
     .positive('Amount must be positive')
     .required('Amount is required'),
@@ -106,6 +95,82 @@ const ReceiptModal: React.FC<{ invoice: BillingInvoice | null; onClose: () => vo
     );
 };
 
+
+const CheckoutForm: React.FC<{ currentBalance: number; dueInvoices: BillingInvoice[] }> = ({ currentBalance, dueInvoices }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const { makePayment } = useAuth();
+    const { showToast } = useApp();
+
+    const handleSubmit = async (values: { nameOnCard: string; amount: string; }, setSubmitting: (isSubmitting: boolean) => void) => {
+        if (!stripe || !elements) {
+            return;
+        }
+
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) return;
+
+        setSubmitting(true);
+
+        try {
+            const { data: { clientSecret } } = await axios.post('/api/create-payment-intent', {
+                amount: Math.round(parseFloat(values.amount) * 100), // amount in cents
+            });
+
+            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: values.nameOnCard,
+                    },
+                },
+            });
+
+            if (error) {
+                showToast(error.message || 'An error occurred.', 'error');
+                setSubmitting(false);
+                return;
+            }
+
+            // Find the most overdue invoice to apply the payment to
+            const sortedDueInvoices = [...dueInvoices].sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+            if (sortedDueInvoices.length > 0) {
+                await makePayment(sortedDueInvoices[0].id, parseFloat(values.amount));
+                showToast('Payment successful!', 'success');
+            } else {
+                showToast('No outstanding invoices to pay.', 'info');
+            }
+        } catch (err) {
+            showToast('Payment failed. Please try again.', 'error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Formik
+            initialValues={{ nameOnCard: '', amount: currentBalance > 0 ? currentBalance.toFixed(2) : '0.00' }}
+            enableReinitialize
+            validationSchema={PaymentSchema}
+            onSubmit={(values, { setSubmitting }) => {
+                handleSubmit(values, setSubmitting);
+            }}
+        >
+            {({ errors, touched, isValid, isSubmitting, values }) => (
+                <Form className="space-y-4">
+                    <Field name="nameOnCard" placeholder="Name on Card" className={`w-full p-2 border rounded ${errors.nameOnCard && touched.nameOnCard ? 'border-red-500' : 'border-gray-300'}`} />
+                    <div className="p-2 border rounded border-gray-300">
+                        <CardElement />
+                    </div>
+                    <Field type="number" name="amount" className={`w-full p-2 border rounded ${errors.amount && touched.amount ? 'border-red-500' : 'border-gray-300'}`} />
+                    <button type="submit" disabled={!isValid || isSubmitting || parseFloat(values.amount) <= 0} className="w-full flex justify-center items-center bg-primary-600 text-white font-bold py-2 px-4 rounded-lg enabled:hover:bg-primary-700 disabled:bg-gray-400">
+                        {isSubmitting ? <SpinnerIcon /> : `Pay $${parseFloat(values.amount || '0').toFixed(2)}`}
+                    </button>
+                </Form>
+            )}
+        </Formik>
+    );
+};
 
 const Payments: React.FC = () => {
     const { user, invoices, makePayment } = useAuth();
@@ -182,34 +247,9 @@ const Payments: React.FC = () => {
                 <button onClick={() => setPaymentMethod('card')} className={`p-2 border rounded-lg flex justify-center ${paymentMethod === 'card' ? 'bg-primary-100 border-primary-500' : 'bg-white'}`}><CreditCardIcon className="w-6 h-6"/></button>
             </div>
 
-            <Formik
-              initialValues={{ nameOnCard: '', cardNumber: '', expiryDate: '', cvc: '', amount: currentBalance > 0 ? currentBalance.toFixed(2) : '0.00' }}
-              enableReinitialize validationSchema={PaymentSchema}
-              onSubmit={(values, { setSubmitting, resetForm }) => {
-                handleSimulatedPayment(parseFloat(values.amount));
-                setSubmitting(false);
-                resetForm();
-              }}
-            >
-            {({ errors, touched, isValid, isSubmitting, values }) => ( <Form className="space-y-4">
-                <Field name="nameOnCard" placeholder="Name on Card" className={`w-full p-2 border rounded ${errors.nameOnCard && touched.nameOnCard ? 'border-red-500' : 'border-gray-300'}`} />
-                <Field name="cardNumber" placeholder="Card Number" className={`w-full p-2 border rounded ${errors.cardNumber && touched.cardNumber ? 'border-red-500' : 'border-gray-300'}`} />
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <Field name="expiryDate" placeholder="MM / YY" className={`w-full p-2 border rounded ${errors.expiryDate && touched.expiryDate ? 'border-red-500' : 'border-gray-300'}`} />
-                        <ErrorMessage name="expiryDate" component="p" className="text-red-500 text-xs mt-1" />
-                    </div>
-                    <div>
-                        <Field name="cvc" placeholder="CVC" className={`w-full p-2 border rounded ${errors.cvc && touched.cvc ? 'border-red-500' : 'border-gray-300'}`} />
-                        <ErrorMessage name="cvc" component="p" className="text-red-500 text-xs mt-1" />
-                    </div>
-                </div>
-                <Field type="number" name="amount" className={`w-full p-2 border rounded ${errors.amount && touched.amount ? 'border-red-500' : 'border-gray-300'}`} />
-                <button type="submit" disabled={!isValid || isSubmitting || parseFloat(values.amount) <= 0} className="w-full flex justify-center items-center bg-primary-600 text-white font-bold py-2 px-4 rounded-lg enabled:hover:bg-primary-700 disabled:bg-gray-400">
-                    {isSubmitting ? <SpinnerIcon /> : `Pay $${parseFloat(values.amount || '0').toFixed(2)}`}
-                </button>
-            </Form>)}
-            </Formik>
+            <Elements stripe={stripePromise}>
+              <CheckoutForm currentBalance={currentBalance} dueInvoices={dueInvoices} />
+            </Elements>
           </Card>
            <Card title="Saved Payment Methods">
                <div className="p-3 border rounded-lg flex justify-between items-center">

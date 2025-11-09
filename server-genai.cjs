@@ -64,6 +64,28 @@ async function main() {
     console.error('Unhandled Rejection at Promise', p, 'reason:', reason);
   });
 
+  app.post('/api/create-payment-intent', async (req, res) => {
+    const { amount } = req.body;
+    const { default: Stripe } = await import('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    } catch (error) {
+      res.status(400).send({
+        error: {
+          message: error.message,
+        },
+      });
+    }
+  });
+
   app.listen(PORT, () => {
     console.log(`GenAI proxy server listening on port ${PORT}`);
   });
