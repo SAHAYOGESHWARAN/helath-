@@ -2,7 +2,7 @@
 // returns a client instance. This avoids bundling issues and tolerates
 // different shapes across package versions.
 export async function getGenAIClient() {
-	const genaiModule: any = await import('@google/genai');
+	const genaiModule: any = await import('@google/generative-ai');
 	const Candidate = genaiModule?.GoogleGenAI ?? genaiModule?.GoogleGenerativeAI ?? genaiModule?.Generative ?? genaiModule?.default ?? genaiModule;
 
 	// Safely read env vars in both Node and browser environments.

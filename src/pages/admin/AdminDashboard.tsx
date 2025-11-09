@@ -131,7 +131,7 @@ const AdminDashboard: React.FC = () => {
         try {
             // Dynamically load the package so the bundler doesn't statically
             // validate named exports (which can differ between versions).
-            const genaiModule: any = await import('@google/genai');
+            const genaiModule: any = await import('@google/generative-ai');
 
             // Try to detect a few common shapes of the library so this works
             // across releases: a constructor class, a factory, or a default
