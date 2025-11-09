@@ -277,6 +277,7 @@ export interface Notification {
   message: string;
   timestamp: string;
   isRead: boolean;
+  isNew?: boolean;
   link?: string;
 }
 
