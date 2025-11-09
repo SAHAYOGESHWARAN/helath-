@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useAuth } from '@/hooks/useAuth';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import LoginPage from '@/pages/auth/LoginPage';
 import PatientLayout from '@/components/layout/PatientLayout';
 import ProviderLayout from '@/components/layout/ProviderLayout';
@@ -65,13 +66,15 @@ const AppRoutes: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <AppProvider>
-          <HashRouter>
-            <AppRoutes />
-          </HashRouter>
-        </AppProvider>
-      </NotificationProvider>
+      <WebSocketProvider>
+        <NotificationProvider>
+          <AppProvider>
+            <HashRouter>
+              <AppRoutes />
+            </HashRouter>
+          </AppProvider>
+        </NotificationProvider>
+      </WebSocketProvider>
     </AuthProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
+import { socketService } from '@/services/socketService';
 import { User, UserRole, Message } from '../../types';
 import { PaperAirplaneIcon } from '../../components/shared/Icons';
 
@@ -25,15 +26,15 @@ const formatDateDivider = (date: Date) => {
 
 
 const Messaging: React.FC = () => {
-    const { user, users, messages, sendMessage, markMessagesAsRead } = useAuth();
+    const { user, users, messages: messageHistory, sendMessage, markMessagesAsRead } = useAuth();
     const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
     const [message, setMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    
+
     const patientsWithMessages = useMemo(() => {
         if (!user) return [];
         const patientConversations = new Map<string, { patient: User; lastMessage: Message | null; unreadCount: number }>();
-        const allMessages: Message[] = Object.values(messages).flat() as Message[];
+        const allMessages: Message[] = Object.values(messageHistory).flat() as Message[];
         
         allMessages.forEach(msg => {
             let patientId: string | null = null;
@@ -69,8 +70,7 @@ const Messaging: React.FC = () => {
             if (!b.lastMessage) return -1;
             return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
         });
-    }, [users, messages, user]);
-
+    }, [users, messageHistory, user]);
 
     useEffect(() => {
         if (patientsWithMessages.length > 0 && !selectedPatient) {
@@ -80,34 +80,36 @@ const Messaging: React.FC = () => {
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, selectedPatient]);
+    }, [messageHistory, selectedPatient]);
     
     useEffect(() => {
         if (selectedPatient && user) {
             markMessagesAsRead(selectedPatient.id);
         }
-    }, [selectedPatient, user, markMessagesAsRead, messages]);
+    }, [selectedPatient, user, markMessagesAsRead, messageHistory]);
 
     const currentMessages = useMemo(() => {
         if (!selectedPatient || !user) return [];
-        const allMessages: Message[] = Object.values(messages).flat() as Message[];
+        const allMessages: Message[] = Object.values(messageHistory).flat() as Message[];
         const relevantMessages = allMessages.filter(
             m => (m.senderId === user.id && m.receiverId === selectedPatient.id) || 
                  (m.senderId === selectedPatient.id && m.receiverId === user.id)
         );
         const uniqueMessages = Array.from(new Map(relevantMessages.map(m => [m.id, m])).values());
         return uniqueMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    }, [messages, selectedPatient, user]);
+    }, [messageHistory, selectedPatient, user]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim() || !user || !selectedPatient) return;
 
-        sendMessage({
+        const newMessage: Omit<Message, 'id' | 'timestamp' | 'isRead'> = {
             senderId: user.id,
             receiverId: selectedPatient.id,
             text: message,
-        });
+        };
+        sendMessage(newMessage);
+        socketService.sendMessage({ type: 'message', payload: newMessage });
         setMessage('');
     };
 

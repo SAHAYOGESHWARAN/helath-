@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "mock-ws": "node ./scripts/mock-ws-server.js",
+    "server-websocket": "node server-websocket.cjs",
     "genai-server": "node ./server-genai.cjs",
     "genai-test": "node ./scripts/run-genai-test.cjs",
     "build": "tsc && vite build",
@@ -28,6 +29,7 @@
     "react-router-dom": "^6.22.3",
     "recharts": "^3.3.0",
     "websocket": "^1.0.35",
+    "ws": "^8.18.3",
     "yup": "^1.7.1"
   },
   "devDependencies": {

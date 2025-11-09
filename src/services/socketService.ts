@@ -34,7 +34,7 @@ class SocketService {
     const connectUrl = `${this.url}?${params.toString()}`;
 
     // If token present, also pass it as a subprotocol (many servers accept this)
-    const protocols = options?.token ? [`Bearer ${options.token}`] : undefined;
+    const protocols = options?.token ? [options.token] : undefined;
 
     try {
       this.client = new WebSocket(connectUrl, protocols as string[] | undefined);

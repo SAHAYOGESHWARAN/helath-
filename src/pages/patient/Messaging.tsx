@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
+import { socketService } from '@/services/socketService';
 import { User, UserRole, Message } from '../../types';
-import { PaperAirplaneIcon, CheckCircleIcon, ClockIcon } from '../../components/shared/Icons';
+import { PaperAirplaneIcon, CheckCircleIcon } from '../../components/shared/Icons';
 import PageHeader from '../../components/shared/PageHeader';
 import { Card } from '../../components/shared/Card';
 
@@ -31,7 +32,6 @@ const Messaging: React.FC = () => {
     const { user, users, messages, sendMessage, markMessagesAsRead, socketStatus } = useAuth();
     const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
     const [message, setMessage] = useState('');
-    const [isReplying, setIsReplying] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,7 +89,7 @@ const Messaging: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
-    useEffect(scrollToBottom, [messages, selectedProvider, isReplying]);
+    useEffect(scrollToBottom, [messages, selectedProvider]);
 
     useEffect(() => {
         if (selectedProvider && user) {
@@ -110,80 +110,16 @@ const Messaging: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-    if (!message.trim() || !user || !selectedProvider || isReplying) return;
+        if (!message.trim() || !user || !selectedProvider) return;
 
-        const userMessageText = message;
-        setMessage('');
-
-        sendMessage({
+        const newMessage: Omit<Message, 'id' | 'timestamp' | 'isRead'> = {
             senderId: user.id,
             receiverId: selectedProvider.id,
-            text: userMessageText,
-        });
-
-        setIsReplying(true);
-
-        try {
-            const systemInstruction = `You are an AI assistant impersonating a medical provider named ${selectedProvider.name}. A patient, ${user.name}, has sent you a message. Respond concisely and helpfully. The conversation history is provided. Your response should be brief and conversational. IMPORTANT: Do NOT provide medical advice. Instead, encourage the user to schedule an appointment for any medical concerns. Keep responses to 2-3 sentences.`;
-
-            const historyForGemini: any[] = currentMessages.map(m => ({
-                role: m.senderId === user.id ? 'user' : 'model',
-                parts: [{ text: m.text }],
-            }));
-
-            // Proxy the generation request to a small server-side endpoint so the client
-            // doesn't need to bundle the @google/genai SDK.
-            const token = typeof window !== 'undefined' ? sessionStorage.getItem('novopath-token') : undefined;
-            const resp = await fetch('/api/genai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                body: JSON.stringify({
-                    model: 'gemini-2.5-flash',
-                    history: [...historyForGemini, { role: 'user', parts: [{ text: userMessageText }] }],
-                    prompt: userMessageText,
-                    systemInstruction,
-                }),
-            });
-
-            let replyText: string | undefined;
-            if (!resp.ok) throw new Error(`GenAI server returned ${resp.status}`);
-            const data = await resp.json();
-            replyText = data?.text || data?.result;
-
-            // Fallback: if server didn't respond with text, try a lightweight mock endpoint
-            if (!replyText) {
-                try {
-                    const mockResp = await fetch('/api/genai-mock', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                        body: JSON.stringify({ prompt: userMessageText }),
-                    });
-                    if (mockResp.ok) {
-                        const mockData = await mockResp.json();
-                        replyText = mockData?.text;
-                    }
-                } catch (err) {
-                    // ignore mock fallback error
-                }
-            }
-
-            if (!replyText) replyText = 'Sorry, I could not generate a reply.';
-
-            sendMessage({
-                senderId: selectedProvider.id,
-                receiverId: user.id,
-                text: replyText,
-            });
-        } catch (error) {
-            console.error("Error generating reply:", error);
-            sendMessage({
-                senderId: selectedProvider.id,
-                receiverId: user.id,
-                text: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact support if the issue persists.",
-            });
-        } finally {
-            setIsReplying(false);
-        }
+            text: message,
+        };
+        sendMessage(newMessage);
+        socketService.sendMessage({ type: 'message', payload: newMessage });
+        setMessage('');
     };
 
     if (!user) {
@@ -405,23 +341,6 @@ const Messaging: React.FC = () => {
                                             );
                                         })
                                     )}
-                                    {isReplying && (
-                                        <div className="flex items-end gap-3 justify-start mt-6 animate-fade-in">
-                                            <img
-                                                src={selectedProvider.avatarUrl}
-                                                alt="provider avatar"
-                                                className="w-10 h-10 rounded-full flex-shrink-0 ring-2 ring-white shadow-md"
-                                            />
-                                            <div className="max-w-lg p-4 rounded-2xl rounded-bl-md bg-white text-gray-800 border border-gray-200/60 shadow-md">
-                                                <div className="flex items-center space-x-1.5">
-                                                    <span className="w-2.5 h-2.5 bg-primary-400 rounded-full animate-bounce"></span>
-                                                    <span className="w-2.5 h-2.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-                                                    <span className="w-2.5 h-2.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
-                                                </div>
-                                                <p className="text-xs text-gray-500 mt-2">Typing...</p>
-                                            </div>
-                                        </div>
-                                    )}
                                     <div ref={messagesEndRef} />
                                 </div>
                                 <div className="p-4 border-t border-gray-200/60 bg-white/80 backdrop-blur-sm sticky bottom-0">
@@ -434,7 +353,6 @@ const Messaging: React.FC = () => {
                                                 placeholder={`Type a message to ${selectedProvider.name}...`}
                                                 className="w-full px-5 py-3.5 pr-12 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50/80 hover:bg-white transition-all text-sm"
                                                 aria-label="Message input"
-                                                disabled={isReplying}
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter' && !e.shiftKey) {
                                                         e.preventDefault();
@@ -452,7 +370,7 @@ const Messaging: React.FC = () => {
                                         </div>
                                         <button
                                             type="submit"
-                                            disabled={!message.trim() || isReplying}
+                                            disabled={!message.trim()}
                                             className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-3.5 rounded-2xl hover:from-primary-700 hover:to-primary-800 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl disabled:shadow-none transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
                                             aria-label="Send message"
                                         >

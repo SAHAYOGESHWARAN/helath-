@@ -2,10 +2,11 @@
 import React, { useState, ReactNode, useCallback, useEffect, createContext } from 'react';
 import { Notification, UserRole } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { socketService } from '@/services/socketService';
 
 export interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead' | 'isNew'>) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
@@ -42,14 +43,31 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     }, [user]);
 
-    const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-        const newNotification: Notification = {
-            ...notification,
-            id: `notif_${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            isRead: false,
+    useEffect(() => {
+        if (!user) return;
+
+        const handleNewNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+            const newNotification: Notification = {
+                ...notification,
+                id: `notif_${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                isRead: false,
+                isNew: true, // Flag to indicate it's a new real-time notification
+            };
+            setNotifications(prev => [newNotification, ...prev]);
         };
-        setNotifications(prev => [newNotification, ...prev]);
+
+        // In a real application, you would connect to a WebSocket and listen for events.
+        // For demonstration, we'll simulate receiving a notification.
+        const unsubscribe = socketService.onMessage(handleNewNotification);
+
+        return () => {
+            unsubscribe();
+        };
+    }, [user]);
+
+    const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+        socketService.sendMessage({ type: 'notification', payload: notification });
     }, []);
 
     const markAsRead = useCallback((id: string) => {
