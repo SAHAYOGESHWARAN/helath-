@@ -75,7 +75,7 @@ export const useTable = <T extends Record<string, any>>(
     }, [initialData, debouncedGlobalFilter, debouncedColumnFilters, options?.dateRangeFilterKey]);
 
     const sortedData = useMemo(() => {
-        let sortableItems = [...filteredData];
+        const sortableItems = [...filteredData];
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
                 const aVal = a[sortConfig.key];

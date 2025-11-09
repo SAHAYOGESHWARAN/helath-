@@ -4,7 +4,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import { NovoPathLogoIcon, ChevronLeftIcon, SpinnerIcon, UserIcon, EnvelopeIcon, LockClosedIcon, AcademicCapIcon, MapPinIcon, BriefcaseIcon } from '../../components/shared/Icons';
 import { US_STATES, MEDICAL_SPECIALTIES } from '../../constants';

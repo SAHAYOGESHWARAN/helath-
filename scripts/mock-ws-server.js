@@ -52,7 +52,7 @@ wsServer.on('request', (request) => {
         console.log('Received message from client:', data);
         // Echo back a confirmation
         connection.sendUTF(JSON.stringify({ type: 'ack', payload: data }));
-      } catch (err) {
+      } catch {
         // ignore
       }
     }
@@ -64,6 +64,7 @@ wsServer.on('request', (request) => {
   });
 });
 
+// @ts-nocheck
 // Broadcast a fake message.created event every 6 seconds
 setInterval(() => {
   if (connections.size === 0) return;
@@ -82,7 +83,7 @@ setInterval(() => {
     const envelope = { type: 'message.created', payload: msg };
     try {
       conn.sendUTF(JSON.stringify(envelope));
-    } catch (err) {
+    } catch {
       // ignore send errors
     }
   });

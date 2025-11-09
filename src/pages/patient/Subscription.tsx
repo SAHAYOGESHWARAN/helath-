@@ -4,7 +4,7 @@ import { Card } from '../../components/shared/Card';
 import { SubscriptionPlan } from '../../types';
 import { CheckCircleIcon, CreditCardIcon, DownloadIcon, SparklesIcon } from '../../components/shared/Icons';
 import SubscriptionTierCard from '../../components/shared/SubscriptionTierCard';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import Modal from '../../components/shared/Modal';
 import { useApp } from '../../contexts/AppContext';
 import PageHeader from '../../components/shared/PageHeader';

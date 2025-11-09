@@ -7,7 +7,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import { Appointment, ReminderSettings } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 import { ClockIcon, VideoCameraIcon, UsersIcon, CameraIcon, ChevronDownIcon, SpinnerIcon } from '../../components/shared/Icons';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import VideoUpdateModal from './VideoUpdateModal';
 import ScheduleAppointmentModal from './ScheduleAppointmentModal';
 import Modal from '../../components/shared/Modal';

@@ -151,48 +151,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Realtime updates via WebSocket: subscribe to incoming messages and update local state.
     useEffect(() => {
-        let unsubMessage: (() => void) | undefined;
-        let unsubStatus: (() => void) | undefined;
+        if (user) {
+            // Use the user id as a connection query param; server should scope events to this user/tenant.
+            const token = sessionStorage.getItem('novopath-token') || undefined;
+            socketService.connect(user.id, { token });
 
-        if (!user) {
+            const unsubStatus = socketService.onStatusChange((s) => {
+                setSocketStatus(s);
+            });
+
+            const unsubMessage = socketService.onMessage((data: any) => {
+                try {
+                    if (!data) return;
+
+                    // Expecting a simple event envelope: { type: string, payload: any }
+                    if (data.type === 'message.created' && data.payload) {
+                        const msg = data.payload as Message;
+                        const key = [msg.senderId, msg.receiverId].sort().join('-');
+                        setMessages(prev => {
+                            const existing = prev[key] || [];
+                            if (existing.some(m => m.id === msg.id)) return prev; // dedupe incoming event
+                            return { ...prev, [key]: [...existing, msg] };
+                        });
+                    }
+                } catch (err) {
+                    // ignore malformed realtime messages
+                    console.error('Error handling realtime message', err);
+                }
+            });
+
+            return () => {
+                unsubMessage();
+                unsubStatus();
+                socketService.disconnect();
+            };
+        } else {
             socketService.disconnect();
             setSocketStatus('disconnected');
-            return;
         }
-
-        // Use the user id as a connection query param; server should scope events to this user/tenant.
-        const token = sessionStorage.getItem('novopath-token') || undefined;
-        socketService.connect(user.id, { token });
-
-        unsubStatus = socketService.onStatusChange((s) => {
-            setSocketStatus(s);
-        });
-
-        unsubMessage = socketService.onMessage((data: any) => {
-            try {
-                if (!data) return;
-
-                // Expecting a simple event envelope: { type: string, payload: any }
-                if (data.type === 'message.created' && data.payload) {
-                    const msg = data.payload as Message;
-                    const key = [msg.senderId, msg.receiverId].sort().join('-');
-                    setMessages(prev => {
-                        const existing = prev[key] || [];
-                        if (existing.some(m => m.id === msg.id)) return prev; // dedupe incoming event
-                        return { ...prev, [key]: [...existing, msg] };
-                    });
-                }
-            } catch (err) {
-                // ignore malformed realtime messages
-                console.error('Error handling realtime message', err);
-            }
-        });
-
-        return () => {
-            if (unsubMessage) unsubMessage();
-            if (unsubStatus) unsubStatus();
-            socketService.disconnect();
-        };
     }, [user?.id]);
 
     // Subscribe to in-app event bus for domain events (appointments, notes, labs, messages)

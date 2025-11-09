@@ -5,7 +5,7 @@ import PageHeader from '../../components/shared/PageHeader';
 import Tabs from '../../components/shared/Tabs';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';
 import { useApp } from '../../contexts/AppContext';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { SpinnerIcon, CreditCardIcon, ShieldCheckIcon, BellIcon } from '../../components/shared/Icons';

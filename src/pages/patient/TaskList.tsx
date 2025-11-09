@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { Task, Subtask, TaskPriority } from '../../types';
 import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';

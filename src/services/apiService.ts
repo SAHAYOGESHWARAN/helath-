@@ -12,12 +12,12 @@ const SIMULATED_LATENCY = 150;
 // For this simulation, we'll just modify the imported mock data arrays directly for mutations.
 let users: User[] = JSON.parse(JSON.stringify(MOCK_USERS));
 let appointments: Appointment[] = JSON.parse(JSON.stringify(MOCK_APPOINTMENTS));
-let claims: Claim[] = JSON.parse(JSON.stringify(MOCK_CLAIMS));
+const claims: Claim[] = JSON.parse(JSON.stringify(MOCK_CLAIMS));
 let invoices: BillingInvoice[] = JSON.parse(JSON.stringify(MOCK_INVOICES));
-let progressNotes: ProgressNote[] = JSON.parse(JSON.stringify(MOCK_PROGRESS_NOTES));
-let prescriptions: Prescription[] = JSON.parse(JSON.stringify(MOCK_PRESCRIPTIONS));
-let messages: Record<string, Message[]> = JSON.parse(JSON.stringify(MOCK_MESSAGES));
-let labOrders: LabOrder[] = JSON.parse(JSON.stringify(MOCK_LAB_ORDERS));
+const progressNotes: ProgressNote[] = JSON.parse(JSON.stringify(MOCK_PROGRESS_NOTES));
+const prescriptions: Prescription[] = JSON.parse(JSON.stringify(MOCK_PRESCRIPTIONS));
+const messages: Record<string, Message[]> = JSON.parse(JSON.stringify(MOCK_MESSAGES));
+const labOrders: LabOrder[] = JSON.parse(JSON.stringify(MOCK_LAB_ORDERS));
 let referrals: Referral[] = JSON.parse(JSON.stringify(MOCK_REFERRALS));
 
 // --- API Request Simulation ---

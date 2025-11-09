@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/shared/Card';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
     SparklesIcon, 
     VideoCameraIcon, 

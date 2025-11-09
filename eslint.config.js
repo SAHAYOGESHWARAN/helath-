@@ -1,36 +1,30 @@
 import globals from "globals";
-import tseslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import eslint from "@eslint/js";
-import react from "eslint-plugin-react";
+import tseslint from "typescript-eslint";
+import pluginReact from "eslint-plugin-react";
+import pluginReactConfig from "eslint-plugin-react/configs/recommended.js";
+import hooksPlugin from "eslint-plugin-react-hooks";
+import refreshPlugin from "eslint-plugin-react-refresh";
+import js from "@eslint/js";
 
-export default [
+export default tseslint.config(
   {
-    ignores: ["dist", "eslint.config.js"],
+    ignores: ["dist/", "**/*.cjs", "eslint.config.js"],
   },
-  eslint.configs.recommended,
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ["src/**/*.{ts,tsx}"],
+    ...pluginReactConfig,
     plugins: {
-      "@typescript-eslint": tseslint,
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-      react: react,
+      react: pluginReact,
+      "react-hooks": hooksPlugin,
+      "react-refresh": refreshPlugin,
     },
     languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
+      ...pluginReactConfig.languageOptions,
       globals: {
         ...globals.browser,
-        ...globals.es2020,
-        ...globals.node,
-        IntersectionObserverInit: "readonly",
+        ...globals.es2021,
       },
     },
     settings: {
@@ -39,27 +33,23 @@ export default [
       },
     },
     rules: {
-      ...tseslint.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      "react-refresh/only-export-components": "warn",
+      "react/react-in-jsx-scope": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/ban-types": "off",
       "no-constant-condition": "off",
+      "react/prop-types": "off",
     },
   },
   {
-    files: ["**/*.cjs", "**/*.js"],
+    files: ["**/*.js"],
     languageOptions: {
       globals: {
         ...globals.node,
       },
     },
     rules: {
-      "no-redeclare": "off",
-      "no-undef": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
-  },
-];
+  }
+);

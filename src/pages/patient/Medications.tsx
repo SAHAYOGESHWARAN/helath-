@@ -4,7 +4,7 @@ import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { Medication } from '../../types';
 import { PillIcon, CheckCircleIcon, PlusIcon, PencilAltIcon, TrashIcon } from '../../components/shared/Icons';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
 import Modal from '../../components/shared/Modal';
 import { Formik, Form, Field, ErrorMessage } from 'formik';

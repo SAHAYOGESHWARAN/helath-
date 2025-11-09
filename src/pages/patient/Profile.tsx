@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card } from '../../components/shared/Card';
 import { User } from '../../types';
 import VideoUpdateModal from './VideoUpdateModal';

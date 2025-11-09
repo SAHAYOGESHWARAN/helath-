@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Card from '../../components/shared/Card';
 import Tabs from '../../components/shared/Tabs';
 import PageHeader from '../../components/shared/PageHeader';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
 import { UserCircleIcon, BellIcon, ShieldCheckIcon } from '../../components/shared/Icons';
 import ToggleSwitch from '../../components/shared/ToggleSwitch';

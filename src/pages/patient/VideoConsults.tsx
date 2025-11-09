@@ -4,7 +4,7 @@ import { Card } from '../../components/shared/Card';
 import PageHeader from '../../components/shared/PageHeader';
 import { VideoCameraIcon, CheckCircleIcon, XCircleIcon, ShieldCheckIcon, PhoneIcon } from '../../components/shared/Icons';
 import { SpeakerWaveIcon, MicrophoneIcon } from '../../components/shared/Icons';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 // FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 

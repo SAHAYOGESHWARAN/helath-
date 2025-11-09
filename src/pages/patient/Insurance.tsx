@@ -3,7 +3,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import PageHeader from '../../components/shared/PageHeader';
 import { Card } from '../../components/shared/Card';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
 import { InsuranceInfo } from '../../types';
 import { SpinnerIcon } from '../../components/shared/Icons';
