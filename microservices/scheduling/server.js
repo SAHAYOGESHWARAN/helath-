@@ -1,0 +1,135 @@
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// PostgreSQL connection
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+});
+
+const createAppointmentsTable = async () => {
+  const queryText = `
+    CREATE TABLE IF NOT EXISTS appointments (
+      id SERIAL PRIMARY KEY,
+      patient_name VARCHAR(255) NOT NULL,
+      appointment_date TIMESTAMP NOT NULL,
+      reason TEXT
+    );
+  `;
+  try {
+    await pool.query(queryText);
+    console.log('Appointments table is successfully created or already exists.');
+  } catch (err) {
+    console.error('Error in creating appointments table', err.stack);
+  }
+};
+
+pool.on('connect', (client) => {
+    console.log('Connected to PostgreSQL database');
+    createAppointmentsTable();
+});
+
+// Auth middleware
+const checkApiKey = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
+  }
+
+  const apiKey = authHeader.split(' ')[1];
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(403).json({ error: 'Invalid API key' });
+  }
+
+  next();
+};
+
+// API endpoints
+app.use('/api', checkApiKey);
+
+app.get('/api/appointments', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM appointments');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/appointments/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { rows } = await pool.query('SELECT * FROM appointments WHERE id = $1', [id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/appointments', async (req, res) => {
+  const { patient_name, appointment_date, reason } = req.body;
+
+  if (!patient_name || !appointment_date) {
+    return res.status(400).json({ error: 'patient_name and appointment_date are required' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO appointments (patient_name, appointment_date, reason) VALUES ($1, $2, $3) RETURNING *',
+      [patient_name, appointment_date, reason]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/appointments/:id', async (req, res) => {
+    const { id } = req.params;
+    const { patient_name, appointment_date, reason } = req.body;
+
+    if (!patient_name || !appointment_date) {
+        return res.status(400).json({ error: 'patient_name and appointment_date are required' });
+    }
+
+    try {
+        const { rows } = await pool.query(
+            'UPDATE appointments SET patient_name = $1, appointment_date = $2, reason = $3 WHERE id = $4 RETURNING *',
+            [patient_name, appointment_date, reason, id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/appointments/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { rowCount } = await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
+        if (rowCount === 0) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const PORT = process.env.SCHEDULING_PORT || 4002;
+app.listen(PORT, () => console.log(`Scheduling microservice listening on port ${PORT}`));

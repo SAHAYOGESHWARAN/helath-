@@ -14,7 +14,8 @@
     "genai-test": "node ./scripts/run-genai-test.cjs",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start-scheduling": "node microservices/scheduling/server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.19.0",

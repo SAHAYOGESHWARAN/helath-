@@ -2,3 +2,4 @@
 
 ## Pending Tasks
 - [ ] Test pages
+- [ ] Implement OAuth2/OIDC and RBAC for microservices
