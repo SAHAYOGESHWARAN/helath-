@@ -15,7 +15,8 @@
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start-scheduling": "node microservices/scheduling/server.js"
+    "start-scheduling": "node microservices/scheduling/server.js",
+    "start-emr": "node microservices/emr/server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.19.0",
