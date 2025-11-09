@@ -20,6 +20,8 @@ const createAppointmentsTable = async () => {
   const queryText = `
     CREATE TABLE IF NOT EXISTS appointments (
       id SERIAL PRIMARY KEY,
+      patient_id VARCHAR(255),
+      provider_id VARCHAR(255),
       patient_name VARCHAR(255) NOT NULL,
       appointment_date TIMESTAMP NOT NULL,
       reason TEXT
@@ -33,9 +35,29 @@ const createAppointmentsTable = async () => {
   }
 };
 
+const migrateDatabase = async () => {
+  try {
+    const res = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='appointments'");
+    const columns = res.rows.map(row => row.column_name);
+
+    if (!columns.includes('provider_id')) {
+      await pool.query('ALTER TABLE appointments ADD COLUMN provider_id VARCHAR(255)');
+      console.log('Successfully migrated database: added provider_id');
+    }
+
+    if (!columns.includes('patient_id')) {
+      await pool.query('ALTER TABLE appointments ADD COLUMN patient_id VARCHAR(255)');
+      console.log('Successfully migrated database: added patient_id');
+    }
+  } catch (err) {
+    console.error('Error during database migration', err.stack);
+  }
+};
+
 pool.on('connect', (client) => {
     console.log('Connected to PostgreSQL database');
     createAppointmentsTable();
+    migrateDatabase();
 });
 
 // Auth middleware
@@ -79,16 +101,16 @@ app.get('/api/appointments/:id', async (req, res) => {
 });
 
 app.post('/api/appointments', async (req, res) => {
-  const { patient_name, appointment_date, reason } = req.body;
+  const { patient_id, provider_id, patient_name, appointment_date, reason } = req.body;
 
-  if (!patient_name || !appointment_date) {
-    return res.status(400).json({ error: 'patient_name and appointment_date are required' });
+  if (!patient_id || !provider_id || !patient_name || !appointment_date) {
+    return res.status(400).json({ error: 'patient_id, provider_id, patient_name and appointment_date are required' });
   }
 
   try {
     const { rows } = await pool.query(
-      'INSERT INTO appointments (patient_name, appointment_date, reason) VALUES ($1, $2, $3) RETURNING *',
-      [patient_name, appointment_date, reason]
+      'INSERT INTO appointments (patient_id, provider_id, patient_name, appointment_date, reason) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [patient_id, provider_id, patient_name, appointment_date, reason]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -98,16 +120,16 @@ app.post('/api/appointments', async (req, res) => {
 
 app.put('/api/appointments/:id', async (req, res) => {
     const { id } = req.params;
-    const { patient_name, appointment_date, reason } = req.body;
+    const { patient_id, provider_id, patient_name, appointment_date, reason } = req.body;
 
-    if (!patient_name || !appointment_date) {
-        return res.status(400).json({ error: 'patient_name and appointment_date are required' });
+    if (!patient_id || !provider_id || !patient_name || !appointment_date) {
+        return res.status(400).json({ error: 'patient_id, provider_id, patient_name and appointment_date are required' });
     }
 
     try {
         const { rows } = await pool.query(
-            'UPDATE appointments SET patient_name = $1, appointment_date = $2, reason = $3 WHERE id = $4 RETURNING *',
-            [patient_name, appointment_date, reason, id]
+            'UPDATE appointments SET patient_id = $1, provider_id = $2, patient_name = $3, appointment_date = $4, reason = $5 WHERE id = $6 RETURNING *',
+            [patient_id, provider_id, patient_name, appointment_date, reason, id]
         );
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Appointment not found' });
