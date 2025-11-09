@@ -1,6 +1,6 @@
 import {
-  MOCK_USERS, MOCK_APPOINTMENTS, MOCK_CLAIMS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS,
-  MOCK_PROGRESS_NOTES, MOCK_PRESCRIPTIONS, MOCK_MESSAGES, MOCK_INVOICES, MOCK_LAB_ORDERS,
+  MOCK_USERS, MOCK_APPOINTMENTS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS,
+  MOCK_PROGRESS_NOTES, MOCK_MESSAGES, MOCK_LAB_ORDERS,
   MOCK_REFERRALS, MOCK_AUDIT_LOG
 } from '@/mockData';
 import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, UserRole, ClaimStatus, ClaimType } from '@/types';
@@ -10,12 +10,11 @@ const SIMULATED_LATENCY = 150;
 
 // In a real application, this would be a proper data store or would be refetched.
 // For this simulation, we'll just modify the imported mock data arrays directly for mutations.
+import { addPrescription as apiAddPrescription, getPrescriptions } from './dosespotService';
+import { addClaim as apiAddClaim, addInvoice as apiAddInvoice, makePayment as apiMakePayment, getClaims, getInvoices } from './stripeService';
 let users: User[] = JSON.parse(JSON.stringify(MOCK_USERS));
 let appointments: Appointment[] = JSON.parse(JSON.stringify(MOCK_APPOINTMENTS));
-const claims: Claim[] = JSON.parse(JSON.stringify(MOCK_CLAIMS));
-let invoices: BillingInvoice[] = JSON.parse(JSON.stringify(MOCK_INVOICES));
 const progressNotes: ProgressNote[] = JSON.parse(JSON.stringify(MOCK_PROGRESS_NOTES));
-const prescriptions: Prescription[] = JSON.parse(JSON.stringify(MOCK_PRESCRIPTIONS));
 const messages: Record<string, Message[]> = JSON.parse(JSON.stringify(MOCK_MESSAGES));
 const labOrders: LabOrder[] = JSON.parse(JSON.stringify(MOCK_LAB_ORDERS));
 let referrals: Referral[] = JSON.parse(JSON.stringify(MOCK_REFERRALS));
@@ -58,10 +57,10 @@ export const fetchAllData = () => {
     return Promise.all([
         apiRequest(users),
         apiRequest(appointments),
-        apiRequest(claims),
-        apiRequest(invoices),
+        getClaims(),
+        getInvoices(),
         apiRequest(progressNotes),
-        apiRequest(prescriptions),
+        getPrescriptions(),
         apiRequest(messages),
         apiRequest(labOrders),
         apiRequest(referrals),
@@ -128,6 +127,7 @@ export const apiCancelAppointment = (appointmentId: string): Promise<Appointment
     return apiRequest(updatedAppt);
 };
 
+export { apiAddClaim, apiAddInvoice, apiMakePayment };
 export const apiAddVideoUpdate = (appointmentId: string, videoUrl: string): Promise<Appointment | null> => {
     let updatedAppt: Appointment | null = null;
     appointments = appointments.map(appt => {
@@ -141,46 +141,12 @@ export const apiAddVideoUpdate = (appointmentId: string, videoUrl: string): Prom
     return apiRequest(updatedAppt);
 };
 
-export const apiAddClaim = (claim: Omit<Claim, 'id'>): Promise<Claim> => {
-    const newClaim: Claim = { ...claim, id: `CLM${Date.now()}` };
-    claims.push(newClaim);
-    return apiRequest(newClaim);
-};
-
-export const apiAddInvoice = (invoice: Omit<BillingInvoice, 'id'>): Promise<BillingInvoice> => {
-    const newInvoice: BillingInvoice = { ...invoice, id: `inv_${Date.now()}` };
-    invoices.push(newInvoice);
-    return apiRequest(newInvoice);
-};
-
-export const apiMakePayment = (invoiceId: string, amount: number): Promise<BillingInvoice | null> => {
-    let updatedInvoice: BillingInvoice | null = null;
-    invoices = invoices.map(inv => {
-        if (inv.id === invoiceId) {
-            const newAmountDue = inv.amountDue - amount;
-            updatedInvoice = {
-                ...inv,
-                amountDue: newAmountDue,
-                status: newAmountDue <= 0 ? 'Paid' : 'Due',
-            };
-            return updatedInvoice;
-        }
-        return inv;
-    });
-    return apiRequest(updatedInvoice);
-};
-
+export { apiAddPrescription };
 export const apiAddProgressNote = (note: Omit<ProgressNote, 'id'>): Promise<ProgressNote> => {
     const newNote: ProgressNote = { ...note, id: `note_${Date.now()}` };
     progressNotes.push(newNote);
     eventBus.publish(EVENTS.NOTE_CREATED, newNote);
     return apiRequest(newNote);
-};
-
-export const apiAddPrescription = (prescription: Omit<Prescription, 'id' | 'status'>): Promise<Prescription> => {
-    const newPrescription: Prescription = { ...prescription, id: `rx_${Date.now()}`, status: 'Sent' };
-    prescriptions.push(newPrescription);
-    return apiRequest(newPrescription);
 };
 
 export const apiSendMessage = (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>): Promise<Message> => {

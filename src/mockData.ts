@@ -46,15 +46,6 @@ export const MOCK_APPOINTMENTS: Appointment[] = [
     { id: 'appt3', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro2', providerName: 'Dr. David Chen', date: '2024-07-20', time: '02:00 PM', reason: 'Dermatology Follow-up', location: 'Virtual', status: 'Completed', duration: 15, visitSummary: 'Condition has improved. Follow up in 6 months.' },
 ];
 
-export const MOCK_CLAIMS: Claim[] = [
-    { id: 'CLM78901', patientId: 'pat1', provider: 'Dr. Jane Smith', serviceDate: '2024-07-15', totalClaimChargeAmount: 450, patientOwes: 50, insurancePaid: 400, status: ClaimStatus.PAID_IN_FULL, claimType: ClaimType.PROFESSIONAL, createdAt: '2024-07-18', lineItems: [{service: 'Office Visit 99213', charge: 250}, {service: 'EKG', charge: 200}] },
-];
-
-export const MOCK_INVOICES: BillingInvoice[] = [
-    { id: 'inv_1', patientId: 'pat1', date: '2024-07-18', dueDate: '2024-08-18', totalAmount: 50, amountDue: 0, status: 'Paid', description: 'Co-pay for visit on 2024-07-15' },
-    { id: 'inv_2', patientId: 'pat1', date: '2024-08-01', dueDate: '2024-09-01', totalAmount: 25, amountDue: 25, status: 'Due', description: 'Co-pay for lab work' },
-];
-
 export const MOCK_PROVIDER_PLANS: SubscriptionPlan[] = [
   { id: 'plan_d1', name: 'Basic Tier', price: '$49/mo', features: ['Up to 50 patients', 'Basic EHR', 'Appointment Scheduling'], patientLimit: 50, type: 'provider' },
   { id: 'plan_d2', name: 'Pro Tier', price: '$99/mo', features: ['Up to 200 patients', 'Full EHR & E-Prescribing', 'Telehealth Included', 'Advanced Reporting'], patientLimit: 200, isPopular: true, type: 'provider' },
@@ -68,10 +59,6 @@ export const MOCK_PATIENT_PLANS: SubscriptionPlan[] = [
 
 export const MOCK_PROGRESS_NOTES: ProgressNote[] = [
     { id: 'note1', patientId: 'pat1', patientName: 'John Doe', providerId: 'pro1', date: '2024-08-15', status: 'Signed', content: { subjective: 'Patient reports feeling well.', objective: 'BP 120/80, HR 72.', assessment: 'Stable.', plan: 'Continue current medications.' } }
-];
-
-export const MOCK_PRESCRIPTIONS: Prescription[] = [
-    { id: 'rx1', patientId: 'pat1', patientName: 'John Doe', drug: 'Lisinopril 10mg', dosage: '1 tablet', frequency: 'Once daily', quantity: 30, refills: 2, pharmacy: 'CVS Pharmacy, Anytown', datePrescribed: '2024-08-14', status: 'Sent' },
 ];
 
 export const MOCK_MESSAGES: Record<string, Message[]> = {

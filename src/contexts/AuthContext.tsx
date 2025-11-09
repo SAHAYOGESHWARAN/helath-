@@ -111,9 +111,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // This effect will run when a user logs in to fetch all associated data.
         if (user) {
             setLoading(true);
-            api.fetchAllData().then(data => {
-                setUsers(data.users);
-                setAppointments(data.appointments);
+            try {
+                api.fetchAllData().then(data => {
+                    setUsers(data.users);
+                    setAppointments(data.appointments);
                 setClaims(data.claims);
                 setInvoices(data.invoices);
                 setProgressNotes(data.progressNotes);
@@ -129,9 +130,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const fullUser = data.users.find(u => u.id === user.id) || user;
                 setUser(fullUser);
                 sessionStorage.setItem('novopath-user', JSON.stringify(fullUser));
-            }).finally(() => {
-                setLoading(false);
             });
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false);
+        }
         } else {
             // Clear data on logout
             setUsers([]);

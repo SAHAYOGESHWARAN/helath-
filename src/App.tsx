@@ -63,6 +63,7 @@ const AppRoutes: React.FC = () => {
 };
 
 function App() {
+  console.log("Rendering App component");
   return (
     <AuthProvider>
       <WebSocketProvider>
