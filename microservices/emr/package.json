@@ -1,0 +1,15 @@
+{
+  "name": "emr-microservice",
+  "version": "1.0.0",
+  "description": "EMR microservice for NovoPath",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "ws": "^8.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0"
+  }
+}
