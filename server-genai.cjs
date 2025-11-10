@@ -56,6 +56,35 @@ async function main() {
     res.json({ text });
   });
 
+  app.post('/api/genai/login', (req, res) => {
+    const { email, password } = req.body;
+    // This is a mock login. In a real application, you'd validate against a database.
+    const user = {
+      id: 'pat1',
+      name: 'John Doe',
+      email: 'john.doe@email.com',
+      role: 'patient',
+    };
+    if (email === 'john.doe@email.com' && password === 'Password123!') {
+      res.json({ user, token: `demo-jwt-${Date.now()}` });
+    } else {
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  });
+
+  app.post('/api/genai/register', (req, res) => {
+    const { email, name, password, role } = req.body;
+    // This is a mock registration.
+    const newUser = {
+      id: `usr_${Date.now()}`,
+      name,
+      email,
+      role,
+    };
+    res.status(201).json(newUser);
+  });
+
+
   process.on('uncaughtException', (err) => {
     console.error('Uncaught exception in GenAI server:', err);
   });

@@ -35,10 +35,7 @@ const LoginPage: React.FC = () => {
             validationSchema={LoginSchema}
             onSubmit={async (values, { setSubmitting }) => {
               const success = await login(values.email, values.password);
-              if (success) {
-                // Navigate will be handled by the AppRoutes component upon user state change.
-                // navigate('/dashboard');
-              } else {
+              if (!success) {
                 showToast('Invalid credentials. Please try again.', 'error');
               }
               setSubmitting(false);

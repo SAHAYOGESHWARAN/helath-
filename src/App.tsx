@@ -36,11 +36,17 @@ const AppRoutes: React.FC = () => {
         user.role === UserRole.PATIENT ? <PatientLayout /> :
         user.role === UserRole.PROVIDER ? <ProviderLayout /> :
         user.role === UserRole.ADMIN ? <AdminLayout /> :
-        <Navigate to="/login" replace />;
+        null;
+
+    if (!UserLayout) {
+        // Handle unknown role, perhaps redirect to login
+        return <Navigate to="/login" replace />;
+    }
 
     return (
         <Routes>
             <Route path={`/${rolePath}/*`} element={UserLayout} />
+            {/* Redirect any other authenticated route to the correct dashboard */}
             <Route path="*" element={<Navigate to={`/${rolePath}/dashboard`} replace />} />
         </Routes>
     );

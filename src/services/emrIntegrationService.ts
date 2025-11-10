@@ -34,7 +34,7 @@ export function getEMRIntegrationService(): EMRIntegrationService {
   }
 
   // If no real client is configured, provide a small mock to keep the UI functional in local/dev environments.
-  if (!client) {
+  /* if (!client) {
     console.warn('EMR API not configured (VITE_EMR_API_URL / VITE_EMR_API_KEY). Falling back to mock EMR integration.');
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
     let isConnected = false;
@@ -60,7 +60,7 @@ export function getEMRIntegrationService(): EMRIntegrationService {
       setIntegrationSettings: async (settings) => { await delay(100); console.log('Settings updated:', settings); return { success: true, data: { success: true } }; },
       reconnect: async () => { await delay(500); isConnected = true; return { success: true, data: { success: true } }; }
     };
-  }
+  } */
 
   // Real client-backed implementation
   return {

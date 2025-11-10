@@ -88,8 +88,8 @@ app.get('/health', (req, res) => {
 // All other API routes should be protected
 app.use('/api', checkApiKey);
 
-// Get all records
-app.get('/api/records', async (req, res) => {
+// Get all patient records
+app.get('/api/patients', async (req, res) => {
     try {
         const records = await db.collection('records').find({}).toArray();
         res.json(records);
@@ -98,8 +98,26 @@ app.get('/api/records', async (req, res) => {
     }
 });
 
+// Get a single patient record by ID
+app.get('/api/patients/:patientId', async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        // In a real scenario, you would query by a proper patient ID.
+        // Here we assume the 'id' field on the document matches.
+        const record = await db.collection('records').findOne({ id: patientId });
+        if (record) {
+            res.json(record);
+        } else {
+            res.status(404).json({ error: 'Patient not found' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 // Create a new record and broadcast it
-app.post('/api/records', async (req, res) => {
+app.post('/api/patients', async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ error: 'Request body cannot be empty.' });
   }
