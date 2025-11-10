@@ -9,13 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/emr';
-const PORT = process.env.EMR_PORT || 4001;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/notes';
+const PORT = process.env.NOTES_PORT || 4003;
 const API_KEY = process.env.API_KEY;
 
 let db;
 
-// Connect to MongoDB
 MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(client => {
     console.log('Connected to MongoDB');
@@ -26,25 +25,9 @@ MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: tr
     process.exit(1);
   });
 
-// Create HTTP server
 const server = http.createServer(app);
-
-// Create WebSocket server
 const wss = new WebSocket.Server({ server });
 
-wss.on('connection', ws => {
-  console.log('Client connected to WebSocket');
-
-  ws.on('message', message => {
-    console.log('received: %s', message);
-  });
-
-  ws.on('close', () => {
-    console.log('Client disconnected from WebSocket');
-  });
-});
-
-// Function to broadcast data to all connected clients
 const broadcast = (data) => {
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
@@ -55,17 +38,11 @@ const broadcast = (data) => {
 
 wss.on('connection', ws => {
   console.log('Client connected to WebSocket');
-
-  ws.on('message', message => {
-    console.log('received: %s', message);
-  });
-
   ws.on('close', () => {
     console.log('Client disconnected from WebSocket');
   });
 });
 
-// Auth middleware
 const checkApiKey = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -80,49 +57,43 @@ const checkApiKey = (req, res, next) => {
   next();
 };
 
-// API endpoints
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// All other API routes should be protected
 app.use('/api', checkApiKey);
 
-// Get all records
-app.get('/api/records', async (req, res) => {
+app.get('/api/notes', async (req, res) => {
     try {
-        const records = await db.collection('records').find({}).toArray();
-        res.json(records);
+        const notes = await db.collection('notes').find({}).toArray();
+        res.json(notes);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Create a new record and broadcast it
-app.post('/api/records', async (req, res) => {
+app.post('/api/notes', async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ error: 'Request body cannot be empty.' });
   }
   try {
-    const newRecord = req.body;
-    const result = await db.collection('records').insertOne(newRecord);
-    const createdRecord = Object.assign({_id: result.insertedId}, newRecord);
+    const newNote = req.body;
+    const result = await db.collection('notes').insertOne(newNote);
+    const createdNote = Object.assign({_id: result.insertedId}, newNote);
 
-    // Broadcast the newly created record to all connected WebSocket clients
     broadcast({
-      type: 'RECORD_CREATED',
-      payload: createdRecord
+      type: 'NOTE_CREATED',
+      payload: createdNote
     });
 
-    res.status(201).json(createdRecord);
+    res.status(201).json(createdNote);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create record', details: err.message });
+    res.status(500).json({ error: 'Failed to create note', details: err.message });
   }
 });
 
-
 server.listen(PORT, () => {
-  console.log(`EMR microservice running on port ${PORT}`);
+  console.log(`Notes microservice running on port ${PORT}`);
 });
 
 module.exports = { app, server, db };

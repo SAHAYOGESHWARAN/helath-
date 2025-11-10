@@ -27,6 +27,7 @@ import {
     DumbbellIcon,
     IdentificationIcon,
     BeakerIcon,
+    CalculatorIcon,
 } from './components/shared/Icons';
 
 export interface NavItem {
@@ -51,6 +52,10 @@ export const PATIENT_NAV: NavItem[] = [
   { name: 'Insurance', href: 'insurance', icon: <IdentificationIcon /> },
   { name: 'Subscription', href: 'subscription', icon: <SparklesIcon /> },
   { name: 'AI Assistant', href: 'ai-assistant', icon: <SparklesIcon /> },
+  { name: 'Health Assistant', href: 'health-assistant', icon: <SparklesIcon /> },
+  { name: 'BMI Calculator', href: 'bmi-calculator', icon: <CalculatorIcon /> },
+  { name: 'Calorie Tracker', href: 'calorie-tracker', icon: <CalculatorIcon /> },
+  { name: 'Workout Planner', href: 'workout-planner', icon: <DumbbellIcon /> },
   { name: 'Profile', href: 'profile', icon: <UserCircleIcon /> },
   { name: 'Settings', href: 'settings', icon: <CogIcon /> },
 ];

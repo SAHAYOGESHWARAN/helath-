@@ -1,199 +1,174 @@
-import {
-  MOCK_USERS, MOCK_APPOINTMENTS, MOCK_PROVIDER_PLANS, MOCK_PATIENT_PLANS,
-  MOCK_PROGRESS_NOTES, MOCK_MESSAGES, MOCK_LAB_ORDERS,
-  MOCK_REFERRALS, MOCK_AUDIT_LOG
-} from '@/mockData';
-import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, UserRole, ClaimStatus, ClaimType } from '@/types';
-import { eventBus, EVENTS } from '@/services/eventBus';
+import { User, Appointment, Claim, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, Referral, UserRole } from '@/types';
+import axios from 'axios';
 
-const SIMULATED_LATENCY = 150;
+const api = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-// In a real application, this would be a proper data store or would be refetched.
-// For this simulation, we'll just modify the imported mock data arrays directly for mutations.
-import { addPrescription as apiAddPrescription, getPrescriptions } from './dosespotService';
-import { addClaim as apiAddClaim, addInvoice as apiAddInvoice, makePayment as apiMakePayment, getClaims, getInvoices } from './stripeService';
-let users: User[] = JSON.parse(JSON.stringify(MOCK_USERS));
-let appointments: Appointment[] = JSON.parse(JSON.stringify(MOCK_APPOINTMENTS));
-const progressNotes: ProgressNote[] = JSON.parse(JSON.stringify(MOCK_PROGRESS_NOTES));
-const messages: Record<string, Message[]> = JSON.parse(JSON.stringify(MOCK_MESSAGES));
-const labOrders: LabOrder[] = JSON.parse(JSON.stringify(MOCK_LAB_ORDERS));
-let referrals: Referral[] = JSON.parse(JSON.stringify(MOCK_REFERRALS));
+api.interceptors.request.use(config => {
+  const token = sessionStorage.getItem('novopath-token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-// --- API Request Simulation ---
-const apiRequest = <T>(data: T): Promise<T> => 
-  new Promise(resolve => setTimeout(() => resolve(JSON.parse(JSON.stringify(data))), SIMULATED_LATENCY));
+export const apiLogin = async (email: string, password?: string): Promise<{ user: User; token: string } | null> => {
+  try {
+    const { data } = await api.post('/genai/login', { email, password });
+    return data;
+  } catch (error) {
+    console.error('Login failed:', error);
+    return null;
+  }
+};
 
-// --- Auth Endpoints ---
-export const apiLogin = (email: string, password?: string): Promise<{ user: User; token: string } | null> => {
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (foundUser && (!password || foundUser.password === password)) {
-        const token = `demo-jwt-${foundUser.id}-${Date.now()}`;
-        return apiRequest({ user: foundUser, token });
+export const apiRegister = async (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole): Promise<User> => {
+  const { data } = await api.post('/genai/register', { ...userData, role });
+  return data;
+};
+
+export const apiChangePassword = async (current: string, newPass: string): Promise<boolean> => {
+  try {
+    await api.post('/genai/change-password', { current, newPass });
+    return true;
+  } catch (error) {
+    console.error('Password change failed:', error);
+    return false;
+  }
+};
+
+export const fetchAllData = async () => {
+  const [users, appointments, claims, invoices, progressNotes, prescriptions, messages, labOrders, referrals, providerPlans, patientPlans, auditLog] = await Promise.all([
+    api.get('/emr/records'),
+    api.get('/scheduling/appointments'),
+    api.get('/emr/claims'),
+    api.get('/emr/invoices'),
+    api.get('/notes/notes'),
+    api.get('/emr/prescriptions'),
+    api.get('/emr/messages'),
+    api.get('/emr/lab-orders'),
+    api.get('/emr/referrals'),
+    api.get('/genai/provider-plans'),
+    api.get('/genai/patient-plans'),
+    api.get('/genai/audit-log'),
+  ]);
+
+  return {
+    users: users.data,
+    appointments: appointments.data,
+    claims: claims.data,
+    invoices: invoices.data,
+    progressNotes: progressNotes.data,
+    prescriptions: prescriptions.data,
+    messages: messages.data,
+    labOrders: labOrders.data,
+    referrals: referrals.data,
+    providerPlans: providerPlans.data,
+    patientPlans: patientPlans.data,
+    auditLog: auditLog.data,
+  };
+};
+
+export const apiUpdateUser = async (userId: string, updatedData: Partial<User> | ((currentUser: User) => Partial<User>)): Promise<User | null> => {
+  try {
+    const { data } = await api.put(`/emr/records/${userId}`, updatedData);
+    return data;
+  } catch (error) {
+    console.error('User update failed:', error);
+    return null;
+  }
+};
+
+export const apiAddAppointment = async (appointment: Omit<Appointment, 'id'>): Promise<Appointment> => {
+  const { data } = await api.post('/scheduling/appointments', appointment);
+  return data;
+};
+
+export const apiConfirmAppointment = async (appointmentId: string): Promise<Appointment | null> => {
+  try {
+    const { data } = await api.put(`/scheduling/appointments/${appointmentId}/confirm`);
+    return data;
+  } catch (error) {
+    console.error('Appointment confirmation failed:', error);
+    return null;
+  }
+};
+
+export const apiCancelAppointment = async (appointmentId: string): Promise<Appointment | null> => {
+  try {
+    const { data } = await api.put(`/scheduling/appointments/${appointmentId}/cancel`);
+    return data;
+  } catch (error) {
+    console.error('Appointment cancellation failed:', error);
+    return null;
+  }
+};
+
+export const apiAddClaim = async (claim: Omit<Claim, 'id'>): Promise<Claim> => {
+    const { data } = await api.post('/emr/claims', claim);
+    return data;
+};
+
+export const apiAddInvoice = async (invoice: Omit<BillingInvoice, 'id'>): Promise<BillingInvoice> => {
+    const { data } = await api.post('/emr/invoices', invoice);
+    return data;
+};
+
+export const apiMakePayment = async (invoiceId: string, amount: number): Promise<BillingInvoice> => {
+    const { data } = await api.post(`/emr/invoices/${invoiceId}/pay`, { amount });
+    return data;
+};
+
+export const apiAddVideoUpdate = async (appointmentId: string, videoUrl: string): Promise<Appointment | null> => {
+    try {
+        const { data } = await api.post(`/scheduling/appointments/${appointmentId}/video-update`, { videoUrl });
+        return data;
+    } catch (error) {
+        console.error('Failed to add video update:', error);
+        return null;
     }
-    return apiRequest(null);
 };
 
-export const apiRegister = (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole): Promise<User> => {
-    const newUser: User = {
-        id: `user_${Date.now()}`,
-        ...userData,
-        role: role,
-        avatarUrl: `https://i.pravatar.cc/150?u=${Date.now()}`,
-        status: 'Active',
-        isVerified: role !== UserRole.PROVIDER,
-        notificationSettings: { emailAppointments: true, emailBilling: true, emailMessages: true, smsMessages: false, pushAll: false },
-    };
-    users.push(newUser);
-    return apiRequest(newUser);
+export const apiAddPrescription = async (prescription: Omit<Prescription, 'id' | 'status'>): Promise<Prescription> => {
+    const { data } = await api.post('/emr/prescriptions', prescription);
+    return data;
 };
 
-export const apiChangePassword = (current: string, newPass: string): Promise<boolean> => {
-    // Mock implementation - always succeeds
-    return apiRequest(true);
+export const apiAddProgressNote = async (note: Omit<ProgressNote, 'id'>): Promise<ProgressNote> => {
+    const { data } = await api.post('/notes/notes', note);
+    return data;
 };
 
-// --- Data Fetching Endpoints ---
-export const fetchAllData = () => {
-    return Promise.all([
-        apiRequest(users),
-        apiRequest(appointments),
-        getClaims(),
-        getInvoices(),
-        apiRequest(progressNotes),
-        getPrescriptions(),
-        apiRequest(messages),
-        apiRequest(labOrders),
-        apiRequest(referrals),
-        apiRequest(MOCK_PROVIDER_PLANS),
-        apiRequest(MOCK_PATIENT_PLANS),
-        apiRequest(MOCK_AUDIT_LOG),
-    ]).then(([users, appointments, claims, invoices, progressNotes, prescriptions, messages, labOrders, referrals, providerPlans, patientPlans, auditLog]) => ({
-        users, appointments, claims, invoices, progressNotes, prescriptions, messages, labOrders, referrals, providerPlans, patientPlans, auditLog
-    }));
-}
-
-// --- Data Mutation Endpoints ---
-export const apiUpdateUser = (userId: string, updatedData: Partial<User> | ((currentUser: User) => Partial<User>)): Promise<User | null> => {
-    let updatedUser: User | null = null;
-    users = users.map(u => {
-        if (u.id === userId) {
-            const updates = typeof updatedData === 'function' ? updatedData(u) : updatedData;
-            updatedUser = { ...u, ...updates };
-            return updatedUser;
-        }
-        return u;
-    });
-    return apiRequest(updatedUser);
+export const apiSendMessage = async (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>): Promise<Message> => {
+    const { data } = await api.post('/emr/messages', message);
+    return data;
 };
 
-export const apiAddAppointment = (appointment: Omit<Appointment, 'id'>): Promise<Appointment> => {
-    const newAppointment: Appointment = {
-        ...appointment,
-        id: `appt_${Date.now()}`,
-    };
-    appointments.push(newAppointment);
-    // publish appointment.created for realtime
-    eventBus.publish(EVENTS.APPOINTMENT_CREATED, newAppointment);
-    return apiRequest(newAppointment);
+export const apiMarkMessagesAsRead = async (userId: string, contactId: string): Promise<Message[]> => {
+    const { data } = await api.put(`/emr/messages/read/${userId}/${contactId}`);
+    return data;
 };
 
-export const apiConfirmAppointment = (appointmentId: string): Promise<Appointment | null> => {
-    let updatedAppt: Appointment | null = null;
-    appointments = appointments.map(a => {
-        if (a.id === appointmentId) {
-            updatedAppt = { ...a, status: 'Confirmed' };
-            return updatedAppt;
-        }
-        return a;
-    });
-    if (updatedAppt) {
-        try { eventBus.publish(EVENTS.APPOINTMENT_UPDATED, updatedAppt); } catch (e) { /* ignore */ }
+export const apiAddLabOrder = async (order: Omit<LabOrder, 'id'>): Promise<LabOrder> => {
+    const { data } = await api.post('/emr/lab-orders', order);
+    return data;
+};
+
+export const apiAddReferral = async (referralData: Omit<Referral, 'id' | 'createdAt' | 'status' | 'type' | 'auditLog'>): Promise<Referral> => {
+    const { data } = await api.post('/emr/referrals', referralData);
+    return data;
+};
+
+export const apiUpdateReferral = async (id: string, updates: Partial<Referral>, actionText: string): Promise<Referral | null> => {
+    try {
+        const { data } = await api.put(`/emr/referrals/${id}`, { updates, actionText });
+        return data;
+    } catch (error) {
+        console.error('Referral update failed:', error);
+        return null;
     }
-    return apiRequest(updatedAppt);
-};
-
-export const apiCancelAppointment = (appointmentId: string): Promise<Appointment | null> => {
-    let updatedAppt: Appointment | null = null;
-    appointments = appointments.map(a => {
-        if (a.id === appointmentId) {
-            updatedAppt = { ...a, status: 'Cancelled' };
-            return updatedAppt;
-        }
-        return a;
-    });
-    if (updatedAppt) {
-        try { eventBus.publish(EVENTS.APPOINTMENT_UPDATED, updatedAppt); } catch (e) { /* ignore */ }
-    }
-    return apiRequest(updatedAppt);
-};
-
-export { apiAddClaim, apiAddInvoice, apiMakePayment };
-export const apiAddVideoUpdate = (appointmentId: string, videoUrl: string): Promise<Appointment | null> => {
-    let updatedAppt: Appointment | null = null;
-    appointments = appointments.map(appt => {
-        if (appt.id === appointmentId) {
-            const newUpdate = { id: `vid_${Date.now()}`, date: new Date().toISOString(), videoUrl };
-            updatedAppt = { ...appt, videoUpdates: [...(appt.videoUpdates || []), newUpdate] };
-            return updatedAppt;
-        }
-        return appt;
-    });
-    return apiRequest(updatedAppt);
-};
-
-export { apiAddPrescription };
-export const apiAddProgressNote = (note: Omit<ProgressNote, 'id'>): Promise<ProgressNote> => {
-    const newNote: ProgressNote = { ...note, id: `note_${Date.now()}` };
-    progressNotes.push(newNote);
-    eventBus.publish(EVENTS.NOTE_CREATED, newNote);
-    return apiRequest(newNote);
-};
-
-export const apiSendMessage = (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>): Promise<Message> => {
-    const newMessage: Message = { ...message, id: `msg_${Date.now()}`, timestamp: new Date().toISOString(), isRead: false };
-    const key = [message.senderId, message.receiverId].sort().join('-');
-    messages[key] = [...(messages[key] || []), newMessage];
-    // publish message.created so other clients can react
-    eventBus.publish(EVENTS.MESSAGE_CREATED, newMessage);
-    return apiRequest(newMessage);
-};
-
-export const apiMarkMessagesAsRead = (userId: string, contactId: string): Promise<Message[]> => {
-    const key = [userId, contactId].sort().join('-');
-    messages[key] = (messages[key] || []).map(m => m.receiverId === userId && !m.isRead ? { ...m, isRead: true } : m);
-    return apiRequest(messages[key]);
-};
-
-export const apiAddLabOrder = (order: Omit<LabOrder, 'id'>): Promise<LabOrder> => {
-    const newOrder: LabOrder = { ...order, id: `lo_${Date.now()}` };
-    labOrders.push(newOrder);
-    eventBus.publish(EVENTS.LAB_ORDER_CREATED, newOrder);
-    return apiRequest(newOrder);
-};
-
-export const apiAddReferral = (referralData: Omit<Referral, 'id' | 'createdAt' | 'status' | 'type' | 'auditLog'>): Promise<Referral> => {
-    const now = new Date().toISOString();
-    const newReferral: Referral = {
-        ...referralData,
-        id: `ref_${Date.now()}`,
-        createdAt: now,
-        status: ReferralStatus.PENDING,
-        type: 'Outgoing',
-        auditLog: [{ date: now, action: 'Referral Created', status: ReferralStatus.PENDING }]
-    };
-    referrals.push(newReferral);
-    return apiRequest(newReferral);
-};
-
-export const apiUpdateReferral = (id: string, updates: Partial<Referral>, actionText: string): Promise<Referral | null> => {
-    let updatedReferral: Referral | null = null;
-    referrals = referrals.map(r => {
-        if (r.id === id) {
-            const newLog: AuditLogEntry = { date: new Date().toISOString(), action: actionText, status: updates.status || r.status };
-            updatedReferral = { ...r, ...updates, auditLog: [...r.auditLog, newLog] };
-            return updatedReferral;
-        }
-        return r;
-    });
-    return apiRequest(updatedReferral);
 };

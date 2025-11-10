@@ -3,7 +3,7 @@ import { Claim, BillingInvoice } from '@/types';
 import 'dotenv/config';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-10-29.clover',
 });
 
 export const getClaims = async (): Promise<Claim[]> => {

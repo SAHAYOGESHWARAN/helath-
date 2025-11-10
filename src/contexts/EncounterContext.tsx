@@ -1,61 +1,34 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Encounter, PatientNote } from '@/types';
-import { MOCK_ENCOUNTERS } from '../mockData';
-import { socketService } from '@/services/socketService';
+import { Encounter, User } from '@/types';
+import * as api from '@/services/apiService';
 
 interface EncounterContextType {
-  encounter: Encounter | null;
-  notes: PatientNote[];
-  updateNote: (noteId: string, content: string) => void;
-  isSaving: boolean;
-  lastSaved: Date | null;
+  encounters: Encounter[];
+  patient: User | null;
 }
 
 const EncounterContext = createContext<EncounterContextType | undefined>(undefined);
 
-export const EncounterProvider: React.FC<{ encounterId: string; children: ReactNode }> = ({ encounterId, children }) => {
-  const [encounter, setEncounter] = useState<Encounter | null>(null);
-  const [notes, setNotes] = useState<PatientNote[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+export const EncounterProvider: React.FC<{ patientId: string; children: ReactNode }> = ({ patientId, children }) => {
+  const [encounters, setEncounters] = useState<Encounter[]>([]);
+  const [patient, setPatient] = useState<User | null>(null);
 
   useEffect(() => {
-    const foundEncounter = MOCK_ENCOUNTERS.find(e => e.id === encounterId);
-    if (foundEncounter) {
-      setEncounter(foundEncounter);
-      setNotes(foundEncounter.notes);
-    }
+    const fetchData = async () => {
+      const data = await api.fetchAllData();
+      const foundPatient = data.users.find(p => p.id === patientId);
+      setPatient(foundPatient || null);
 
-    socketService.connect(encounterId);
-    socketService.onMessage((data) => {
-      if (data.type === 'NOTE_UPDATE') {
-        setNotes(prevNotes =>
-          prevNotes.map(note => note.id === data.payload.id ? { ...note, content: data.payload.content } : note)
-        );
-      }
-    });
-
-    return () => {
-      socketService.disconnect();
+      const patientEncounters = data.progressNotes.filter(e => e.patientId === patientId);
+      setEncounters(patientEncounters);
     };
-  }, [encounterId]);
 
-  const updateNote = (noteId: string, content: string) => {
-    setIsSaving(true);
-    const updatedNotes = notes.map(note => note.id === noteId ? { ...note, content } : note);
-    setNotes(updatedNotes);
-
-    socketService.sendMessage({ type: 'UPDATE_NOTE', payload: { id: noteId, content } });
-
-    setTimeout(() => {
-      setIsSaving(false);
-      setLastSaved(new Date());
-    }, 500);
-  };
+    fetchData();
+  }, [patientId]);
 
   return (
-    <EncounterContext.Provider value={{ encounter, notes, updateNote, isSaving, lastSaved }}>
+    <EncounterContext.Provider value={{ encounters, patient }}>
       {children}
     </EncounterContext.Provider>
   );

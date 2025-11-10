@@ -60,6 +60,11 @@ pool.on('connect', (client) => {
     migrateDatabase();
 });
 
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
 // Auth middleware
 const checkApiKey = (req, res, next) => {
   const authHeader = req.headers.authorization;

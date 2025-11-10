@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Encounter } from '@/types';
-import { MOCK_USERS, MOCK_ENCOUNTERS } from '@/mockData';
+import * as api from '@/services/apiService';
 
 interface PatientContextType {
   patient: User | null;
@@ -15,11 +15,16 @@ export const PatientProvider: React.FC<{ patientId: string; children: ReactNode 
   const [encounters, setEncounters] = useState<Encounter[]>([]);
 
   useEffect(() => {
-    const foundPatient = MOCK_USERS.find(p => p.id === patientId);
-    setPatient(foundPatient || null);
+    const fetchData = async () => {
+      const data = await api.fetchAllData();
+      const foundPatient = data.users.find(p => p.id === patientId);
+      setPatient(foundPatient || null);
 
-    const patientEncounters = MOCK_ENCOUNTERS.filter(e => e.patientId === patientId);
-    setEncounters(patientEncounters);
+      const patientEncounters = data.progressNotes.filter(e => e.patientId === patientId);
+      setEncounters(patientEncounters);
+    };
+
+    fetchData();
   }, [patientId]);
 
   return (

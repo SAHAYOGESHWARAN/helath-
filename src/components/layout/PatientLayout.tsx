@@ -22,6 +22,10 @@ import TaskList from '@/pages/patient/TaskList';
 import HealthGoalsPage from '@/pages/patient/HealthGoalsPage';
 import Insurance from '@/pages/patient/Insurance';
 import LabResults from '@/pages/patient/LabResults';
+import HealthAssistantPage from '@/pages/patient/HealthAssistantPage';
+import BMICalculatorPage from '@/pages/patient/BMICalculatorPage';
+import CalorieTrackerPage from '@/pages/patient/CalorieTrackerPage';
+import WorkoutPlannerPage from '@/pages/patient/WorkoutPlannerPage';
 
 
 const PatientLayout: React.FC = () => {
@@ -51,6 +55,10 @@ const PatientLayout: React.FC = () => {
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="insurance" element={<Insurance />} />
+              <Route path="health-assistant" element={<HealthAssistantPage />} />
+              <Route path="bmi-calculator" element={<BMICalculatorPage />} />
+              <Route path="calorie-tracker" element={<CalorieTrackerPage />} />
+              <Route path="workout-planner" element={<WorkoutPlannerPage />} />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>
           </div>
