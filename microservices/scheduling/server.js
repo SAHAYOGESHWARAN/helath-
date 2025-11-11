@@ -54,13 +54,13 @@ const migrateDatabase = async () => {
   }
 };
 
-pool.on('connect', (client) => {
+pool.on('connect', () => {
     console.log('Connected to PostgreSQL database');
     createAppointmentsTable();
     migrateDatabase();
 });
 
-pool.on('error', (err, client) => {
+pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
   process.exit(-1);
 });

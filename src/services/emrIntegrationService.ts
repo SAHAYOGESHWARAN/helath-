@@ -33,34 +33,9 @@ export function getEMRIntegrationService(): EMRIntegrationService {
     client = EMRAPIClient.getInstance({ baseUrl, apiKey });
   }
 
-  // If no real client is configured, provide a small mock to keep the UI functional in local/dev environments.
-  /* if (!client) {
-    console.warn('EMR API not configured (VITE_EMR_API_URL / VITE_EMR_API_KEY). Falling back to mock EMR integration.');
-    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-    let isConnected = false;
-    return {
-      checkEMRHealth: async () => { await delay(80); return isConnected; },
-      syncPatientData: async (id) => {
-        await delay(200);
-        if (!isConnected) return { success: false, error: { message: 'Not connected' } };
-        return { success: true, data: { id, name: 'Demo Patient', email: 'demo@example.com', role: 'patient' as any, avatarUrl: '' } };
-      },
-      syncAppointments: async (id) => {
-        await delay(200);
-        if (!isConnected) return { success: false, error: { message: 'Not connected' } };
-        return { success: true, data: [{ id: 'a1', patientId: id, patientName: 'Demo Patient', providerId: 'p1', providerName: 'Dr. Demo', date: new Date().toISOString().split('T')[0], time: '10:00 AM', reason: 'Follow-up', location: 'Clinic', status: 'Confirmed', duration: 30, visitSummary: '' }] };
-      },
-      syncPrescriptions: async (id) => { await delay(150); if (!isConnected) return { success: false, error: { message: 'Not connected' } }; return { success: true, data: [] }; },
-      syncLabResults: async (id) => { await delay(150); if (!isConnected) return { success: false, error: { message: 'Not connected' } }; return { success: true, data: [] }; },
-      syncVitals: async (id) => { await delay(150); if (!isConnected) return { success: false, error: { message: 'Not connected' } }; return { success: true, data: [] }; },
-      syncAllPatientData: async (id) => { await delay(350); return; },
-      requestAmendment: async (patientId, amendment) => { await delay(300); console.log(`Amendment requested for ${patientId}: ${amendment}`); return { success: true, data: { success: true } }; },
-      getIntegrationStatus: async () => { await delay(50); return { success: true, data: { status: isConnected ? 'Connected' : 'Disconnected', isConnected } }; },
-      fetchAuditLogs: async () => { await delay(400); return { success: true, data: [ { timestamp: new Date().toISOString(), event: 'Sync started', user: 'system' }, { timestamp: new Date().toISOString(), event: 'Sync completed', user: 'system' }, ]}; },
-      setIntegrationSettings: async (settings) => { await delay(100); console.log('Settings updated:', settings); return { success: true, data: { success: true } }; },
-      reconnect: async () => { await delay(500); isConnected = true; return { success: true, data: { success: true } }; }
-    };
-  } */
+  if (!client) {
+    throw new Error('EMR API not configured. Please set VITE_EMR_API_URL and VITE_EMR_API_KEY.');
+  }
 
   // Real client-backed implementation
   return {

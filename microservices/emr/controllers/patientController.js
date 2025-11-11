@@ -1,6 +1,6 @@
 const { getDB } = require('../db/mongo');
-const { ObjectId } = require('mongodb');
 const Joi = require('joi');
+const mockData = require('../mockData');
 
 const patientSchema = Joi.object({
     id: Joi.string().required(),
@@ -110,10 +110,23 @@ const deletePatient = async (req, res) => {
     }
 };
 
+const getAllClaims = (req, res) => res.json(mockData.claims);
+const getAllInvoices = (req, res) => res.json(mockData.invoices);
+const getAllPrescriptions = (req, res) => res.json(mockData.prescriptions);
+const getAllMessages = (req, res) => res.json(mockData.messages);
+const getAllLabOrders = (req, res) => res.json(mockData.labOrders);
+const getAllReferrals = (req, res) => res.json(mockData.referrals);
+
 module.exports = {
     getAllPatients,
     getPatientById,
     createPatient,
     updatePatient,
-    deletePatient
+    deletePatient,
+    getAllClaims,
+    getAllInvoices,
+    getAllPrescriptions,
+    getAllMessages,
+    getAllLabOrders,
+    getAllReferrals
 };

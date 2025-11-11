@@ -42,7 +42,7 @@ export const apiChangePassword = async (current: string, newPass: string): Promi
 };
 
 export const fetchAllData = async () => {
-  const [users, appointments, claims, invoices, progressNotes, prescriptions, messages, labOrders, referrals, providerPlans, patientPlans, auditLog] = await Promise.all([
+  const results = await Promise.allSettled([
     api.get('/emr/records'),
     api.get('/scheduling/appointments'),
     api.get('/emr/claims'),
@@ -57,19 +57,23 @@ export const fetchAllData = async () => {
     api.get('/genai/audit-log'),
   ]);
 
+  const getData = (result) => (result.status === 'fulfilled' ? result.value.data : []);
+
+  const [users, appointments, claims, invoices, progressNotes, prescriptions, messages, labOrders, referrals, providerPlans, patientPlans, auditLog] = results.map(getData);
+
   return {
-    users: users.data,
-    appointments: appointments.data,
-    claims: claims.data,
-    invoices: invoices.data,
-    progressNotes: progressNotes.data,
-    prescriptions: prescriptions.data,
-    messages: messages.data,
-    labOrders: labOrders.data,
-    referrals: referrals.data,
-    providerPlans: providerPlans.data,
-    patientPlans: patientPlans.data,
-    auditLog: auditLog.data,
+    users,
+    appointments,
+    claims,
+    invoices,
+    progressNotes,
+    prescriptions,
+    messages,
+    labOrders,
+    referrals,
+    providerPlans,
+    patientPlans,
+    auditLog,
   };
 };
 
