@@ -11,8 +11,13 @@ const SCHEDULING_API_URL = process.env.SCHEDULING_API_URL || 'http://localhost:4
 const NOTES_API_URL = process.env.NOTES_API_URL || 'http://localhost:4003';
 const GENAI_API_URL = process.env.GENAI_API_URL || 'http://localhost:4000';
 const VIDEO_API_URL = process.env.VIDEO_API_URL || 'http://localhost:4004';
+const AUTH_API_URL = process.env.AUTH_API_URL || 'http://localhost:4005';
 
 const services = [
+  {
+    route: '/api/auth',
+    target: AUTH_API_URL,
+  },
   {
     route: '/api/video',
     target: VIDEO_API_URL,

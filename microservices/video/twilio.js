@@ -6,9 +6,15 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const apiKeySid = process.env.TWILIO_API_KEY_SID;
 const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
 
-const client = twilio(accountSid, authToken);
-const AccessToken = twilio.jwt.AccessToken;
-const VideoGrant = AccessToken.VideoGrant;
+let client;
+let AccessToken;
+let VideoGrant;
+
+if (accountSid && accountSid.startsWith('AC')) {
+  client = twilio(accountSid, authToken);
+  AccessToken = twilio.jwt.AccessToken;
+  VideoGrant = AccessToken.VideoGrant;
+}
 
 /**
  * Creates a new Twilio video room.

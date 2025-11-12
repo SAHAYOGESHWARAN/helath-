@@ -59,13 +59,29 @@ async function main() {
   app.post('/api/genai/login', (req, res) => {
     const { email, password } = req.body;
     // This is a mock login. In a real application, you'd validate against a database.
-    const user = {
-      id: 'pat1',
-      name: 'John Doe',
-      email: 'john.doe@email.com',
-      role: 'patient',
-    };
     if (email === 'john.doe@email.com' && password === 'Password123!') {
+      const user = {
+        id: 'pat1',
+        name: 'John Doe',
+        email: 'john.doe@email.com',
+        role: 'patient',
+      };
+      res.json({ user, token: `demo-jwt-${Date.now()}` });
+    } else if (email === 'jane.smith@email.com' && password === 'Password123!') {
+      const user = {
+        id: 'pro1',
+        name: 'Jane Smith',
+        email: 'jane.smith@email.com',
+        role: 'provider',
+      };
+      res.json({ user, token: `demo-jwt-${Date.now()}` });
+    } else if (email === 'admin@novopath.com' && password === 'password123') {
+      const user = {
+        id: 'adm1',
+        name: 'Admin User',
+        email: 'admin@novopath.com',
+        role: 'admin',
+      };
       res.json({ user, token: `demo-jwt-${Date.now()}` });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });

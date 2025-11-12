@@ -95,47 +95,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('disconnected');
 
     useEffect(() => {
-        const storedUser = sessionStorage.getItem('novopath-user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error("Failed to parse user from session storage.", e);
-                sessionStorage.removeItem('novopath-user');
+        const checkUser = async () => {
+            const token = sessionStorage.getItem('novopath-token');
+            if (token) {
+                try {
+                    const { user } = await api.apiVerifyToken(token);
+                    setUser(user);
+                } catch (e) {
+                    console.error("Failed to verify token.", e);
+                    sessionStorage.removeItem('novopath-token');
+                    sessionStorage.removeItem('novopath-user');
+                }
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+        checkUser();
     }, []);
 
     useEffect(() => {
         // This effect will run when a user logs in to fetch all associated data.
         if (user) {
             setLoading(true);
-            try {
-                api.fetchAllData().then(data => {
+            api.fetchAllData()
+                .then(data => {
                     setUsers(data.users);
                     setAppointments(data.appointments);
-                setClaims(data.claims);
-                setInvoices(data.invoices);
-                setProgressNotes(data.progressNotes);
-                setPrescriptions(data.prescriptions);
-                setMessages(data.messages);
-                setLabOrders(data.labOrders);
-                setReferrals(data.referrals);
-                setProviderPlans(data.providerPlans);
-                setPatientPlans(data.patientPlans);
-                setAuditLog(data.auditLog);
-                
-                // Refresh the user object with the full data from our "API"
-                const fullUser = data.users.find(u => u.id === user.id) || user;
-                setUser(fullUser);
-                sessionStorage.setItem('novopath-user', JSON.stringify(fullUser));
-            });
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false);
-        }
+                    setClaims(data.claims);
+                    setInvoices(data.invoices);
+                    setProgressNotes(data.progressNotes);
+                    setPrescriptions(data.prescriptions);
+                    setMessages(data.messages);
+                    setLabOrders(data.labOrders);
+                    setReferrals(data.referrals);
+                    setProviderPlans(data.providerPlans);
+                    setPatientPlans(data.patientPlans);
+                    setAuditLog(data.auditLog);
+
+                    // Refresh the user object with the full data from our "API"
+                    const fullUser = data.users.find(u => u.id === user.id) || user;
+                    setUser(fullUser);
+                    sessionStorage.setItem('novopath-user', JSON.stringify(fullUser));
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         } else {
             // Clear data on logout
             setUsers([]);
@@ -225,15 +231,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const login = useCallback(async (email: string, password?: string): Promise<boolean> => {
         setLoading(true);
-        const resp = await api.apiLogin(email, password);
-        setLoading(false);
-        if (resp && resp.user) {
-            // store token (in prod, API returns a signed JWT)
-            sessionStorage.setItem('novopath-token', resp.token);
-            setUser(resp.user); // This triggers the data fetch effect
-            return true;
+        try {
+            const resp = await api.apiLogin(email, password);
+            if (resp && resp.user) {
+                sessionStorage.setItem('novopath-token', resp.token);
+                sessionStorage.setItem('novopath-user', JSON.stringify(resp.user));
+                setUser(resp.user);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Login failed:', error);
+            return false;
+        } finally {
+            setLoading(false);
         }
-        return false;
     }, []);
 
     const logout = useCallback(() => {

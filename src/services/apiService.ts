@@ -18,12 +18,21 @@ api.interceptors.request.use(config => {
 
 export const apiLogin = async (email: string, password?: string): Promise<{ user: User; token: string } | null> => {
   try {
-    const { data } = await api.post('/genai/login', { email, password });
-    return data;
+    const { data } = await api.post('/auth/login', { email, password });
+    if (data.token) {
+      const { user } = await apiVerifyToken(data.token);
+      return { user, token: data.token };
+    }
+    return null;
   } catch (error) {
     console.error('Login failed:', error);
     return null;
   }
+};
+
+export const apiVerifyToken = async (token: string): Promise<{ user: User }> => {
+  const { data } = await api.post('/auth/verify', { token });
+  return data;
 };
 
 export const apiRegister = async (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole): Promise<User> => {

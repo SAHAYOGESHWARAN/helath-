@@ -65,25 +65,10 @@ pool.on('error', (err) => {
   process.exit(-1);
 });
 
-// Auth middleware
-const checkApiKey = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
-  }
-
-  const apiKey = authHeader.split(' ')[1];
-  if (apiKey !== process.env.API_KEY) {
-    return res.status(403).json({ error: 'Invalid API key' });
-  }
-
-  next();
-};
+const { checkAuth } = require('./auth');
 
 // API endpoints
-app.use('/api', checkApiKey);
-
-app.get('/api/appointments', async (req, res) => {
+app.get('/api/appointments', checkAuth(), async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM appointments');
     res.json(rows);
@@ -92,7 +77,7 @@ app.get('/api/appointments', async (req, res) => {
   }
 });
 
-app.get('/api/appointments/:id', async (req, res) => {
+app.get('/api/appointments/:id', checkAuth(), async (req, res) => {
     const { id } = req.params;
     try {
         const { rows } = await pool.query('SELECT * FROM appointments WHERE id = $1', [id]);
@@ -105,7 +90,7 @@ app.get('/api/appointments/:id', async (req, res) => {
     }
 });
 
-app.post('/api/appointments', async (req, res) => {
+app.post('/api/appointments', checkAuth(), async (req, res) => {
   const { patient_id, provider_id, patient_name, appointment_date, reason } = req.body;
 
   if (!patient_id || !provider_id || !patient_name || !appointment_date) {
@@ -123,7 +108,7 @@ app.post('/api/appointments', async (req, res) => {
   }
 });
 
-app.put('/api/appointments/:id', async (req, res) => {
+app.put('/api/appointments/:id', checkAuth(), async (req, res) => {
     const { id } = req.params;
     const { patient_id, provider_id, patient_name, appointment_date, reason } = req.body;
 
@@ -145,7 +130,7 @@ app.put('/api/appointments/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/appointments/:id', async (req, res) => {
+app.delete('/api/appointments/:id', checkAuth(), async (req, res) => {
     const { id } = req.params;
     try {
         const { rowCount } = await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
@@ -159,4 +144,10 @@ app.delete('/api/appointments/:id', async (req, res) => {
 });
 
 const PORT = process.env.SCHEDULING_PORT || 4002;
-app.listen(PORT, () => console.log(`Scheduling microservice listening on port ${PORT}`));
+let server;
+
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => console.log(`Scheduling microservice listening on port ${PORT}`));
+}
+
+module.exports = { app, server };

@@ -1,11 +1,12 @@
 const { MongoClient } = require('mongodb');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/emr';
+let client;
 let db;
 
-const connectDB = async () => {
+const connectDB = async (uri) => {
+    const MONGODB_URI = uri || process.env.MONGODB_URI || 'mongodb://localhost:27017/emr';
     try {
-        const client = await MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+        client = await MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
         console.log('Connected to MongoDB');
         db = client.db();
     } catch (err) {
@@ -16,4 +17,10 @@ const connectDB = async () => {
 
 const getDB = () => db;
 
-module.exports = { connectDB, getDB };
+const closeDB = async () => {
+    if (client) {
+        await client.close();
+    }
+};
+
+module.exports = { connectDB, getDB, closeDB };

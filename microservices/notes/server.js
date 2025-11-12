@@ -9,23 +9,28 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/notes';
 const PORT = process.env.NOTES_PORT || 4003;
-const API_KEY = process.env.API_KEY;
 
 let db;
+let client;
 
-MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(client => {
-    console.log('Connected to MongoDB');
-    db = client.db();
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-    process.exit(1);
-  });
+const connectDB = async (uri) => {
+    const MONGODB_URI = uri || process.env.MONGODB_URI || 'mongodb://localhost:27017/notes';
+    try {
+        client = await MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+        console.log('Connected to MongoDB');
+        db = client.db();
+    } catch (err) {
+        console.error('Failed to connect to MongoDB', err);
+        process.exit(1);
+    }
+};
 
 const server = http.createServer(app);
+
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
+}
 const wss = new WebSocket.Server({ server });
 
 const broadcast = (data) => {
@@ -43,27 +48,13 @@ wss.on('connection', ws => {
   });
 });
 
-const checkApiKey = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
-  }
-
-  const apiKey = authHeader.split(' ')[1];
-  if (apiKey !== API_KEY) {
-    return res.status(403).json({ error: 'Invalid API key' });
-  }
-
-  next();
-};
+const { checkAuth } = require('./auth');
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.use('/api', checkApiKey);
-
-app.get('/api/notes', async (req, res) => {
+app.get('/api/notes', checkAuth(), async (req, res) => {
     try {
         const notes = await db.collection('notes').find({}).toArray();
         res.json(notes);
@@ -72,7 +63,7 @@ app.get('/api/notes', async (req, res) => {
     }
 });
 
-app.post('/api/notes', async (req, res) => {
+app.post('/api/notes', checkAuth(), async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ error: 'Request body cannot be empty.' });
   }
@@ -96,4 +87,8 @@ server.listen(PORT, () => {
   console.log(`Notes microservice running on port ${PORT}`);
 });
 
-module.exports = { app, server, db };
+module.exports = { app, server, db, connectDB, closeDB: async () => {
+    if (client) {
+        await client.close();
+    }
+} };

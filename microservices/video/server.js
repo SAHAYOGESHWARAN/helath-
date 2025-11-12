@@ -9,25 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Auth middleware (placeholder)
-const checkApiKey = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
-  }
-
-  const apiKey = authHeader.split(' ')[1];
-  if (apiKey !== process.env.API_KEY) {
-    return res.status(403).json({ error: 'Invalid API key' });
-  }
-
-  next();
-};
-
-app.use('/api', checkApiKey);
+const { checkAuth } = require('./auth');
 
 // Endpoint to create a new video room and session
-app.post('/api/video/room', async (req, res) => {
+app.post('/api/video/room', checkAuth(), async (req, res) => {
   const { roomName, userIdentity } = req.body;
 
   if (!roomName || !userIdentity) {
@@ -53,13 +38,13 @@ app.post('/api/video/room', async (req, res) => {
       roomName: room.uniqueName,
       token,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to create video room' });
   }
 });
 
 // Endpoint to generate a token to join an existing room
-app.post('/api/video/token', async (req, res) => {
+app.post('/api/video/token', checkAuth(), async (req, res) => {
   const { roomName, userIdentity } = req.body;
 
   if (!roomName || !userIdentity) {
@@ -69,13 +54,13 @@ app.post('/api/video/token', async (req, res) => {
   try {
     const token = generateAccessToken(userIdentity, roomName);
     res.json({ token });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to generate token' });
   }
 });
 
 // Endpoint to get session information
-app.get('/api/video/session/:sessionId', async (req, res) => {
+app.get('/api/video/session/:sessionId', checkAuth(), async (req, res) => {
   const { sessionId } = req.params;
 
   try {
@@ -84,10 +69,16 @@ app.get('/api/video/session/:sessionId', async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
     res.json(session);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to retrieve session' });
   }
 });
 
 const PORT = process.env.VIDEO_PORT || 4004;
-app.listen(PORT, () => console.log(`Video microservice listening on port ${PORT}`));
+let server;
+
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => console.log(`Video microservice listening on port ${PORT}`));
+}
+
+module.exports = { app, server };

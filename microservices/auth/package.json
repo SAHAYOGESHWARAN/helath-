@@ -1,18 +1,18 @@
 {
-  "name": "scheduling-microservice",
+  "name": "auth-microservice",
   "version": "1.0.0",
-  "description": "Scheduling microservice for NovoPath",
+  "description": "Authentication and authorization microservice for NovoPath",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test": "jest"
   },
   "dependencies": {
-    "axios": "^1.13.2",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.1",
-    "pg": "^8.7.3"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "jest": "^30.2.0",
