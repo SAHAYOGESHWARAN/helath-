@@ -18,6 +18,7 @@
     "start-scheduling": "node microservices/scheduling/server.js",
     "start-emr": "node microservices/emr/server.js",
     "start-notes": "node microservices/notes/server.js",
+    "start-video": "node microservices/video/server.js",
     "start-api-gateway": "node api-gateway.cjs",
     "e2e": "playwright test"
   },

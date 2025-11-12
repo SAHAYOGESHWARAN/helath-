@@ -10,8 +10,13 @@ const EMR_API_URL = process.env.EMR_API_URL || 'http://localhost:4001';
 const SCHEDULING_API_URL = process.env.SCHEDULING_API_URL || 'http://localhost:4002';
 const NOTES_API_URL = process.env.NOTES_API_URL || 'http://localhost:4003';
 const GENAI_API_URL = process.env.GENAI_API_URL || 'http://localhost:4000';
+const VIDEO_API_URL = process.env.VIDEO_API_URL || 'http://localhost:4004';
 
 const services = [
+  {
+    route: '/api/video',
+    target: VIDEO_API_URL,
+  },
   {
     route: '/api/emr',
     target: EMR_API_URL,
