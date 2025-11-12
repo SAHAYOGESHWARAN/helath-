@@ -1,0 +1,1446 @@
+{
+  "users": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "pat1"
+          },
+          "name": {
+            "S": "John Doe"
+          },
+          "email": {
+            "S": "john.doe@email.com"
+          },
+          "password": {
+            "S": "Password123!"
+          },
+          "role": {
+            "S": "PATIENT"
+          },
+          "avatarUrl": {
+            "S": "https://i.pravatar.cc/150?u=pat1"
+          },
+          "dob": {
+            "S": "1985-05-20"
+          },
+          "phone": {
+            "S": "555-123-4567"
+          },
+          "address": {
+            "S": "123 Health St, Wellness City, USA"
+          },
+          "state": {
+            "S": "California"
+          },
+          "status": {
+            "S": "Active"
+          },
+          "createdAt": {
+            "S": "2023-10-01T10:00:00Z"
+          },
+          "conditions": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "c1"
+                  },
+                  "name": {
+                    "S": "Hypertension"
+                  },
+                  "status": {
+                    "S": "Active"
+                  },
+                  "ageOfOnset": {
+                    "N": "45"
+                  }
+                }
+              }
+            ]
+          },
+          "allergies": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "a1"
+                  },
+                  "name": {
+                    "S": "Penicillin"
+                  },
+                  "severity": {
+                    "S": "Severe"
+                  },
+                  "reaction": {
+                    "S": "Anaphylaxis"
+                  },
+                  "status": {
+                    "S": "Active"
+                  }
+                }
+              }
+            ]
+          },
+          "medications": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "med1"
+                  },
+                  "name": {
+                    "S": "Lisinopril 10mg"
+                  },
+                  "dosage": {
+                    "S": "1 tablet"
+                  },
+                  "frequency": {
+                    "S": "Once daily"
+                  },
+                  "status": {
+                    "S": "Active"
+                  },
+                  "adherence": {
+                    "N": "95"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "med2"
+                  },
+                  "name": {
+                    "S": "Atorvastatin 20mg"
+                  },
+                  "dosage": {
+                    "S": "1 tablet"
+                  },
+                  "frequency": {
+                    "S": "Once daily at bedtime"
+                  },
+                  "status": {
+                    "S": "Active"
+                  },
+                  "adherence": {
+                    "N": "98"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "med3"
+                  },
+                  "name": {
+                    "S": "Aspirin 81mg"
+                  },
+                  "dosage": {
+                    "S": "1 tablet"
+                  },
+                  "frequency": {
+                    "S": "Once daily"
+                  },
+                  "status": {
+                    "S": "Inactive"
+                  }
+                }
+              }
+            ]
+          },
+          "vitals": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "v1"
+                  },
+                  "date": {
+                    "S": "2024-08-01"
+                  },
+                  "bloodPressure": {
+                    "S": "118/78"
+                  },
+                  "heartRate": {
+                    "N": "72"
+                  },
+                  "weight": {
+                    "N": "185"
+                  },
+                  "bmi": {
+                    "N": "24.5"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "v2"
+                  },
+                  "date": {
+                    "S": "2024-05-15"
+                  },
+                  "bloodPressure": {
+                    "S": "122/80"
+                  },
+                  "heartRate": {
+                    "N": "75"
+                  },
+                  "weight": {
+                    "N": "188"
+                  },
+                  "bmi": {
+                    "N": "25.1"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "v3"
+                  },
+                  "date": {
+                    "S": "2024-02-10"
+                  },
+                  "bloodPressure": {
+                    "S": "125/82"
+                  },
+                  "heartRate": {
+                    "N": "70"
+                  },
+                  "weight": {
+                    "N": "190"
+                  },
+                  "bmi": {
+                    "N": "25.4"
+                  }
+                }
+              }
+            ]
+          },
+          "labResults": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "lab1"
+                  },
+                  "testName": {
+                    "S": "Lipid Panel"
+                  },
+                  "date": {
+                    "S": "2024-07-25"
+                  },
+                  "components": {
+                    "L": [
+                      {
+                        "M": {
+                          "name": {
+                            "S": "Total Cholesterol"
+                          },
+                          "value": {
+                            "S": "180 mg/dL"
+                          },
+                          "referenceRange": {
+                            "S": "<200 mg/dL"
+                          },
+                          "isAbnormal": {
+                            "BOOL": false
+                          }
+                        }
+                      },
+                      {
+                        "M": {
+                          "name": {
+                            "S": "LDL"
+                          },
+                          "value": {
+                            "S": "100 mg/dL"
+                          },
+                          "referenceRange": {
+                            "S": "<130 mg/dL"
+                          },
+                          "isAbnormal": {
+                            "BOOL": false
+                          }
+                        }
+                      },
+                      {
+                        "M": {
+                          "name": {
+                            "S": "HDL"
+                          },
+                          "value": {
+                            "S": "60 mg/dL"
+                          },
+                          "referenceRange": {
+                            "S": ">40 mg/dL"
+                          },
+                          "isAbnormal": {
+                            "BOOL": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "healthGoals": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "g1"
+                  },
+                  "title": {
+                    "S": "Daily Steps"
+                  },
+                  "current": {
+                    "N": "7500"
+                  },
+                  "target": {
+                    "N": "10000"
+                  },
+                  "unit": {
+                    "S": "steps"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "g2"
+                  },
+                  "title": {
+                    "S": "Weight Loss"
+                  },
+                  "current": {
+                    "N": "185"
+                  },
+                  "target": {
+                    "N": "180"
+                  },
+                  "unit": {
+                    "S": "lbs"
+                  }
+                }
+              }
+            ]
+          },
+          "tasks": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "t1"
+                  },
+                  "text": {
+                    "S": "Schedule follow-up with Dr. Smith"
+                  },
+                  "completed": {
+                    "BOOL": false
+                  },
+                  "dueDate": {
+                    "S": "2024-09-10"
+                  },
+                  "priority": {
+                    "S": "High"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "t2"
+                  },
+                  "text": {
+                    "S": "Pick up Lisinopril prescription"
+                  },
+                  "completed": {
+                    "BOOL": true
+                  },
+                  "priority": {
+                    "S": "Medium"
+                  }
+                }
+              }
+            ]
+          },
+          "subscription": {
+            "M": {
+              "planId": {
+                "S": "plan_p2"
+              },
+              "status": {
+                "S": "Active"
+              },
+              "renewalDate": {
+                "S": "2025-08-15"
+              }
+            }
+          },
+          "insurance": {
+            "M": {
+              "provider": {
+                "S": "Blue Cross Blue Shield"
+              },
+              "planName": {
+                "S": "PPO Plan A"
+              },
+              "memberId": {
+                "S": "X123456789"
+              },
+              "groupId": {
+                "S": "G98765"
+              }
+            }
+          },
+          "notificationSettings": {
+            "M": {
+              "emailAppointments": {
+                "BOOL": true
+              },
+              "emailBilling": {
+                "BOOL": true
+              },
+              "emailMessages": {
+                "BOOL": true
+              },
+              "smsMessages": {
+                "BOOL": true
+              },
+              "pushAll": {
+                "BOOL": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "pro1"
+          },
+          "name": {
+            "S": "Jane Smith"
+          },
+          "email": {
+            "S": "jane.smith@email.com"
+          },
+          "password": {
+            "S": "Password123!"
+          },
+          "role": {
+            "S": "PROVIDER"
+          },
+          "avatarUrl": {
+            "S": "https://i.pravatar.cc/150?u=pro1"
+          },
+          "specialty": {
+            "S": "Cardiology"
+          },
+          "licenseNumber": {
+            "S": "G-12345"
+          },
+          "state": {
+            "S": "California"
+          },
+          "isVerified": {
+            "BOOL": true
+          },
+          "phone": {
+            "S": "555-987-6543"
+          },
+          "subscription": {
+            "M": {
+              "planId": {
+                "S": "plan_d2"
+              },
+              "status": {
+                "S": "Active"
+              },
+              "renewalDate": {
+                "S": "2025-01-01"
+              }
+            }
+          },
+          "status": {
+            "S": "Active"
+          },
+          "createdAt": {
+            "S": "2023-09-15T10:00:00Z"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "adm1"
+          },
+          "name": {
+            "S": "Admin User"
+          },
+          "email": {
+            "S": "admin@novopath.com"
+          },
+          "password": {
+            "S": "password123"
+          },
+          "role": {
+            "S": "ADMIN"
+          },
+          "avatarUrl": {
+            "S": "https://i.pravatar.cc/150?u=adm1"
+          },
+          "phone": {
+            "S": "555-555-1212"
+          },
+          "status": {
+            "S": "Active"
+          },
+          "createdAt": {
+            "S": "2023-09-01T10:00:00Z"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "pat2"
+          },
+          "name": {
+            "S": "Alice Williams"
+          },
+          "email": {
+            "S": "alice.w@email.com"
+          },
+          "password": {
+            "S": "Password123!"
+          },
+          "role": {
+            "S": "PATIENT"
+          },
+          "avatarUrl": {
+            "S": "https://i.pravatar.cc/150?u=pat2"
+          },
+          "dob": {
+            "S": "1992-11-12"
+          },
+          "phone": {
+            "S": "555-234-5678"
+          },
+          "address": {
+            "S": "456 Oak Ave, Wellness City, USA"
+          },
+          "state": {
+            "S": "California"
+          },
+          "status": {
+            "S": "Active"
+          },
+          "createdAt": {
+            "S": "2024-01-20T10:00:00Z"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "pro2"
+          },
+          "name": {
+            "S": "David Chen"
+          },
+          "email": {
+            "S": "david.chen@email.com"
+          },
+          "password": {
+            "S": "Password123!"
+          },
+          "role": {
+            "S": "PROVIDER"
+          },
+          "avatarUrl": {
+            "S": "https://i.pravatar.cc/150?u=pro2"
+          },
+          "specialty": {
+            "S": "Dermatology"
+          },
+          "licenseNumber": {
+            "S": "G-67890"
+          },
+          "state": {
+            "S": "California"
+          },
+          "isVerified": {
+            "BOOL": false
+          },
+          "phone": {
+            "S": "555-876-5432"
+          },
+          "subscription": {
+            "M": {
+              "planId": {
+                "S": "plan_d1"
+              },
+              "status": {
+                "S": "Active"
+              },
+              "renewalDate": {
+                "S": "2025-02-01"
+              }
+            }
+          },
+          "status": {
+            "S": "Active"
+          },
+          "createdAt": {
+            "S": "2024-02-10T10:00:00Z"
+          }
+        }
+      }
+    }
+  ],
+  "appointments": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "appt1"
+          },
+          "patientId": {
+            "S": "pat1"
+          },
+          "patientName": {
+            "S": "John Doe"
+          },
+          "providerId": {
+            "S": "pro1"
+          },
+          "providerName": {
+            "S": "Dr. Jane Smith"
+          },
+          "date": {
+            "S": "2025-11-15"
+          },
+          "time": {
+            "S": "10:30 AM"
+          },
+          "reason": {
+            "S": "Annual Check-up"
+          },
+          "location": {
+            "S": "Clinic"
+          },
+          "status": {
+            "S": "Confirmed"
+          },
+          "duration": {
+            "N": "30"
+          },
+          "visitSummary": {
+            "S": "Patient is doing well, continue current treatment plan."
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "appt2"
+          },
+          "patientId": {
+            "S": "pat2"
+          },
+          "patientName": {
+            "S": "Alice Williams"
+          },
+          "providerId": {
+            "S": "pro1"
+          },
+          "providerName": {
+            "S": "Dr. Jane Smith"
+          },
+          "date": {
+            "S": "2025-11-17"
+          },
+          "time": {
+            "S": "11:00 AM"
+          },
+          "reason": {
+            "S": "Follow-up"
+          },
+          "location": {
+            "S": "Virtual"
+          },
+          "status": {
+            "S": "Pending"
+          },
+          "duration": {
+            "N": "15"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "appt3"
+          },
+          "patientId": {
+            "S": "pat1"
+          },
+          "patientName": {
+            "S": "John Doe"
+          },
+          "providerId": {
+            "S": "pro2"
+          },
+          "providerName": {
+            "S": "Dr. David Chen"
+          },
+          "date": {
+            "S": "2024-07-20"
+          },
+          "time": {
+            "S": "02:00 PM"
+          },
+          "reason": {
+            "S": "Dermatology Follow-up"
+          },
+          "location": {
+            "S": "Virtual"
+          },
+          "status": {
+            "S": "Completed"
+          },
+          "duration": {
+            "N": "15"
+          },
+          "visitSummary": {
+            "S": "Condition has improved. Follow up in 6 months."
+          }
+        }
+      }
+    }
+  ],
+  "provider_plans": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "plan_d1"
+          },
+          "name": {
+            "S": "Basic Tier"
+          },
+          "price": {
+            "S": "$49/mo"
+          },
+          "features": {
+            "L": [
+              {
+                "S": "Up to 50 patients"
+              },
+              {
+                "S": "Basic EHR"
+              },
+              {
+                "S": "Appointment Scheduling"
+              }
+            ]
+          },
+          "patientLimit": {
+            "N": "50"
+          },
+          "type": {
+            "S": "provider"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "plan_d2"
+          },
+          "name": {
+            "S": "Pro Tier"
+          },
+          "price": {
+            "S": "$99/mo"
+          },
+          "features": {
+            "L": [
+              {
+                "S": "Up to 200 patients"
+              },
+              {
+                "S": "Full EHR & E-Prescribing"
+              },
+              {
+                "S": "Telehealth Included"
+              },
+              {
+                "S": "Advanced Reporting"
+              }
+            ]
+          },
+          "patientLimit": {
+            "N": "200"
+          },
+          "isPopular": {
+            "BOOL": true
+          },
+          "type": {
+            "S": "provider"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "plan_d3"
+          },
+          "name": {
+            "S": "Enterprise"
+          },
+          "price": {
+            "S": "Custom"
+          },
+          "features": {
+            "L": [
+              {
+                "S": "Unlimited patients"
+              },
+              {
+                "S": "All Pro features"
+              },
+              {
+                "S": "Dedicated Support & Onboarding"
+              }
+            ]
+          },
+          "patientLimit": {
+            "N": "-1"
+          },
+          "type": {
+            "S": "provider"
+          }
+        }
+      }
+    }
+  ],
+  "patient_plans": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "plan_p1"
+          },
+          "name": {
+            "S": "Video Consults"
+          },
+          "price": {
+            "S": "$29.99/mo"
+          },
+          "features": {
+            "L": [
+              {
+                "S": "5 video consults per month"
+              },
+              {
+                "S": "Unlimited messaging"
+              },
+              {
+                "S": "AI health summary"
+              }
+            ]
+          },
+          "patientLimit": {
+            "N": "0"
+          },
+          "type": {
+            "S": "patient"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "plan_p2"
+          },
+          "name": {
+            "S": "Wellness Coach"
+          },
+          "price": {
+            "S": "$49.99/mo"
+          },
+          "features": {
+            "L": [
+              {
+                "S": "Unlimited video consults"
+              },
+              {
+                "S": "AI Weight Loss Coach access"
+              },
+              {
+                "S": "Personalized health goals"
+              }
+            ]
+          },
+          "patientLimit": {
+            "N": "0"
+          },
+          "isPopular": {
+            "BOOL": true
+          },
+          "type": {
+            "S": "patient"
+          }
+        }
+      }
+    }
+  ],
+  "progress_notes": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "note1"
+          },
+          "patientId": {
+            "S": "pat1"
+          },
+          "patientName": {
+            "S": "John Doe"
+          },
+          "providerId": {
+            "S": "pro1"
+          },
+          "date": {
+            "S": "2024-08-15"
+          },
+          "status": {
+            "S": "Signed"
+          },
+          "content": {
+            "M": {
+              "subjective": {
+                "S": "Patient reports feeling well."
+              },
+              "objective": {
+                "S": "BP 120/80, HR 72."
+              },
+              "assessment": {
+                "S": "Stable."
+              },
+              "plan": {
+                "S": "Continue current medications."
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "messages": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "msg1"
+          },
+          "senderId": {
+            "S": "pro1"
+          },
+          "receiverId": {
+            "S": "pat1"
+          },
+          "text": {
+            "S": "Hello John, just a reminder about your upcoming appointment."
+          },
+          "timestamp": {
+            "S": "2025-11-12T00:17:00.990Z"
+          },
+          "isRead": {
+            "BOOL": false
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "msg2"
+          },
+          "senderId": {
+            "S": "pat1"
+          },
+          "receiverId": {
+            "S": "pro1"
+          },
+          "text": {
+            "S": "Thanks Dr. Smith! I\\'ll be there."
+          },
+          "timestamp": {
+            "S": "2025-11-12T01:17:00.990Z"
+          },
+          "isRead": {
+            "BOOL": true
+          }
+        }
+      }
+    }
+  ],
+  "lab_orders": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "lo1"
+          },
+          "patientId": {
+            "S": "pat1"
+          },
+          "patientName": {
+            "S": "John Doe"
+          },
+          "providerId": {
+            "S": "pro1"
+          },
+          "date": {
+            "S": "2024-07-15"
+          },
+          "tests": {
+            "L": [
+              {
+                "S": "Lipid Panel"
+              },
+              {
+                "S": "CBC"
+              }
+            ]
+          },
+          "status": {
+            "S": "Results Ready"
+          }
+        }
+      }
+    }
+  ],
+  "referrals": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "ref1"
+          },
+          "patientId": {
+            "S": "pat1"
+          },
+          "patientName": {
+            "S": "John Doe"
+          },
+          "referredTo": {
+            "S": "Dr. Evelyn Reed (Cardiology)"
+          },
+          "referredFrom": {
+            "S": "Dr. Jane Smith"
+          },
+          "createdAt": {
+            "S": "2024-08-10"
+          },
+          "status": {
+            "S": "SENT"
+          },
+          "type": {
+            "S": "Outgoing"
+          },
+          "reason": {
+            "S": "Follow-up on EKG results"
+          },
+          "urgency": {
+            "S": "Routine"
+          },
+          "auditLog": {
+            "L": [
+              {
+                "M": {
+                  "date": {
+                    "S": "2024-08-10"
+                  },
+                  "action": {
+                    "S": "Referral Created"
+                  },
+                  "status": {
+                    "S": "PENDING"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "date": {
+                    "S": "2024-08-11"
+                  },
+                  "action": {
+                    "S": "Sent via Fax"
+                  },
+                  "status": {
+                    "S": "SENT"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "audit_log": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "1"
+          },
+          "timestamp": {
+            "S": "2024-08-15 10:32:15"
+          },
+          "user": {
+            "S": "Dr. Jane Smith"
+          },
+          "userRole": {
+            "S": "PROVIDER"
+          },
+          "action": {
+            "S": "Login Success"
+          },
+          "details": {
+            "S": "User logged in from IP 192.168.1.1"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "2"
+          },
+          "timestamp": {
+            "S": "2024-08-15 10:33:01"
+          },
+          "user": {
+            "S": "Dr. Jane Smith"
+          },
+          "userRole": {
+            "S": "PROVIDER"
+          },
+          "action": {
+            "S": "View Patient Chart"
+          },
+          "details": {
+            "S": "Viewed chart for John Doe (pat1)"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "3"
+          },
+          "timestamp": {
+            "S": "2024-08-15 09:45:22"
+          },
+          "user": {
+            "S": "Alex Johnson"
+          },
+          "userRole": {
+            "S": "ADMIN"
+          },
+          "action": {
+            "S": "Update Settings"
+          },
+          "details": {
+            "S": "Updated system feature flags"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "4"
+          },
+          "timestamp": {
+            "S": "2024-08-15 09:10:48"
+          },
+          "user": {
+            "S": "John Doe"
+          },
+          "userRole": {
+            "S": "PATIENT"
+          },
+          "action": {
+            "S": "Login Success"
+          },
+          "details": {
+            "S": "User logged in from IP 203.0.113.25"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "5"
+          },
+          "timestamp": {
+            "S": "2024-08-14 15:20:11"
+          },
+          "user": {
+            "S": "Dr. Jane Smith"
+          },
+          "userRole": {
+            "S": "PROVIDER"
+          },
+          "action": {
+            "S": "E-Prescription Sent"
+          },
+          "details": {
+            "S": "Sent prescription for Amoxicillin to patient Alice Johnson"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "6"
+          },
+          "timestamp": {
+            "S": "2024-08-14 14:05:56"
+          },
+          "user": {
+            "S": "Alex Johnson"
+          },
+          "userRole": {
+            "S": "ADMIN"
+          },
+          "action": {
+            "S": "Login Failed"
+          },
+          "details": {
+            "S": "Failed login attempt for user: admin_support"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "7"
+          },
+          "timestamp": {
+            "S": "2024-08-14 11:55:03"
+          },
+          "user": {
+            "S": "John Doe"
+          },
+          "userRole": {
+            "S": "PATIENT"
+          },
+          "action": {
+            "S": "Payment Submitted"
+          },
+          "details": {
+            "S": "Submitted payment of $50.00"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "N": "8"
+          },
+          "timestamp": {
+            "S": "2024-08-13 18:00:00"
+          },
+          "user": {
+            "S": "System"
+          },
+          "userRole": {
+            "S": "System"
+          },
+          "action": {
+            "S": "Data Export"
+          },
+          "details": {
+            "S": "Weekly analytics data exported by automated job"
+          }
+        }
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": {
+            "S": "enc1"
+          },
+          "patientId": {
+            "S": "pat1"
+          },
+          "providerId": {
+            "S": "pro1"
+          },
+          "date": {
+            "S": "2024-08-15"
+          },
+          "type": {
+            "S": "Office Visit"
+          },
+          "chiefComplaint": {
+            "S": "Follow-up for hypertension"
+          },
+          "status": {
+            "S": "InProgress"
+          },
+          "notes": {
+            "L": [
+              {
+                "M": {
+                  "id": {
+                    "S": "note_hpi_1"
+                  },
+                  "encounterId": {
+                    "S": "enc1"
+                  },
+                  "authorId": {
+                    "S": "pro1"
+                  },
+                  "type": {
+                    "S": "HPI"
+                  },
+                  "content": {
+                    "S": "Patient reports consistent blood pressure readings at home. No new complaints."
+                  },
+                  "timestamp": {
+                    "S": "2024-08-15T10:35:00Z"
+                  },
+                  "isSigned": {
+                    "BOOL": false
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "note_ros_1"
+                  },
+                  "encounterId": {
+                    "S": "enc1"
+                  },
+                  "authorId": {
+                    "S": "pro1"
+                  },
+                  "type": {
+                    "S": "ROS"
+                  },
+                  "content": {
+                    "S": "All systems reviewed and are negative."
+                  },
+                  "timestamp": {
+                    "S": "2024-08-15T10:40:00Z"
+                  },
+                  "isSigned": {
+                    "BOOL": false
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "note_exam_1"
+                  },
+                  "encounterId": {
+                    "S": "enc1"
+                  },
+                  "authorId": {
+                    "S": "pro1"
+                  },
+                  "type": {
+                    "S": "PhysicalExam"
+                  },
+                  "content": {
+                    "S": "Vital signs stable. Cardiovascular exam unremarkable."
+                  },
+                  "timestamp": {
+                    "S": "2024-08-15T10:45:00Z"
+                  },
+                  "isSigned": {
+                    "BOOL": false
+                  }
+                }
+              },
+              {
+                "M": {
+                  "id": {
+                    "S": "note_ap_1"
+                  },
+                  "encounterId": {
+                    "S": "enc1"
+                  },
+                  "authorId": {
+                    "S": "pro1"
+                  },
+                  "type": {
+                    "S": "AssessmentPlan"
+                  },
+                  "content": {
+                    "S": "Continue current medication. Follow up in 3 months."
+                  },
+                  "timestamp": {
+                    "S": "2024-08-15T10:50:00Z"
+                  },
+                  "isSigned": {
+                    "BOOL": false
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
