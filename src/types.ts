@@ -433,3 +433,22 @@ export interface PredictiveAlert {
   triggeredAt: string;
   actionRequired: boolean;
 }
+
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string | { code: string; message: string; details?: any };
+  message?: string;
+  timestamp?: string;
+  statusCode?: number;
+  requestId?: string;
+}
+
+export interface EMRConfig {
+  baseUrl?: string;
+  apiKey?: string;
+  timeout?: number;
+  retryAttempts?: number;
+  cacheTimeout?: number;
+}
+
