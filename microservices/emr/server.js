@@ -3,10 +3,10 @@ const http = require('http');
 const cors = require('cors');
 require('dotenv').config();
 
-const { connectDB } = require('./db/mongo');
+const db = require('./db');
 const { initWebSocket } = require('./websocket');
-const patientRoutes = require('./routes/patientRoutes');
-const { checkAuth } = require('./auth');
+const authRoutes = require('./routes/authRoutes');
+const patientRoutes = require('./routes/patientRoutes'); // Import patient routes
 
 const app = express();
 app.use(cors());
@@ -22,16 +22,18 @@ const wss = initWebSocket(server);
 app.set('wss', wss);
 
 // API endpoints
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok' });
+app.use('/api/auth', authRoutes);
+app.use('/api/patients', patientRoutes); // Use patient routes
+app.get('/health', async (req, res) => {
+    try {
+        await db.query('SELECT NOW()');
+        res.status(200).json({ status: 'ok', db: 'connected' });
+    } catch (err) {
+        res.status(500).json({ status: 'error', db: 'disconnected' });
+    }
 });
 
-app.use('/api/patients', checkAuth(['provider', 'admin']), patientRoutes);
-
 server.listen(PORT, () => {
-    if (process.env.NODE_ENV !== 'test') {
-        connectDB();
-    }
     console.log(`EMR microservice running on port ${PORT}`);
 });
 

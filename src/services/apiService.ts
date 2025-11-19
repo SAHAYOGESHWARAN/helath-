@@ -36,13 +36,13 @@ export const apiVerifyToken = async (token: string): Promise<{ user: User }> => 
 };
 
 export const apiRegister = async (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole): Promise<User> => {
-  const { data } = await api.post('/genai/register', { ...userData, role });
+  const { data } = await api.post('/auth/register', { ...userData, role });
   return data;
 };
 
 export const apiChangePassword = async (current: string, newPass: string): Promise<boolean> => {
   try {
-    await api.post('/genai/change-password', { current, newPass });
+    await api.post('/auth/change-password', { current, newPass });
     return true;
   } catch (error) {
     console.error('Password change failed:', error);

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const Toast: React.FC<{ message: string, type: 'success' | 'error' | 'info', onClose: () => void }> = ({ message, type, onClose }) => {
+const Toast: React.FC<{ message: string, type: 'success' | 'error' | 'info' | 'warning', onClose: () => void }> = ({ message, type, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 4000);
     return () => clearTimeout(timer);
@@ -10,6 +10,7 @@ const Toast: React.FC<{ message: string, type: 'success' | 'error' | 'info', onC
     success: 'bg-emerald-500',
     error: 'bg-red-500',
     info: 'bg-blue-500',
+    warning: 'bg-amber-500',
   }[type];
 
   return (

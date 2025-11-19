@@ -13,7 +13,6 @@ import {
   useSyncState,
   useOfflineMode,
   useSearch,
-  useAnalytics,
   useAlerts,
 } from '../hooks/useAdvancedEMR';
 
@@ -22,7 +21,7 @@ import {
 // ============================================================================
 
 export function PatientDashboard({ patientId }: { patientId: string }) {
-  const { patient, loading, error, updatePatient, refetch } = usePatient(patientId);
+  const { patient, loading, error, refetch } = usePatient(patientId);
   const { appointments } = useAppointments({ patientId });
   const { prescriptions } = usePrescriptions(patientId);
   const { vitals } = useVitals(patientId);
@@ -57,7 +56,7 @@ export function PatientDashboard({ patientId }: { patientId: string }) {
       </div>
 
       {/* Patient Info */}
-      <PatientInfoCard patient={patient} onUpdate={updatePatient} />
+      <PatientInfoCard patient={patient} />
 
       {/* Appointments */}
       <section className="bg-white rounded-lg shadow p-6">
@@ -92,11 +91,21 @@ export function PatientDashboard({ patientId }: { patientId: string }) {
 // APPOINTMENT BOOKING COMPONENT
 // ============================================================================
 
+interface AppointmentSlot {
+  id: string;
+  time: string;
+}
+
+interface AppointmentResponse {
+  success: boolean;
+  data?: AppointmentSlot[];
+}
+
 export function AppointmentBooking() {
   const { services } = useEMR();
   const [selectedProvider, setSelectedProvider] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -108,7 +117,7 @@ export function AppointmentBooking() {
           date: selectedDate,
           duration: 30
         })
-        .then((response: any) => {
+        .then((response: AppointmentResponse) => {
           if (response.success) {
             setAvailableSlots(response.data || []);
           }
@@ -117,7 +126,7 @@ export function AppointmentBooking() {
     }
   }, [selectedProvider, selectedDate, services.scheduling]);
 
-  const handleBook = async (slot: any) => {
+  const handleBook = async (slot: AppointmentSlot) => {
     try {
       const response = await services.scheduling.bookAppointment({
         providerId: selectedProvider,
@@ -129,8 +138,9 @@ export function AppointmentBooking() {
       if (response.success) {
         alert('Appointment booked successfully!');
       }
-    } catch (error: any) {
-      alert(`Booking failed: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Booking failed: ${errorMessage}`);
     }
   };
 
@@ -368,7 +378,16 @@ export function AlertsPanel() {
 // HELPER COMPONENTS
 // ============================================================================
 
-function PatientInfoCard({ patient, onUpdate }: any) {
+interface PatientInfoType {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+}
+
+function PatientInfoCard({ patient }: { patient: PatientInfoType }) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-bold mb-4">Patient Information</h3>
@@ -394,14 +413,22 @@ function PatientInfoCard({ patient, onUpdate }: any) {
   );
 }
 
-function AppointmentsList({ appointments }: any) {
+interface AppointmentType {
+  id: string;
+  reason: string;
+  date: string;
+  time: string;
+  providerId: string;
+}
+
+function AppointmentsList({ appointments }: { appointments: AppointmentType[] }) {
   if (!appointments || appointments.length === 0) {
     return <p className="text-gray-600">No upcoming appointments</p>;
   }
 
   return (
     <ul className="space-y-2">
-      {appointments.map((apt: any) => (
+      {appointments.map((apt: AppointmentType) => (
         <li key={apt.id} className="p-3 border rounded">
           <p className="font-medium">{apt.reason}</p>
           <p className="text-sm text-gray-600">
@@ -414,14 +441,22 @@ function AppointmentsList({ appointments }: any) {
   );
 }
 
-function PrescriptionsList({ prescriptions }: any) {
+interface PrescriptionType {
+  id: string;
+  medication: string;
+  dosage: string;
+  frequency: string;
+  expiryDate: string;
+}
+
+function PrescriptionsList({ prescriptions }: { prescriptions: PrescriptionType[] }) {
   if (!prescriptions || prescriptions.length === 0) {
     return <p className="text-gray-600">No active prescriptions</p>;
   }
 
   return (
     <ul className="space-y-2">
-      {prescriptions.map((rx: any) => (
+      {prescriptions.map((rx: PrescriptionType) => (
         <li key={rx.id} className="p-3 border rounded">
           <p className="font-medium">{rx.medication}</p>
           <p className="text-sm text-gray-600">{rx.dosage} - {rx.frequency}</p>
@@ -432,14 +467,21 @@ function PrescriptionsList({ prescriptions }: any) {
   );
 }
 
-function VitalsList({ vitals }: any) {
+interface VitalType {
+  id: string;
+  type: string;
+  value: string;
+  timestamp: string;
+}
+
+function VitalsList({ vitals }: { vitals: VitalType[] }) {
   if (!vitals || vitals.length === 0) {
     return <p className="text-gray-600">No vital records</p>;
   }
 
   return (
     <ul className="space-y-2">
-      {vitals.slice(0, 5).map((vital: any) => (
+      {vitals.slice(0, 5).map((vital: VitalType) => (
         <li key={vital.id} className="p-3 border rounded">
           <p className="font-medium">{vital.type}</p>
           <p className="text-sm text-gray-600">Value: {vital.value}</p>
@@ -456,7 +498,7 @@ function VitalsList({ vitals }: any) {
 
 export function AdvancedEMRApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [patientId, setPatientId] = useState('patient-123');
+  const [patientId] = useState('patient-123');
 
   return (
     <EMRProvider

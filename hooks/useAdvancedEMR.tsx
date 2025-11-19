@@ -3,7 +3,7 @@
  * Features: State management, real-time updates, offline support, caching
  */
 
-import React, { useState, useCallback, useEffect, useRef, useContext, createContext, type ReactNode } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useContext, createContext } from 'react';
 import { AdvancedEMRClient, getAdvancedEMRClient } from '../services/advancedEMRClient';
 import { RealTimeSyncEngine } from '../services/realTimeSyncEngine';
 import { AdvancedEMRFeaturesFactory } from '../services/advancedEMRFeatures';
@@ -38,7 +38,7 @@ export function EMRProvider({
   autoSyncInterval = 30000,
   enableOfflineMode = true,
   children,
-}: EMRProviderProps) {
+}: EMRProviderProps): React.ReactElement {
   const [client] = useState(() => new AdvancedEMRClient(
     baseUrl || 'https://api.emr.local/api/v1',
     apiKey || ''

@@ -1,4 +1,10 @@
-const twilio = require('twilio');
+let twilio;
+try {
+  twilio = require('twilio');
+} catch (err) {
+  // twilio not installed; we'll provide graceful fallbacks below
+  twilio = null;
+}
 require('dotenv').config();
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -10,7 +16,7 @@ let client;
 let AccessToken;
 let VideoGrant;
 
-if (accountSid && accountSid.startsWith('AC')) {
+if (twilio && accountSid && accountSid.startsWith('AC')) {
   client = twilio(accountSid, authToken);
   AccessToken = twilio.jwt.AccessToken;
   VideoGrant = AccessToken.VideoGrant;
@@ -22,6 +28,11 @@ if (accountSid && accountSid.startsWith('AC')) {
  * @returns {Promise<object>}
  */
 const createVideoRoom = async (roomName) => {
+  if (!twilio || !client) {
+    // Twilio not configured — return a fake room object for local development
+    return { sid: `local-room-${roomName}`, uniqueName: roomName, status: 'in-memory' };
+  }
+
   try {
     const room = await client.video.v1.rooms.create({
       uniqueName: roomName,
@@ -45,6 +56,11 @@ const createVideoRoom = async (roomName) => {
  * @returns {string} The generated access token.
  */
 const generateAccessToken = (identity, roomName) => {
+  if (!twilio || !AccessToken || !VideoGrant) {
+    // Return a dummy token for local development
+    return `local-token-${identity}-${roomName}`;
+  }
+
   const token = new AccessToken(accountSid, apiKeySid, apiKeySecret, {
     identity: identity,
   });

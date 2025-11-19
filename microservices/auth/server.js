@@ -1,70 +1,124 @@
 const express = require('express');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs'); // Import bcryptjs
+const { v4: uuidv4 } = require('uuid'); // Import uuid
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+
+dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-const users = [
-  {
-    id: 'pat1',
-    email: 'john.doe@email.com',
-    password: 'Password123!',
-    role: 'patient',
-  },
-  {
-    id: 'pro1',
-    email: 'jane.smith@email.com',
-    password: 'Password123!',
-    role: 'provider',
-  },
-  {
-    id: 'adm1',
-    email: 'admin@novopath.com',
-    password: 'password123',
-    role: 'admin',
-  },
-];
+const PORT = process.env.AUTH_SERVICE_PORT;
+const JWT_SECRET = process.env.JWT_SECRET; // Secret for JWT signing
 
-// Hash passwords
-users.forEach(user => {
-  const salt = bcrypt.genSaltSync(10);
-  user.password = bcrypt.hashSync(user.password, salt);
-});
+// Simple in-memory user store for demonstration
+const users = []; // In a real application, this would be a database
 
-app.post('/auth/login', (req, res) => {
+// Utility function to generate a JWT token
+const generateToken = (user) => {
+  return jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+};
+
+// Middleware to authenticate token
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) return res.sendStatus(401); // No token
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403); // Invalid token
+    req.user = user;
+    next();
+  });
+};
+
+
+// Login route
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const user = users.find(u => u.email === email);
 
-  if (user && bcrypt.compareSync(password, user.password)) {
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: '1h',
-    });
-    res.json({ token });
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
-  }
-});
-
-app.post('/auth/verify', (req, res) => {
-  const { token } = req.body;
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid credentials' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    res.json({ user: decoded });
-  });
+  // Compare provided password with hashed password
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  const token = generateToken(user);
+  res.status(200).json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
 });
 
-const PORT = process.env.AUTH_PORT || 4005;
-const server = app.listen(PORT, () => console.log(`Auth microservice listening on port ${PORT}`));
+// Register route - refactored from server-genai.cjs
+app.post('/api/auth/register', async (req, res) => {
+  const { email, name, password, role } = req.body;
 
-module.exports = { app, server };
+  if (!email || !name || !password || !role) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  if (users.find(u => u.email === email)) {
+    return res.status(409).json({ message: 'User with this email already exists' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10); // Hash password
+  const newUser = {
+    id: uuidv4(), // Generate unique ID
+    name,
+    email,
+    password: hashedPassword,
+    role,
+  };
+  users.push(newUser);
+
+  // Return user details without password
+  res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
+});
+
+// Verify token route
+app.post('/api/auth/verify', authenticateToken, async (req, res) => {
+  // If authenticateToken middleware passes, req.user will contain the decoded token payload
+  const user = users.find(u => u.id === req.user.id);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  res.status(200).json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+});
+
+// Change password route
+app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+  const { current, newPass } = req.body;
+  const userId = req.user.id;
+
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Verify current password
+  const isMatch = await bcrypt.compare(current, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Incorrect current password' });
+  }
+
+  // Hash and update new password
+  user.password = await bcrypt.hash(newPass, 10);
+  res.status(200).json({ message: 'Password changed successfully' });
+});
+
+// Basic error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+app.listen(PORT, () => {
+  console.log(`Auth Microservice running on port ${PORT}`);
+});

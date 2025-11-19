@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const PORT = process.env.GENAI_PORT || 4000;
+const PORT = process.env.GENAI_PORT;
 
 async function createClient() {
   const { GoogleGenerativeAI } = await import('@google/generative-ai');
@@ -88,17 +88,7 @@ async function main() {
     }
   });
 
-  app.post('/api/genai/register', (req, res) => {
-    const { email, name, password, role } = req.body;
-    // This is a mock registration.
-    const newUser = {
-      id: `usr_${Date.now()}`,
-      name,
-      email,
-      role,
-    };
-    res.status(201).json(newUser);
-  });
+
 
 
   process.on('uncaughtException', (err) => {

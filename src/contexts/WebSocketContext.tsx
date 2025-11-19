@@ -1,42 +1,23 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useEffect } from 'react';
 import { socketService } from '@/services/socketService';
-import { useAuth } from './AuthContext';
+import { useAuthStore } from '@/stores/authStore';
+import { useWebSocketStore } from '@/stores/webSocketStore';
 
-type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
-
-interface WebSocketContextType {
-  status: WebSocketStatus;
-}
-
-const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
-
-export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const [status, setStatus] = useState<WebSocketStatus>('disconnected');
+export const WebSocketController: React.FC = () => {
+  const { user } = useAuthStore();
+  const { connect, disconnect } = useWebSocketStore();
 
   useEffect(() => {
     if (user?.id) {
-      socketService.connect(user.id);
-      const unsubscribe = socketService.onStatusChange(setStatus);
+      const url = `ws://localhost:4001?userId=${user.id}`;
+      connect(url);
+      
       return () => {
-        unsubscribe();
-        socketService.disconnect();
+        disconnect();
       };
     }
-  }, [user]);
+  }, [user, connect, disconnect]);
 
-  return (
-    <WebSocketContext.Provider value={{ status }}>
-      {children}
-    </WebSocketContext.Provider>
-  );
-};
-
-export const useWebSocket = () => {
-  const context = useContext(WebSocketContext);
-  if (!context) {
-    throw new Error('useWebSocket must be used within a WebSocketProvider');
-  }
-  return context;
+  return null;
 };

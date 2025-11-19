@@ -1,98 +1,87 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useState, ReactNode, useCallback, useEffect, useMemo, createContext, useContext } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, createContext } from 'react';
 import * as api from '@/services/apiService';
 import { socketService } from '@/services/socketService';
 import { eventBus, EVENTS } from '@/services/eventBus';
-import { User, UserRole, Claim, ClaimStatus, ClaimType, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, VitalsRecord, LabResult, MedicalCondition, Allergy, Surgery, Immunization, FamilyHistory, Lifestyle, HealthGoal, GymMembership, Referral, ReferralStatus, AuditLogEntry, InsuranceInfo, ReminderSettings, Task, Subtask, Subscription, SystemAuditLog, TaskPriority } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
+import { useAppStore } from '@/stores/appStore';
+import { User, UserRole, Claim, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, Referral, InsuranceInfo, ReminderSettings, MedicalCondition, Allergy, HealthGoal, Task, Subtask, Subscription, SystemAuditLog } from '@/types';
 
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
   users: User[];
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => void;
+  register: (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => Promise<void>;
   updateUser: (updatedData: Partial<User> | ((currentUser: User) => Partial<User>)) => Promise<void>;
-  
   appointments: Appointment[];
   claims: Claim[];
   invoices: BillingInvoice[];
-  currentSubscription: SubscriptionPlan | undefined;
+  currentSubscription?: SubscriptionPlan;
   changeSubscription: (planId: string) => void;
   patientSubscriptionPlans: SubscriptionPlan[];
-  addAppointment: (appointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => void;
-  addVideoUpdateToAppointment: (appointmentId: string, videoUrl: string) => void;
-  makePayment: (invoiceId: string, amount: number) => void;
-  insurance: InsuranceInfo | null;
-  updateInsurance: (data: InsuranceInfo) => Promise<void>;
-
-  progressNotes: ProgressNote[];
-  addProgressNote: (note: Omit<ProgressNote, 'id'>) => void;
-  prescriptions: Prescription[];
-  addPrescription: (prescription: Omit<Prescription, 'id' | 'status'>) => void;
-  messages: Record<string, Message[]>;
-  sendMessage: (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>) => void;
-  markMessagesAsRead: (contactId: string) => void;
   providerSubscriptionPlans: SubscriptionPlan[];
   updateSubscriptionPlan: (plan: SubscriptionPlan) => Promise<void>;
-  confirmAppointment: (appointmentId: string) => void;
-  cancelAppointment: (appointmentId: string) => void;
+  addAppointment: (appointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => Promise<void>;
+  addVideoUpdateToAppointment: (appointmentId: string, videoUrl: string) => Promise<void>;
+  makePayment: (invoiceId: string, amount: number) => Promise<void>;
+  insurance: InsuranceInfo | null;
+  updateInsurance: (data: InsuranceInfo) => Promise<void>;
+  progressNotes: ProgressNote[];
+  addProgressNote: (note: Omit<ProgressNote, 'id'>) => Promise<void>;
+  prescriptions: Prescription[];
+  addPrescription: (prescription: Omit<Prescription, 'id' | 'status'>) => Promise<void>;
+  messages: Record<string, Message[]>;
+  sendMessage: (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
+  markMessagesAsRead: (contactId: string) => Promise<void>;
+  confirmAppointment: (appointmentId: string) => Promise<void>;
+  cancelAppointment: (appointmentId: string) => Promise<void>;
   labOrders: LabOrder[];
-  addLabOrder: (newOrder: Omit<LabOrder, 'id'>) => void;
-  
+  addLabOrder: (newOrder: Omit<LabOrder, 'id'>) => Promise<void>;
   referrals: Referral[];
-  addReferral: (newReferral: Omit<Referral, 'id' | 'createdAt' | 'status' | 'type' | 'auditLog'>) => void;
-  updateReferral: (id: string, updates: Partial<Referral>, actionText: string) => void;
-
-  changePassword: (current: string, newPass: string) => Promise<boolean>;
+  addReferral: (newReferralData: Omit<Referral, 'id' | 'createdAt' | 'status' | 'type' | 'auditLog'>) => Promise<void>;
+  updateReferral: (id: string, updates: Partial<Referral>, actionText: string) => Promise<void>;
+  changePassword: (current: string, newPass: string) => Promise<any>;
   reminders: Record<string, ReminderSettings>;
   addCondition: (condition: Omit<MedicalCondition, 'id'>) => void;
   addAllergy: (allergy: Omit<Allergy, 'id'>) => void;
-
   addHealthGoal: (goal: Omit<HealthGoal, 'id'>) => void;
   updateHealthGoal: (goal: HealthGoal) => void;
   deleteHealthGoal: (goalId: string) => void;
-
   addTask: (task: Omit<Task, 'id' | 'completed'>) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   toggleTaskCompletion: (taskId: string) => void;
   addSubtask: (taskId: string, text: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   deleteSubtask: (taskId: string, subtaskId: string) => void;
-  
-  addClaim: (claim: Omit<Claim, 'id'>) => void;
-  addInvoice: (invoice: Omit<BillingInvoice, 'id'>) => void;
+  addClaim: (claim: Omit<Claim, 'id'>) => Promise<void>;
+  addInvoice: (invoice: Omit<BillingInvoice, 'id'>) => Promise<void>;
   auditLog: SystemAuditLog[];
-    socketStatus?: 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
+  socketStatus: 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [claims, setClaims] = useState<Claim[]>([]);
-    const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
-    const [progressNotes, setProgressNotes] = useState<ProgressNote[]>([]);
-    const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-    const [messages, setMessages] = useState<Record<string, Message[]>>({});
-    const [labOrders, setLabOrders] = useState<LabOrder[]>([]);
-    const [referrals, setReferrals] = useState<Referral[]>([]);
-    const [patientPlans, setPatientPlans] = useState<SubscriptionPlan[]>([]);
-    const [providerPlans, setProviderPlans] = useState<SubscriptionPlan[]>([]);
-    const [auditLog, setAuditLog] = useState<SystemAuditLog[]>([]);
-    const [reminders, setReminders] = useState<Record<string, ReminderSettings>>({});
-    const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+    const { user, setUser, setToken } = useAuthStore();
+    const { 
+        setUsers, 
+        setAppointments, 
+        addAppointment,
+        setClaims, 
+        setInvoices, 
+        setProgressNotes, 
+        setPrescriptions, 
+        setMessages, 
+        setLabOrders, 
+        setReferrals, 
+        setPatientPlans, 
+        setProviderPlans, 
+        setAuditLog,
+        setSocketStatus
+    } = useAppStore();
 
     useEffect(() => {
         const checkUser = async () => {
@@ -101,21 +90,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 try {
                     const { user } = await api.apiVerifyToken(token);
                     setUser(user);
+                    setToken(token);
                 } catch (e) {
                     console.error("Failed to verify token.", e);
                     sessionStorage.removeItem('novopath-token');
                     sessionStorage.removeItem('novopath-user');
                 }
             }
-            setLoading(false);
         };
         checkUser();
-    }, []);
+    }, [setUser, setToken]);
 
     useEffect(() => {
-        // This effect will run when a user logs in to fetch all associated data.
         if (user) {
-            setLoading(true);
             api.fetchAllData()
                 .then(data => {
                     setUsers(data.users);
@@ -131,19 +118,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     setPatientPlans(data.patientPlans);
                     setAuditLog(data.auditLog);
 
-                    // Refresh the user object with the full data from our "API"
                     const fullUser = data.users.find(u => u.id === user.id) || user;
                     setUser(fullUser);
                     sessionStorage.setItem('novopath-user', JSON.stringify(fullUser));
                 })
                 .catch(error => {
                     console.error("Error fetching data:", error);
-                })
-                .finally(() => {
-                    setLoading(false);
                 });
         } else {
-            // Clear data on logout
             setUsers([]);
             setAppointments([]);
             setClaims([]);
@@ -157,12 +139,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setProviderPlans([]);
             setAuditLog([]);
         }
-    }, [user?.id]); // Re-run only when the user ID changes (login/logout)
+    }, [user?.id, setUser, setUsers, setAppointments, setClaims, setInvoices, setProgressNotes, setPrescriptions, setMessages, setLabOrders, setReferrals, setProviderPlans, setPatientPlans, setAuditLog]);
 
-    // Realtime updates via WebSocket: subscribe to incoming messages and update local state.
     useEffect(() => {
         if (user) {
-            // Use the user id as a connection query param; server should scope events to this user/tenant.
             const token = sessionStorage.getItem('novopath-token') || undefined;
             socketService.connect(user.id, { token });
 
@@ -173,19 +153,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const unsubMessage = socketService.onMessage((data: any) => {
                 try {
                     if (!data) return;
-
-                    // Expecting a simple event envelope: { type: string, payload: any }
                     if (data.type === 'message.created' && data.payload) {
                         const msg = data.payload as Message;
                         const key = [msg.senderId, msg.receiverId].sort().join('-');
-                        setMessages(prev => {
-                            const existing = prev[key] || [];
-                            if (existing.some(m => m.id === msg.id)) return prev; // dedupe incoming event
-                            return { ...prev, [key]: [...existing, msg] };
+                        useAppStore.setState(prev => {
+                            const existing = prev.messages[key] || [];
+                            if (existing.some(m => m.id === msg.id)) return prev;
+                            return { ...prev, messages: { ...prev.messages, [key]: [...existing, msg] } };
                         });
                     }
                 } catch (err) {
-                    // ignore malformed realtime messages
                     console.error('Error handling realtime message', err);
                 }
             });
@@ -199,26 +176,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             socketService.disconnect();
             setSocketStatus('disconnected');
         }
-    }, [user?.id]);
+    }, [user?.id, setSocketStatus]);
 
-    // Subscribe to in-app event bus for domain events (appointments, notes, labs, messages)
     useEffect(() => {
         const unsubAppointment = eventBus.subscribe(EVENTS.APPOINTMENT_CREATED, (payload: any) => {
-            setAppointments(prev => [...prev, payload]);
+            addAppointment(payload);
         });
 
         const unsubNote = eventBus.subscribe(EVENTS.NOTE_CREATED, (payload: any) => {
-            setProgressNotes(prev => [...prev, payload]);
+            useAppStore.setState(prev => ({ progressNotes: [...prev.progressNotes, payload] }));
         });
 
         const unsubMessage = eventBus.subscribe(EVENTS.MESSAGE_CREATED, (payload: any) => {
             const msg = payload as Message;
             const key = [msg.senderId, msg.receiverId].sort().join('-');
-            setMessages(prev => ({ ...prev, [key]: [...(prev[key] || []), msg] }));
+            useAppStore.setState(prev => ({ messages: { ...prev.messages, [key]: [...(prev.messages[key] || []), msg] } }));
         });
 
         const unsubLab = eventBus.subscribe(EVENTS.LAB_ORDER_CREATED, (payload: any) => {
-            setLabOrders(prev => [...prev, payload]);
+            useAppStore.setState(prev => ({ labOrders: [...prev.labOrders, payload] }));
         });
 
         return () => {
@@ -227,39 +203,58 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             unsubMessage();
             unsubLab();
         };
-    }, []);
+    }, [addAppointment]);
+
+    const authValue = useAuth();
+    return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+    const { user, setUser, token } = useAuthStore();
+    const {
+        users,
+        appointments,
+        claims,
+        invoices,
+        patientPlans,
+        providerPlans,
+        progressNotes,
+        prescriptions,
+        messages,
+        labOrders,
+        referrals,
+        reminders,
+        auditLog,
+        socketStatus
+    } = useAppStore();
 
     const login = useCallback(async (email: string, password?: string): Promise<boolean> => {
-        setLoading(true);
         try {
             const resp = await api.apiLogin(email, password);
             if (resp && resp.user) {
                 sessionStorage.setItem('novopath-token', resp.token);
                 sessionStorage.setItem('novopath-user', JSON.stringify(resp.user));
                 setUser(resp.user);
+                useAuthStore.getState().setToken(resp.token);
                 return true;
             }
             return false;
         } catch (error) {
             console.error('Login failed:', error);
             return false;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    }, [setUser]);
 
     const logout = useCallback(() => {
         setUser(null);
         sessionStorage.removeItem('novopath-user');
         sessionStorage.removeItem('novopath-token');
-    }, []);
+    }, [setUser]);
 
     const register = useCallback(async (userData: Omit<User, 'id' | 'role' | 'avatarUrl'>, role: UserRole) => {
-        setLoading(true);
         const newUser = await api.apiRegister(userData, role);
-        setUser(newUser); // This triggers the data fetch effect
-        setLoading(false);
-    }, []);
+        setUser(newUser);
+    }, [setUser]);
 
     const updateUser = useCallback(async (updatedData: Partial<User> | ((currentUser: User) => Partial<User>)) => {
         if (!user) return;
@@ -267,32 +262,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (updatedUser) {
             setUser(updatedUser);
             sessionStorage.setItem('novopath-user', JSON.stringify(updatedUser));
-            setUsers(currentUsers => currentUsers.map(u => u.id === user.id ? updatedUser : u));
+            useAppStore.setState(prev => ({
+                users: prev.users.map(u => u.id === user.id ? updatedUser : u)
+            }));
         }
-    }, [user]);
+    }, [user, setUser]);
 
     const addAppointment = useCallback(async (appointment: Omit<Appointment, 'id'>, reminder?: ReminderSettings) => {
         const newAppointment = await api.apiAddAppointment(appointment);
-        setAppointments(prev => [...prev, newAppointment]);
+        useAppStore.getState().addAppointment(newAppointment);
         if (reminder) {
-            setReminders(prev => ({...prev, [newAppointment.id]: reminder}));
+            useAppStore.setState(prev => ({...prev, reminders: {...prev.reminders, [newAppointment.id]: reminder}}));
         }
     }, []);
 
     const addVideoUpdateToAppointment = useCallback(async (appointmentId: string, videoUrl: string) => {
         const updatedAppointment = await api.apiAddVideoUpdate(appointmentId, videoUrl);
         if(updatedAppointment) {
-            setAppointments(prev => prev.map(appt => appt.id === appointmentId ? updatedAppointment : appt));
+            useAppStore.setState(prev => ({
+                appointments: prev.appointments.map(appt => appt.id === appointmentId ? updatedAppointment : appt)
+            }));
         }
     }, []);
 
     const makePayment = useCallback(async (invoiceId: string, amount: number) => {
         const updatedInvoice = await api.apiMakePayment(invoiceId, amount);
         if(updatedInvoice) {
-            setInvoices(prev => prev.map(inv => inv.id === invoiceId ? updatedInvoice : inv));
+            useAppStore.setState(prev => ({
+                invoices: prev.invoices.map(inv => inv.id === invoiceId ? updatedInvoice : inv)
+            }));
         }
     }, []);
-    
+
     const updateInsurance = useCallback(async (data: InsuranceInfo) => {
         await updateUser({ insurance: data });
     }, [updateUser]);
@@ -307,80 +308,89 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateUser({ subscription: newSub });
         }
     }, [user, updateUser]);
-    
+
     const updateSubscriptionPlan = useCallback(async (plan: SubscriptionPlan) => {
-        // This is a mock update. In a real app, you'd call an API.
         const isProviderPlan = providerPlans.some(p => p.id === plan.id);
         
         if (isProviderPlan) {
-            setProviderPlans(prev => prev.map(p => (p.id === plan.id ? plan : p)));
+            useAppStore.setState(prev => ({
+                providerPlans: prev.providerPlans.map(p => (p.id === plan.id ? plan : p))
+            }));
         } else {
-            setPatientPlans(prev => prev.map(p => (p.id === plan.id ? plan : p)));
+            useAppStore.setState(prev => ({
+                patientPlans: prev.patientPlans.map(p => (p.id === plan.id ? plan : p))
+            }));
         }
         return Promise.resolve();
     }, [providerPlans, patientPlans]);
 
     const addProgressNote = useCallback(async (note: Omit<ProgressNote, 'id'>) => {
         const newNote = await api.apiAddProgressNote(note);
-        setProgressNotes(prev => [...prev, newNote]);
+        useAppStore.setState(prev => ({ progressNotes: [...prev.progressNotes, newNote] }));
     }, []);
 
     const addPrescription = useCallback(async (prescription: Omit<Prescription, 'id' | 'status'>) => {
         const newPrescription = await api.apiAddPrescription(prescription);
-        setPrescriptions(prev => [...prev, newPrescription]);
+        useAppStore.setState(prev => ({ prescriptions: [...prev.prescriptions, newPrescription] }));
     }, []);
 
     const addClaim = useCallback(async (claim: Omit<Claim, 'id'>) => {
         const newClaim = await api.apiAddClaim(claim);
-        setClaims(prev => [...prev, newClaim]);
+        useAppStore.setState(prev => ({ claims: [...prev.claims, newClaim] }));
     }, []);
 
     const addInvoice = useCallback(async (invoice: Omit<BillingInvoice, 'id'>) => {
         const newInvoice = await api.apiAddInvoice(invoice);
-        setInvoices(prev => [...prev, newInvoice]);
+        useAppStore.setState(prev => ({ invoices: [...prev.invoices, newInvoice] }));
     }, []);
 
     const sendMessage = useCallback(async (message: Omit<Message, 'id' | 'timestamp' | 'isRead'>) => {
         const newMessage = await api.apiSendMessage(message);
         const key = [message.senderId, message.receiverId].sort().join('-');
-        setMessages(prev => ({ ...prev, [key]: [...(prev[key] || []), newMessage] }));
+        useAppStore.setState(prev => ({ messages: { ...prev.messages, [key]: [...(prev.messages[key] || []), newMessage] } }));
     }, []);
 
     const markMessagesAsRead = useCallback(async (contactId: string) => {
         if (!user) return;
         const updatedMessages = await api.apiMarkMessagesAsRead(user.id, contactId);
         const key = [user.id, contactId].sort().join('-');
-        setMessages(prev => ({ ...prev, [key]: updatedMessages }));
+        useAppStore.setState(prev => ({ messages: { ...prev.messages, [key]: updatedMessages } }));
     }, [user]);
 
     const confirmAppointment = useCallback(async (appointmentId: string) => {
         const updatedAppointment = await api.apiConfirmAppointment(appointmentId);
         if (updatedAppointment) {
-            setAppointments(prev => prev.map(a => a.id === appointmentId ? updatedAppointment : a));
+            useAppStore.setState(prev => ({
+                appointments: prev.appointments.map(a => a.id === appointmentId ? updatedAppointment : a)
+            }));
         }
     }, []);
 
     const cancelAppointment = useCallback(async (appointmentId: string) => {
         const updatedAppointment = await api.apiCancelAppointment(appointmentId);
         if (updatedAppointment) {
-            setAppointments(prev => prev.map(a => a.id === appointmentId ? updatedAppointment : a));
+            useAppStore.setState(prev => ({
+                appointments: prev.appointments.map(a => a.id === appointmentId ? updatedAppointment : a)
+            }));
         }
     }, []);
 
     const addLabOrder = useCallback(async (newOrder: Omit<LabOrder, 'id'>) => {
         const createdOrder = await api.apiAddLabOrder(newOrder);
-        setLabOrders(prev => [...prev, createdOrder]);
+        useAppStore.setState(prev => ({ labOrders: [...prev.labOrders, createdOrder] }));
     }, []);
-    
+
     const addReferral = useCallback(async (newReferralData: Omit<Referral, 'id' | 'createdAt' | 'status' | 'type' | 'auditLog'>) => {
         const newReferral = await api.apiAddReferral(newReferralData);
-        setReferrals(prev => [...prev, newReferral]);
+        useAppStore.setState(prev => ({ referrals: [...prev.referrals, newReferral] }));
     }, []);
-    
+
     const updateReferral = useCallback(async (id: string, updates: Partial<Referral>, actionText: string) => {
         const updatedReferral = await api.apiUpdateReferral(id, updates, actionText);
         if (updatedReferral) {
-            setReferrals(prev => prev.map(r => r.id === id ? updatedReferral : r));
+            useAppStore.setState(prev => ({
+                referrals: prev.referrals.map(r => r.id === id ? updatedReferral : r)
+            }));
         }
     }, []);
 
@@ -427,7 +437,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const toggleSubtaskCompletion = useCallback((taskId: string, subtaskId: string) => {
         updateUser(currentUser => ({ tasks: currentUser.tasks?.map(t => {
             if (t.id === taskId) {
-                return { ...t, subtasks: t.subtasks?.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st) };
+                return { ...t, subtasks: t.subtasks?.map(st => st.id === subtaskId ? ({ ...st, completed: !st.completed }) : st) };
             }
             return t;
         }) }));
@@ -460,10 +470,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return allPlans.find(p => p.id === user.subscription?.planId);
     }, [user, providerPlans, patientPlans]);
 
-    const value: AuthContextType = {
+    return {
         user,
         users,
-        loading,
+        loading: !user && token === null,
         login,
         logout,
         register,
@@ -513,10 +523,4 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         auditLog,
         socketStatus,
     };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
 };

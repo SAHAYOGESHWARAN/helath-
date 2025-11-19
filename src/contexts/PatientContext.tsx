@@ -1,43 +1,24 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Encounter } from '@/types';
+import React, { ReactNode, useEffect } from 'react';
+import { usePatientStore } from '@/stores/patientStore';
 import * as api from '@/services/apiService';
 
-interface PatientContextType {
-  patient: User | null;
-  encounters: Encounter[];
-}
-
-const PatientContext = createContext<PatientContextType | undefined>(undefined);
-
-export const PatientProvider: React.FC<{ patientId: string; children: ReactNode }> = ({ patientId, children }) => {
-  const [patient, setPatient] = useState<User | null>(null);
-  const [encounters, setEncounters] = useState<Encounter[]>([]);
+export const usePatient = (patientId: string) => {
+  const { patient, setPatient } = usePatientStore();
 
   useEffect(() => {
     const fetchData = async () => {
       const data = await api.fetchAllData();
       const foundPatient = data.users.find(p => p.id === patientId);
       setPatient(foundPatient || null);
-
-      const patientEncounters = data.progressNotes.filter(e => e.patientId === patientId);
-      setEncounters(patientEncounters);
     };
 
     fetchData();
-  }, [patientId]);
+  }, [patientId, setPatient]);
 
-  return (
-    <PatientContext.Provider value={{ patient, encounters }}>
-      {children}
-    </PatientContext.Provider>
-  );
+  return { patient };
 };
 
-export const usePatient = () => {
-  const context = useContext(PatientContext);
-  if (context === undefined) {
-    throw new Error('usePatient must be used within a PatientProvider');
-  }
-  return context;
+export const PatientProvider: React.FC<{ children: ReactNode; patientId?: string }> = ({ children, patientId }) => {
+  return <>{children}</>;
 };

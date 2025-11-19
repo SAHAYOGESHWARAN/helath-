@@ -2,7 +2,7 @@ import React from 'react';
 import Toast from '@/components/shared/Toast';
 import { ToastMessage } from '@/contexts/AppContext';
 
-const Toaster: React.FC<{ toasts: ToastMessage[]; onRemove: (id: number) => void }> = ({ toasts, onRemove }) => {
+const Toaster: React.FC<{ toasts: ToastMessage[]; onRemove: (id: number | string) => void }> = ({ toasts, onRemove }) => {
   return (
     <div className="fixed bottom-5 right-5 z-[100] space-y-3">
       {toasts.map(toast => (

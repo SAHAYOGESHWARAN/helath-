@@ -2,7 +2,7 @@ import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
-import { WebSocketProvider } from '@/contexts/WebSocketContext';
+import { WebSocketController } from '@/contexts/WebSocketContext';
 import LoginPage from '@/pages/auth/LoginPage';
 import PatientLayout from '@/components/layout/PatientLayout';
 import ProviderLayout from '@/components/layout/ProviderLayout';
@@ -17,7 +17,7 @@ import WelcomePage from '@/pages/WelcomePage';
 import FeaturesPage from '@/pages/FeaturesPage';
 import TestimonialsPage from '@/pages/TestimonialsPage';
 import ForProvidersPage from '@/pages/ForProvidersPage';
-import { AppProvider } from '@/contexts/AppContext';
+
 
 const AppRoutes: React.FC = () => {
   const { user, loading } = useAuth();
@@ -72,15 +72,12 @@ function App() {
   console.log("Rendering App component");
   return (
     <AuthProvider>
-      <WebSocketProvider>
-        <NotificationProvider>
-          <AppProvider>
-            <HashRouter>
-              <AppRoutes />
-            </HashRouter>
-          </AppProvider>
-        </NotificationProvider>
-      </WebSocketProvider>
+      <WebSocketController />
+      <NotificationProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

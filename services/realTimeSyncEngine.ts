@@ -3,7 +3,8 @@
  * Features: WebSocket sync, offline support, change detection, conflict resolution, local storage
  */
 
-import { AdvancedEMRClient, getAdvancedEMRClient } from './advancedEMRClient';
+import { AdvancedEMRClient, type RealTimeEvent } from './advancedEMRClient';
+import type { APIResponse } from '../src/types';
 
 export interface SyncConfig {
   enableAutoSync: boolean;
@@ -20,7 +21,7 @@ export interface LocalChange {
   type: 'CREATE' | 'UPDATE' | 'DELETE';
   resourceType: string;
   resourceId: string;
-  data: any;
+  data: Record<string, unknown>;
   timestamp: string;
   synced: boolean;
   attempts: number;
@@ -115,17 +116,19 @@ export class RealTimeSyncEngine {
       this.syncNow();
     });
 
-    const unsubscribeEvent = this.client.subscribeToEvents('event', (event: any) => {
+    const unsubscribeEvent = this.client.subscribeToEvents('event', (event: RealTimeEvent) => {
       this.handleRemoteChange(event);
     });
 
-    const unsubscribeError = this.client.subscribeToEvents('ws-error', (error: any) => {
-      this.addSyncError(`WebSocket error: ${error.message}`);
+    const unsubscribeError = this.client.subscribeToEvents('ws-error', (error: RealTimeEvent) => {
+      this.addSyncError(`WebSocket error: ${error.data?.message || 'Unknown error'}`);
     });
 
     // Store unsubscribe functions
-    (this as any).wsUnsubscribers = [unsubscribeConnect, unsubscribeEvent, unsubscribeError];
+    this.wsUnsubscribers = [unsubscribeConnect, unsubscribeEvent, unsubscribeError];
   }
+
+  private wsUnsubscribers: Array<() => void> = [];
 
   /**
    * === SYNC CONTROL ===
@@ -193,7 +196,7 @@ export class RealTimeSyncEngine {
    * === CHANGE TRACKING ===
    */
 
-  trackLocalChange(resourceType: string, resourceId: string, data: any, type: 'CREATE' | 'UPDATE' | 'DELETE'): void {
+  trackLocalChange(resourceType: string, resourceId: string, data: Record<string, unknown>, type: 'CREATE' | 'UPDATE' | 'DELETE'): void {
     const changeId = `${resourceType}:${resourceId}:${Date.now()}`;
     const change: LocalChange = {
       id: changeId,
@@ -222,18 +225,18 @@ export class RealTimeSyncEngine {
       }
 
       try {
-        let response;
+        let response: APIResponse;
         const endpoint = `/${change.resourceType}/${change.resourceId}`;
 
         switch (change.type) {
           case 'CREATE':
-            response = await (this.client as any).request('POST', `/${change.resourceType}`, change.data);
+            response = await (this.client as unknown as { request: (method: string, endpoint: string, data: Record<string, unknown>) => Promise<APIResponse> }).request('POST', `/${change.resourceType}`, change.data);
             break;
           case 'UPDATE':
-            response = await (this.client as any).request('PATCH', endpoint, change.data);
+            response = await (this.client as unknown as { request: (method: string, endpoint: string, data: Record<string, unknown>) => Promise<APIResponse> }).request('PATCH', endpoint, change.data);
             break;
           case 'DELETE':
-            response = await (this.client as any).request('DELETE', endpoint);
+            response = await (this.client as unknown as { request: (method: string, endpoint: string) => Promise<APIResponse> }).request('DELETE', endpoint);
             break;
         }
 
@@ -243,9 +246,10 @@ export class RealTimeSyncEngine {
         } else {
           change.attempts++;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         change.attempts++;
-        this.addSyncError(`Failed to sync ${change.resourceType}: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.addSyncError(`Failed to sync ${change.resourceType}: ${errorMessage}`);
       }
     }
 
@@ -257,7 +261,7 @@ export class RealTimeSyncEngine {
    * === REMOTE CHANGE HANDLING ===
    */
 
-  private handleRemoteChange(event: any): void {
+  private handleRemoteChange(event: RealTimeEvent): void {
     const { resourceType, resourceId, data, timestamp } = event;
 
     // Check for local changes to the same resource
@@ -273,7 +277,7 @@ export class RealTimeSyncEngine {
     }
   }
 
-  private handleConflict(localChange: LocalChange, remoteData: any): void {
+  private handleConflict(localChange: LocalChange, remoteData: Record<string, unknown>): void {
     console.log(`Conflict detected for ${localChange.resourceType}:${localChange.resourceId}`);
 
     let resolvedData = remoteData;
@@ -298,7 +302,7 @@ export class RealTimeSyncEngine {
     localChange.attempts = 0; // Reset attempts
   }
 
-  private mergeChanges(localData: any, remoteData: any): any {
+  private mergeChanges(localData: Record<string, unknown>, remoteData: Record<string, unknown>): Record<string, unknown> {
     return {
       ...remoteData,
       ...localData,
@@ -307,7 +311,7 @@ export class RealTimeSyncEngine {
     };
   }
 
-  private applyRemoteChange(resourceType: string, resourceId: string, data: any, timestamp: string): void {
+  private applyRemoteChange(resourceType: string, resourceId: string, data: unknown, timestamp: string): void {
     const cacheKey = `${resourceType}:${resourceId}`;
     // This would typically update local storage or state management
     console.log(`Applying remote change: ${cacheKey} at ${timestamp}`);
@@ -336,8 +340,8 @@ export class RealTimeSyncEngine {
 
   private async syncPatients(): Promise<boolean> {
     try {
-      const response = await (this.client as any).request('GET', '/patients/sync');
-      return response.success;
+      const response = await (this.client as unknown as { request: (method: string, endpoint: string) => Promise<APIResponse> }).request('GET', '/patients/sync');
+      return response.success ?? false;
     } catch {
       return false;
     }
@@ -345,8 +349,8 @@ export class RealTimeSyncEngine {
 
   private async syncAppointments(): Promise<boolean> {
     try {
-      const response = await (this.client as any).request('GET', '/appointments/sync');
-      return response.success;
+      const response = await (this.client as unknown as { request: (method: string, endpoint: string) => Promise<APIResponse> }).request('GET', '/appointments/sync');
+      return response.success ?? false;
     } catch {
       return false;
     }
@@ -354,8 +358,8 @@ export class RealTimeSyncEngine {
 
   private async syncPrescriptions(): Promise<boolean> {
     try {
-      const response = await (this.client as any).request('GET', '/prescriptions/sync');
-      return response.success;
+      const response = await (this.client as unknown as { request: (method: string, endpoint: string) => Promise<APIResponse> }).request('GET', '/prescriptions/sync');
+      return response.success ?? false;
     } catch {
       return false;
     }
@@ -363,8 +367,8 @@ export class RealTimeSyncEngine {
 
   private async syncLabResults(): Promise<boolean> {
     try {
-      const response = await (this.client as any).request('GET', '/lab-results/sync');
-      return response.success;
+      const response = await (this.client as unknown as { request: (method: string, endpoint: string) => Promise<APIResponse> }).request('GET', '/lab-results/sync');
+      return response.success ?? false;
     } catch {
       return false;
     }
