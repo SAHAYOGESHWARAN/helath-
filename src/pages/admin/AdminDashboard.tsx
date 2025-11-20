@@ -1,7 +1,4 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-// NOTE: we dynamically import `@google/genai` inside `generateSummary` to avoid
-// bundling-time export warnings and to support different shapes of the package
-// (some versions export classes, others export factory functions).
 import { useAuth } from '../../hooks/useAuth';
 import { useEMRIntegration } from '../../hooks/useEMRIntegration';
 import Card from '../../components/shared/Card';
@@ -9,9 +6,9 @@ import PageHeader from '../../components/shared/PageHeader';
 import { UserRole, SystemHealth, PredictiveAnalytics } from '../../types';
 import { UsersIcon, ShieldExclamationIcon, CurrencyDollarIcon, CollectionIcon, SparklesIcon, CogIcon, ExclamationTriangleIcon, ArrowTrendingUpIcon, GlobeAltIcon as CloudIcon, ArrowPathIcon as RefreshIcon, CogIcon as PlayIcon, StopIcon } from '../../components/shared/Icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
-// FIX: Use `react-router-dom` for web-specific components.
 import { Link } from 'react-router-dom';
 import UniqueLoader from '../../components/shared/UniqueLoader';
+import { getGenAIClient } from '../../services/gemini';
 
 const AdminDashboard: React.FC = () => {
     const { users, invoices, providerSubscriptionPlans } = useAuth();
@@ -122,34 +119,8 @@ const AdminDashboard: React.FC = () => {
         setAiSummary('');
         setSummaryError('');
 
-        if (!import.meta.env.VITE_API_KEY) {
-            setSummaryError("API key is not configured. Please set VITE_API_KEY in your .env file.");
-            setIsSummaryLoading(false);
-            return;
-        }
-
         try {
-            // Dynamically load the package so the bundler doesn't statically
-            // validate named exports (which can differ between versions).
-            const genaiModule: any = await import('@google/generative-ai');
-
-            // Try to detect a few common shapes of the library so this works
-            // across releases: a constructor class, a factory, or a default
-            // export. If the shape is unknown, surface a helpful error.
-            let client: any = null;
-            const GoogleGenerativeAI = genaiModule?.GoogleGenerativeAI ?? genaiModule?.Generative ?? genaiModule?.default ?? genaiModule;
-
-            if (typeof GoogleGenerativeAI === 'function') {
-                // class or constructor-style API
-                client = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY);
-            } else if (GoogleGenerativeAI && typeof GoogleGenerativeAI.create === 'function') {
-                // factory/create-style API
-                client = await GoogleGenerativeAI.create({ apiKey: import.meta.env.VITE_API_KEY });
-            } else if (typeof genaiModule === 'function') {
-                client = new genaiModule(import.meta.env.VITE_API_KEY);
-            }
-
-            const model = client?.getGenerativeModel ? client.getGenerativeModel({ model: 'gemini-pro' }) : client;
+            const ai = await getGenAIClient();
 
             const prompt = `
                 Analyze the following metrics for the NovoPath Medical platform and provide a concise, insightful summary (around 100-150 words) for an administrator.
@@ -179,20 +150,19 @@ const AdminDashboard: React.FC = () => {
                 Based on this data, what are the most critical insights an administrator should be aware of?
             `;
 
-            if (!model || typeof model.generateContent !== 'function') {
-                throw new Error('Loaded generative model does not expose `generateContent`. The @google/genai package shape may differ.');
-            }
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    systemInstruction: 'You are an expert data analyst for a healthcare platform.'
+                }
+            });
 
-            const result = await model.generateContent(prompt);
-            // The response shape can vary; try common access patterns safely.
-            const responseText =
-                (result?.response && typeof result.response.text === 'function') ? result.response.text() :
-                (typeof result === 'string' ? result : (result?.text ?? JSON.stringify(result)));
-
+            const responseText = response.text;
             setAiSummary(responseText as string);
         } catch (error) {
             console.error("Error generating AI summary:", error);
-            setSummaryError('Failed to generate insights. Please check the API key and try again.');
+            setSummaryError('Failed to generate insights. Please check your configuration and try again.');
         } finally {
             setIsSummaryLoading(false);
         }

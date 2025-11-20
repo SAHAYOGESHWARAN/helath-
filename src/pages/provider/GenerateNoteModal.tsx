@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { User, UserRole, ProgressNote } from '../../types';
 import { SpinnerIcon } from '../../components/shared/Icons';
 import { useApp } from '../../contexts/AppContext';
+import { Type } from '@google/genai';
 
 interface GenerateNoteModalProps {
   isOpen: boolean;
@@ -48,21 +49,22 @@ const GenerateNoteModal: React.FC<GenerateNoteModalProps> = ({ isOpen, onClose, 
               config: {
                   systemInstruction,
                   responseMimeType: 'application/json',
-                  // Use plain JSON Schema-like object to avoid Type enum dependency
+                  // Use Type enum from @google/genai
                   responseSchema: {
-                      type: 'object',
+                      type: Type.OBJECT,
                       properties: {
-                          subjective: { type: 'string', description: "Patient's subjective complaints, history of present illness, and review of systems as stated by the patient." },
-                          objective: { type: 'string', description: "Provider's objective findings from physical examination, vital signs, and test results mentioned in the transcript." },
-                          assessment: { type: 'string', description: "Provider's diagnosis or assessment of the patient's condition based on the subjective and objective information." },
-                          plan: { type: 'string', description: "The treatment plan, including medications, therapies, follow-up instructions, and patient education." }
+                          subjective: { type: Type.STRING, description: "Patient's subjective complaints, history of present illness, and review of systems as stated by the patient." },
+                          objective: { type: Type.STRING, description: "Provider's objective findings from physical examination, vital signs, and test results mentioned in the transcript." },
+                          assessment: { type: Type.STRING, description: "Provider's diagnosis or assessment of the patient's condition based on the subjective and objective information." },
+                          plan: { type: Type.STRING, description: "The treatment plan, including medications, therapies, follow-up instructions, and patient education." }
                       },
                       required: ['subjective', 'objective', 'assessment', 'plan']
                   },
               },
           });
 
-          const noteText = (response && typeof response.text === 'function') ? response.text().trim() : String(response).trim();
+          // Fix: use response.text property, handle potential undefined
+          const noteText = (response.text ?? String(response)).trim();
           const parsedNote = JSON.parse(noteText);
           setGeneratedNote(parsedNote);
 

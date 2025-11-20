@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getGenAIClient } from '../../services/gemini';
 import { Card } from '../../components/shared/Card';
@@ -10,9 +9,10 @@ import { encode, decode, decodeAudioData } from '../../services/audioUtils';
 import { useApp } from '../../contexts/AppContext';
 import MarkdownRenderer from '../../components/shared/MarkdownRenderer';
 import { Appointment } from '../../types';
+import { GoogleGenAI, Modality } from '@google/genai';
 
 // --- Type Definitions for Multimodal Content ---
-// Define LiveSession interface locally since it's not exported from @google/genai
+// Define LiveSession interface locally since it's not exported directly from @google/genai
 interface LiveSession {
   sendRealtimeInput: (input: { media: any }) => void;
   close: () => void;
@@ -50,9 +50,32 @@ const createAudioBlob = (data: Float32Array): any => {
   };
 };
 
+const getGeminiErrorMessage = (error: unknown): string => {
+  const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  
+  if (msg.includes('429') || msg.includes('quota') || msg.includes('resource exhausted')) {
+    return "I've reached my usage limit for now. Please try again in a few moments.";
+  }
+  if (msg.includes('safety') || msg.includes('blocked') || msg.includes('finishreason')) {
+    return "I cannot generate a response for this specific input due to safety guidelines.";
+  }
+  if (msg.includes('401') || msg.includes('unauthenticated') || msg.includes('api key')) {
+    return "Authentication failed. Please check the system API key configuration.";
+  }
+  if (msg.includes('503') || msg.includes('overloaded') || msg.includes('unavailable')) {
+    return "The AI service is currently experiencing high traffic. Please try again later.";
+  }
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed to fetch')) {
+    return "Network error. Please check your internet connection.";
+  }
+  if (msg.includes('microphone') || msg.includes('media device')) {
+    return "Could not access the microphone. Please check your browser permissions.";
+  }
+  
+  return "I encountered an unexpected error. Please try again.";
+};
 
 const AIAssistant: React.FC = () => {
-  // FIX: Destructure appointments from useAuth to correctly access appointment data.
   const { user, appointments } = useAuth();
   const { showToast } = useApp();
   const [prompt, setPrompt] = useState('');
@@ -60,7 +83,7 @@ const AIAssistant: React.FC = () => {
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ai = useRef<any | null>(null);
+  const ai = useRef<GoogleGenAI | null>(null);
 
   // --- Audio & Live Conversation State ---
   const [isRecording, setIsRecording] = useState(false);
@@ -83,7 +106,7 @@ const AIAssistant: React.FC = () => {
         ai.current = await getGenAIClient();
       } catch (error) {
         console.error("Failed to initialize AI:", error);
-        showToast("Failed to initialize AI assistant. Please refresh the page.", 'error');
+        showToast("Failed to initialize AI assistant. Please check your API key configuration.", 'error');
       }
     })();
   }, [showToast]);
@@ -101,7 +124,10 @@ const AIAssistant: React.FC = () => {
   useEffect(scrollToBottom, [history, loading]);
 
   const handleSendMessage = async () => {
-    if ((!prompt.trim() && filesToUpload.length === 0) || loading || !ai.current || !user) return;
+    if ((!prompt.trim() && filesToUpload.length === 0) || loading || !ai.current || !user) {
+      if (!ai.current) showToast("AI service not initialized.", 'error');
+      return;
+    }
 
     setLoading(true);
 
@@ -112,7 +138,7 @@ const AIAssistant: React.FC = () => {
     const userParts: Part[] = [...mediaParts, textPart];
 
     const userMessage: AIMessage = { role: 'user', parts: userParts };
-  const currentHistory: any[] = history.map(h => ({ role: h.role, parts: h.parts }));
+    const currentHistory: any[] = history.map(h => ({ role: h.role, parts: h.parts }));
 
     setHistory(prev => [...prev, userMessage]);
     setPrompt('');
@@ -127,7 +153,6 @@ const AIAssistant: React.FC = () => {
     const buildHealthSummary = () => {
       if (!user) return 'No patient data available.';
       let summary = 'Available patient data:\n';
-      // FIX: user.appointments does not exist. Get appointments from useAuth context and filter for the current user.
       const userAppointments: Appointment[] = appointments.filter((a: Appointment) => a.patientId === user.id);
       if (userAppointments?.length) {
         const nextAppt = userAppointments.find(a => new Date(a.date) >= new Date());
@@ -177,9 +202,21 @@ const AIAssistant: React.FC = () => {
       }
     } catch (error) {
       console.error("Error generating content:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      showToast("Failed to generate response. Please try again.", 'error');
-      setHistory(prev => [...prev.slice(0, -1), { role: 'model', parts: [{ text: "I'm sorry, I encountered an error while processing your request. Please try again or contact support if the issue persists." }] }]);
+      const userFriendlyError = getGeminiErrorMessage(error);
+      
+      setHistory(prev => {
+        const newHistory = [...prev];
+        const lastMessage = newHistory[newHistory.length - 1];
+        
+        if (lastMessage.role === 'model' && lastMessage.parts[0].text === '') {
+          lastMessage.parts = [{ text: `⚠️ **Error:** ${userFriendlyError}` }];
+          return newHistory;
+        } else {
+          return [...prev, { role: 'model', parts: [{ text: `⚠️ **Error:** ${userFriendlyError}` }] }];
+        }
+      });
+      
+      showToast(userFriendlyError, 'error');
     } finally {
       setLoading(false);
     }
@@ -196,6 +233,10 @@ const AIAssistant: React.FC = () => {
       mediaRecorderRef.current?.stop();
       setIsRecording(false);
     } else {
+      if (!ai.current) {
+        showToast("AI service not initialized.", 'error');
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorderRef.current = new MediaRecorder(stream);
@@ -209,21 +250,28 @@ const AIAssistant: React.FC = () => {
           stream.getTracks().forEach(track => track.stop());
 
           setLoading(true);
-          const audioPart = await fileToGenerativePart(audioFile);
-          const transcriptionPrompt = "Transcribe this audio.";
-          const response = await ai.current!.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: { parts: [audioPart, { text: transcriptionPrompt }] },
-          });
-          setPrompt(prev => prev + ' ' + response.text);
-          setLoading(false);
+          try {
+            const audioPart = await fileToGenerativePart(audioFile);
+            const transcriptionPrompt = "Transcribe this audio.";
+            const response = await ai.current!.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: { parts: [audioPart, { text: transcriptionPrompt }] },
+            });
+            setPrompt(prev => prev + ' ' + (response.text || ''));
+          } catch (error) {
+             console.error("Transcription error:", error);
+             const userFriendlyError = getGeminiErrorMessage(error);
+             showToast(`Transcription failed: ${userFriendlyError}`, 'error');
+          } finally {
+            setLoading(false);
+          }
         };
         mediaRecorderRef.current.start();
         setIsRecording(true);
       } catch (err) {
         console.error("Microphone access denied:", err);
-        const errorMsg = err instanceof Error ? err.message : "Microphone access denied";
-        showToast(`Microphone access is required: ${errorMsg}. Please enable it in your browser settings.`, 'error');
+        const errorMsg = getGeminiErrorMessage(err);
+        showToast(errorMsg, 'error');
         setIsRecording(false);
       }
     }
@@ -242,9 +290,13 @@ const AIAssistant: React.FC = () => {
       return;
     }
 
-    setIsLiveConversation(true);
-    if (!ai.current) return;
+    if (!ai.current) {
+      showToast("AI service not initialized.", 'error');
+      return;
+    }
 
+    setIsLiveConversation(true);
+    
     try {
       inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -253,7 +305,7 @@ const AIAssistant: React.FC = () => {
 
       sessionPromiseRef.current = ai.current.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-        config: { responseModalities: ['AUDIO'] },
+        config: { responseModalities: [Modality.AUDIO] },
         callbacks: {
           onopen: () => {
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
@@ -295,9 +347,10 @@ const AIAssistant: React.FC = () => {
               nextStartTime = 0;
             }
           },
-          onerror: (e) => {
+          onerror: (e: ErrorEvent) => {
             console.error('Live session error:', e);
             setIsLiveConversation(false);
+            showToast("Live conversation error. Connection dropped.", 'error');
           },
           onclose: () => {
             setIsLiveConversation(false);
@@ -306,19 +359,26 @@ const AIAssistant: React.FC = () => {
       });
     } catch (e) {
       console.error("Failed to start live conversation", e);
-      showToast("Could not start live conversation. Please ensure microphone access is granted.", 'error');
+      const errorMsg = getGeminiErrorMessage(e);
+      showToast(errorMsg, 'error');
       setIsLiveConversation(false);
+      
+      try {
+         inputAudioContextRef.current?.close();
+         outputAudioContextRef.current?.close();
+         liveAudioStreamRef.current?.getTracks().forEach(track => track.stop());
+      } catch { /* ignore cleanup errors on init failure */ }
     }
   }, [isLiveConversation, showToast]);
 
   const renderPart = (part: Part, index: number) => {
     if ('text' in part) {
-      return <MarkdownRenderer key={index} content={part.text} />;
+      return <MarkdownRenderer key={index} content={(part as TextPart).text} />;
     }
-    if (part.inlineData?.mimeType.startsWith('image/')) {
+    if ('inlineData' in part && part.inlineData?.mimeType.startsWith('image/')) {
       return <img key={index} src={`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`} alt="user upload" className="rounded-lg max-w-xs mt-2" />;
     }
-    if (part.inlineData?.mimeType.startsWith('video/')) {
+    if ('inlineData' in part && part.inlineData?.mimeType.startsWith('video/')) {
       return <video key={index} src={`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`} controls className="rounded-lg max-w-xs mt-2" />;
     }
     return null;

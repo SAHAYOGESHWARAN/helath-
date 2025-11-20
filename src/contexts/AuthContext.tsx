@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import { User, UserRole, Claim, Appointment, SubscriptionPlan, ProgressNote, Prescription, Message, BillingInvoice, LabOrder, Referral, InsuranceInfo, ReminderSettings, MedicalCondition, Allergy, HealthGoal, Task, Subtask, Subscription, SystemAuditLog } from '@/types';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   users: User[];
   loading: boolean;
@@ -65,7 +65,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user, setUser, setToken } = useAuthStore();
+    const { user, setUser, setToken, setLoading } = useAuthStore();
     const { 
         setUsers, 
         setAppointments, 
@@ -95,11 +95,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     console.error("Failed to verify token.", e);
                     sessionStorage.removeItem('novopath-token');
                     sessionStorage.removeItem('novopath-user');
+                    setUser(null);
+                    setToken(null);
                 }
             }
+            setLoading(false);
         };
         checkUser();
-    }, [setUser, setToken]);
+    }, [setUser, setToken, setLoading]);
 
     useEffect(() => {
         if (user) {
@@ -210,7 +213,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 export const useAuth = () => {
-    const { user, setUser, token } = useAuthStore();
+    const { user, setUser, token, isLoading } = useAuthStore();
     const {
         users,
         appointments,
@@ -473,7 +476,7 @@ export const useAuth = () => {
     return {
         user,
         users,
-        loading: !user && token === null,
+        loading: isLoading, // Use the explicit isLoading state from store
         login,
         logout,
         register,

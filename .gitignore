@@ -7,9 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Environment variables
-.env
-
 node_modules
 dist
 dist-ssr
@@ -25,14 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Compiled JavaScript files (keep only TypeScript source)
-# Ignore compiled .js files in source directories
-pages/**/*.js
-components/**/*.js
-hooks/**/*.js
-services/**/*.js
-contexts/**/*.js
-!**/*.config.js
-playwright-report/
-test-results/

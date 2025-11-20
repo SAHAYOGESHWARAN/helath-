@@ -88,6 +88,15 @@ export interface AuditLog {
   status: 'SUCCESS' | 'FAILED' | 'UNAUTHORIZED';
 }
 
+export interface EMRClientConfig {
+  cacheTTL: number;
+  retryAttempts: number;
+  retryDelay: number;
+  batchSize: number;
+  requestTimeout: number;
+  wsUrl?: string;
+}
+
 export class AdvancedEMRClient {
   private baseUrl: string;
   private apiKey: string;
@@ -103,16 +112,9 @@ export class AdvancedEMRClient {
   private requestQueue: Array<{ fn: () => Promise<APIResponse<any>>; timestamp: number }> = [];
   private rateLimitState = { requests: 0, resetTime: 0 };
   private syncState = { lastSync: 0, isSyncing: false, pendingChanges: 0 };
-  private config: {
-    cacheTTL: number;
-    retryAttempts: number;
-    retryDelay: number;
-    batchSize: number;
-    requestTimeout: number;
-    wsUrl?: string;
-  };
+  private config: EMRClientConfig;
 
-  constructor(baseUrl: string, apiKey: string, config?: Partial<typeof this.config>) {
+  constructor(baseUrl: string, apiKey: string, config?: Partial<EMRClientConfig>) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.apiKey = apiKey;
     this.config = {
@@ -811,7 +813,7 @@ export class AdvancedEMRClient {
 // Singleton instance
 let clientInstance: AdvancedEMRClient | null = null;
 
-export function getAdvancedEMRClient(baseUrl?: string, apiKey?: string, config?: Partial<AdvancedEMRClient['config']>): AdvancedEMRClient {
+export function getAdvancedEMRClient(baseUrl?: string, apiKey?: string, config?: Partial<EMRClientConfig>): AdvancedEMRClient {
   if (!clientInstance) {
     const url = baseUrl || 'https://api.emr.local/api/v1';
     const key = apiKey || '';

@@ -104,7 +104,8 @@ const PatientDashboard: React.FC = () => {
                 contents: `Please summarize this health data for the patient, ${user.name}: Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None'}. Medications: ${user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'None'}.`,
                 config: { systemInstruction }
             });
-            const text = (response && typeof response.text === 'function') ? response.text() : (response?.text ?? String(response));
+            // Fix: use response.text (property) instead of response.text() (method)
+            const text = response.text ?? String(response);
             setSummary(text as string);
     } catch (error) {
         console.error("Error generating health summary:", error);
