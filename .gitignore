@@ -34,3 +34,5 @@ hooks/**/*.js
 services/**/*.js
 contexts/**/*.js
 !**/*.config.js
+playwright-report/
+test-results/

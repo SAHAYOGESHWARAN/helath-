@@ -86,9 +86,29 @@ export const fetchAllData = async () => {
   };
 };
 
+export const apiGetUser = async (userId: string): Promise<User | null> => {
+  try {
+    const { data } = await api.get(`/emr/records/${userId}`);
+    return data;
+  } catch (error) {
+    console.error('User fetch failed:', error);
+    return null;
+  }
+};
+
 export const apiUpdateUser = async (userId: string, updatedData: Partial<User> | ((currentUser: User) => Partial<User>)): Promise<User | null> => {
   try {
-    const { data } = await api.put(`/emr/records/${userId}`, updatedData);
+    let finalData: Partial<User>;
+    if (typeof updatedData === 'function') {
+      const currentUser = await apiGetUser(userId);
+      if (!currentUser) {
+        throw new Error('User not found');
+      }
+      finalData = updatedData(currentUser);
+    } else {
+      finalData = updatedData;
+    }
+    const { data } = await api.put(`/emr/records/${userId}`, finalData);
     return data;
   } catch (error) {
     console.error('User update failed:', error);
