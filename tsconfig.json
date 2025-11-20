@@ -28,5 +28,6 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["server*.ts", "server*.cjs", "start-all-services.cjs", "api-gateway.cjs"]
 }

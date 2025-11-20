@@ -1,20 +1,18 @@
+import { WebSocketServer, WebSocket } from 'ws';
+import { URL } from 'url';
 
-/* eslint-env node */
-const WebSocket = require('ws');
-const url = require('url');
+const PORT: number = parseInt(process.env.WEBSOCKET_PORT || '8080', 10);
 
-const PORT = process.env.WEBSOCKET_PORT || 8080;
+const wss = new WebSocketServer({ port: PORT });
 
-const wss = new WebSocket.Server({ port: PORT });
-
-const clients = new Map();
+const clients = new Map<string, WebSocket>();
 
 console.log(`WebSocket server running on port ${PORT}`);
 
-wss.on('connection', (ws, req) => {
-    const parameters = new url.URLSearchParams(url.parse(req.url).search);
-    const id = parameters.get('id');
-    const token = parameters.get('token');
+wss.on('connection', (ws: WebSocket, req: { url?: string }) => {
+    const urlObj = new URL(req.url || '', 'http://localhost');
+    const id = urlObj.searchParams.get('id');
+    const token = urlObj.searchParams.get('token');
 
     if (!id || !token || !token.startsWith('demo-jwt-')) {
         console.warn('Connection attempt without valid ID or token. Closing.');
@@ -25,11 +23,11 @@ wss.on('connection', (ws, req) => {
     clients.set(id, ws);
     console.log(`Client connected: ${id}`);
 
-    ws.on('message', (message) => {
+    ws.on('message', (message: WebSocket.RawData) => {
         let parsedMessage;
         try {
-            parsedMessage = JSON.parse(message);
-        } catch (error) {
+            parsedMessage = JSON.parse(message.toString());
+        } catch {
             console.error('Failed to parse message:', message);
             return;
         }
@@ -59,7 +57,7 @@ wss.on('connection', (ws, req) => {
         console.log(`Client disconnected: ${id}`);
     });
 
-    ws.on('error', (error) => {
+    ws.on('error', (error: Error) => {
         console.error(`WebSocket error for client ${id}:`, error);
         clients.delete(id);
     });

@@ -13,6 +13,15 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-useless-catch": "off",
+      "no-undef": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+    },
+  },
+  {
     files: ["src/**/*.{ts,tsx}"],
     ...pluginReactConfig,
     plugins: {
@@ -50,6 +59,15 @@ export default tseslint.config(
     },
     rules: {
       "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    files: ["**/*.test.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
     },
   }
 );

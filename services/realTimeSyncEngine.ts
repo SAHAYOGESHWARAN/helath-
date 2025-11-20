@@ -3,7 +3,7 @@
  * Features: WebSocket sync, offline support, change detection, conflict resolution, local storage
  */
 
-import { AdvancedEMRClient, type RealTimeEvent } from './advancedEMRClient';
+import { AdvancedEMRClient, type RealTimeEvent } from '../src/services/advancedEMRClient';
 import type { APIResponse } from '../src/types';
 
 export interface SyncConfig {

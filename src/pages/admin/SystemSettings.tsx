@@ -19,8 +19,8 @@ const SystemSettings: React.FC = () => {
         setApiKeys({ ...apiKeys, [e.target.name]: e.target.value });
     };
 
-     const handleFlagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFeatureFlags({ ...featureFlags, [e.target.name]: e.target.checked });
+     const handleFlagChange = (checked: boolean, name: string) => {
+        setFeatureFlags({ ...featureFlags, [name]: checked });
     };
 
     return (
@@ -50,15 +50,15 @@ const SystemSettings: React.FC = () => {
                      <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-900">Enable AI Health Assistant</span>
-                            <ToggleSwitch name="aiAssistant" checked={featureFlags.aiAssistant} onChange={handleFlagChange} />
+                            <ToggleSwitch name="aiAssistant" checked={featureFlags.aiAssistant} onChange={(checked) => handleFlagChange(checked, 'aiAssistant')} />
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-900">Enable Video Consultations</span>
-                            <ToggleSwitch name="videoConsults" checked={featureFlags.videoConsults} onChange={handleFlagChange} />
+                            <ToggleSwitch name="videoConsults" checked={featureFlags.videoConsults} onChange={(checked) => handleFlagChange(checked, 'videoConsults')} />
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-900">Enable Patient Subscriptions</span>
-                             <ToggleSwitch name="patientSubscriptions" checked={featureFlags.patientSubscriptions} onChange={handleFlagChange} />
+                             <ToggleSwitch name="patientSubscriptions" checked={featureFlags.patientSubscriptions} onChange={(checked) => handleFlagChange(checked, 'patientSubscriptions')} />
                         </div>
                     </div>
                 </Card>

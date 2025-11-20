@@ -33,8 +33,7 @@ const NotificationsTab: React.FC = () => {
     
     if (!settings) return null;
 
-    const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = e.target;
+    const handleNotificationChange = (checked: boolean, name: string) => {
         setSettings(prev => ({ ...prev!, [name]: checked }));
     };
 
@@ -64,7 +63,7 @@ const NotificationsTab: React.FC = () => {
                     <h3 className="font-semibold text-gray-800 mb-2">SMS Notifications</h3>
                     <div className="flex items-center justify-between">
                         <p className={`text-sm ${!hasPhoneForSms ? 'text-gray-400' : 'text-gray-600'}`}>New messages</p>
-                        <ToggleSwitch name="smsMessages" checked={settings.smsMessages && hasPhoneForSms} onChange={handleNotificationChange} disabled={!hasPhoneForSms}/>
+                        <ToggleSwitch name="smsMessages" checked={settings.smsMessages && hasPhoneForSms} onChange={(checked) => handleNotificationChange(checked, 'smsMessages')} disabled={!hasPhoneForSms}/>
                     </div>
                     {!hasPhoneForSms && <p className="text-xs text-gray-500 mt-2">Please add a phone number to your <a href="#/profile" className="text-primary-600 underline">profile</a> to enable SMS notifications.</p>}
                 </div>
@@ -131,7 +130,7 @@ const SecurityTab: React.FC = () => {
                         <p className="font-medium text-gray-700">Enable 2FA</p>
                         <p className="text-sm text-gray-500">Add an extra layer of security to your account. (Coming soon)</p>
                      </div>
-                     <ToggleSwitch name="2fa" checked={false} onChange={() => {}} disabled />
+                     <ToggleSwitch name="2fa" checked={false} onChange={(checked, name) => {}} disabled />
                  </div>
             </Card>
         </div>

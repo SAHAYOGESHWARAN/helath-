@@ -3,7 +3,11 @@
  * Features: Real-time sync, WebSocket, batch operations, caching, retry logic, FHIR, analytics
  */
 
-import type { APIResponse, EMRConfig } from '../src/types';
+import type { APIResponse, EMRConfig } from '../types';
+
+// Type aliases for function types to satisfy linter
+type EventCallback = (data?: unknown) => void;
+type UnsubscribeFunction = () => void;
 
 // Types for advanced features
 export interface RealTimeEvent {
@@ -93,10 +97,10 @@ export class AdvancedEMRClient {
   private wsReconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 10;
   private reconnectDelay: number = 5000;
-  private eventListeners: Map<string, Function[]> = new Map();
+  private eventListeners: Map<string, Array<EventCallback>> = new Map();
   private pendingBatches: Map<string, BatchOperation> = new Map();
   private conflicts: Map<string, ConflictResolution> = new Map();
-  private requestQueue: Array<{ fn: Function; timestamp: number }> = [];
+  private requestQueue: Array<{ fn: () => Promise<APIResponse<any>>; timestamp: number }> = [];
   private rateLimitState = { requests: 0, resetTime: 0 };
   private syncState = { lastSync: 0, isSyncing: false, pendingChanges: 0 };
   private config: {
@@ -489,7 +493,7 @@ export class AdvancedEMRClient {
     this.handleConflictDetection(event);
   }
 
-  subscribeToEvents(eventType: string, callback: (event: RealTimeEvent) => void): () => void {
+  subscribeToEvents(eventType: string, callback: EventCallback): UnsubscribeFunction {
     if (!this.eventListeners.has(eventType)) {
       this.eventListeners.set(eventType, []);
     }
@@ -807,7 +811,7 @@ export class AdvancedEMRClient {
 // Singleton instance
 let clientInstance: AdvancedEMRClient | null = null;
 
-export function getAdvancedEMRClient(baseUrl?: string, apiKey?: string, config?: any): AdvancedEMRClient {
+export function getAdvancedEMRClient(baseUrl?: string, apiKey?: string, config?: Partial<AdvancedEMRClient['config']>): AdvancedEMRClient {
   if (!clientInstance) {
     const url = baseUrl || 'https://api.emr.local/api/v1';
     const key = apiKey || '';

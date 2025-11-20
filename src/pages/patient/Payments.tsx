@@ -97,41 +97,13 @@ const ReceiptModal: React.FC<{ invoice: BillingInvoice | null; onClose: () => vo
 
 
 const CheckoutForm: React.FC<{ currentBalance: number; dueInvoices: BillingInvoice[] }> = ({ currentBalance, dueInvoices }) => {
-    const stripe = useStripe();
-    const elements = useElements();
     const { makePayment } = useAuth();
     const { showToast } = useApp();
 
     const handleSubmit = async (values: { nameOnCard: string; amount: string; }, setSubmitting: (isSubmitting: boolean) => void) => {
-        if (!stripe || !elements) {
-            return;
-        }
-
-        const cardElement = elements.getElement(CardElement);
-        if (!cardElement) return;
-
         setSubmitting(true);
 
         try {
-            const { data: { clientSecret } } = await axios.post('/api/create-payment-intent', {
-                amount: Math.round(parseFloat(values.amount) * 100), // amount in cents
-            });
-
-            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: {
-                    card: cardElement,
-                    billing_details: {
-                        name: values.nameOnCard,
-                    },
-                },
-            });
-
-            if (error) {
-                showToast(error.message || 'An error occurred.', 'error');
-                setSubmitting(false);
-                return;
-            }
-
             // Find the most overdue invoice to apply the payment to
             const sortedDueInvoices = [...dueInvoices].sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
             if (sortedDueInvoices.length > 0) {
@@ -264,7 +236,7 @@ const Payments: React.FC = () => {
                        <p className="font-medium text-gray-700">Enable Auto-Pay</p>
                        <p className="text-sm text-gray-500">Automatically pay your balance on the due date.</p>
                     </div>
-                    <ToggleSwitch name="autoPay" checked={autoPay} onChange={() => setAutoPay(p => !p)} />
+                    <ToggleSwitch name="autoPay" checked={autoPay} onChange={(checked, name) => setAutoPay(checked)} />
                </div>
            </Card>
         </div>

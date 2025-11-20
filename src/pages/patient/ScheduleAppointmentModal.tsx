@@ -160,7 +160,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({ isO
                     <div className="border-t pt-4">
                         <div className="flex items-center justify-between">
                             <label className="font-medium text-gray-700">Set Appointment Reminders</label>
-                            <ToggleSwitch name="remindersEnabled" checked={formData.reminders.enabled} onChange={e => setFormData(f => ({...f, reminders: {...f.reminders, enabled: e.target.checked}}))} />
+                            <ToggleSwitch name="remindersEnabled" checked={formData.reminders.enabled} onChange={(checked, name) => setFormData(f => ({...f, reminders: {...f.reminders, enabled: checked}}))} />
                         </div>
                         {formData.reminders.enabled && (
                             <div className="mt-4 space-y-3 pl-4 border-l-2 animate-fade-in">

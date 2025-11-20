@@ -62,8 +62,8 @@ const NotificationsTab: React.FC = () => {
     const { showToast } = useApp();
     const [settings, setSettings] = useState(user?.notificationSettings || { emailAppointments: true, emailBilling: true, emailMessages: true, smsMessages: false, pushAll: false });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSettings(prev => ({...prev!, [e.target.name]: e.target.checked}));
+    const handleChange = (checked: boolean, name: string) => {
+        setSettings(prev => ({...prev!, [name]: checked}));
     };
 
     const handleSave = () => {
@@ -75,10 +75,10 @@ const NotificationsTab: React.FC = () => {
     return (
         <div className="space-y-4">
             <h4 className="font-semibold">Email</h4>
-            <div className="flex justify-between items-center"><p>New messages</p><ToggleSwitch name="emailMessages" checked={settings.emailMessages} onChange={handleChange} /></div>
-            <div className="flex justify-between items-center"><p>New appointment requests</p><ToggleSwitch name="emailAppointments" checked={settings.emailAppointments} onChange={handleChange} /></div>
+            <div className="flex justify-between items-center"><p>New messages</p><ToggleSwitch name="emailMessages" checked={settings.emailMessages} onChange={(checked) => handleChange(checked, 'emailMessages')} /></div>
+            <div className="flex justify-between items-center"><p>New appointment requests</p><ToggleSwitch name="emailAppointments" checked={settings.emailAppointments} onChange={(checked) => handleChange(checked, 'emailAppointments')} /></div>
             <h4 className="font-semibold pt-4 border-t">SMS</h4>
-            <div className="flex justify-between items-center"><p>New messages</p><ToggleSwitch name="smsMessages" checked={settings.smsMessages} onChange={handleChange} disabled={!user?.phone} /></div>
+            <div className="flex justify-between items-center"><p>New messages</p><ToggleSwitch name="smsMessages" checked={settings.smsMessages} onChange={(checked) => handleChange(checked, 'smsMessages')} disabled={!user?.phone} /></div>
             {!user?.phone && <p className="text-xs text-gray-500">Add a phone number to your profile to enable SMS.</p>}
              <div className="text-right pt-4 border-t">
                 <button onClick={handleSave} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg">Save Notifications</button>
