@@ -815,8 +815,9 @@ let clientInstance: AdvancedEMRClient | null = null;
 
 export function getAdvancedEMRClient(baseUrl?: string, apiKey?: string, config?: Partial<EMRClientConfig>): AdvancedEMRClient {
   if (!clientInstance) {
-    const url = baseUrl || 'https://api.emr.local/api/v1';
-    const key = apiKey || '';
+    // Use import.meta.env for Vite environment variables, fallback to defaults
+    const url = baseUrl || (import.meta as any).env.VITE_EMR_API_URL || 'https://api.emr.local/api/v1';
+    const key = apiKey || (import.meta as any).env.VITE_EMR_API_KEY || '';
     clientInstance = new AdvancedEMRClient(url, key, config);
   }
   return clientInstance;

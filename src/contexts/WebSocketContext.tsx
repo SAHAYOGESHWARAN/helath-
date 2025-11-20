@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { socketService } from '@/services/socketService';
 import { useAuthStore } from '@/stores/authStore';
 import { useWebSocketStore } from '@/stores/webSocketStore';

@@ -17,6 +17,7 @@ import WelcomePage from '@/pages/WelcomePage';
 import FeaturesPage from '@/pages/FeaturesPage';
 import TestimonialsPage from '@/pages/TestimonialsPage';
 import ForProvidersPage from '@/pages/ForProvidersPage';
+import { EMRProvider } from '@/hooks/useAdvancedEMR';
 
 
 const AppRoutes: React.FC = () => {
@@ -72,12 +73,17 @@ function App() {
   console.log("Rendering App component");
   return (
     <AuthProvider>
-      <WebSocketController />
-      <NotificationProvider>
-        <HashRouter>
-          <AppRoutes />
-        </HashRouter>
-      </NotificationProvider>
+      <EMRProvider
+        baseUrl={(import.meta as any).env.VITE_EMR_API_URL}
+        apiKey={(import.meta as any).env.VITE_EMR_API_KEY}
+      >
+        <WebSocketController />
+        <NotificationProvider>
+          <HashRouter>
+            <AppRoutes />
+          </HashRouter>
+        </NotificationProvider>
+      </EMRProvider>
     </AuthProvider>
   );
 }

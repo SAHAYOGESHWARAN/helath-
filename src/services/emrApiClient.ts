@@ -78,8 +78,8 @@ export class EMRAPIClient {
 
   constructor(config: EMRAPIConfig) {
     this.config = {
-      baseUrl: config.baseUrl || process.env.VITE_EMR_API_URL || 'https://emr-api.example.com/api/v1',
-      apiKey: config.apiKey || process.env.VITE_EMR_API_KEY || '',
+      baseUrl: config.baseUrl || (import.meta as any).env.VITE_EMR_API_URL || 'https://emr-api.example.com/api/v1',
+      apiKey: config.apiKey || (import.meta as any).env.VITE_EMR_API_KEY || '',
       timeout: config.timeout || 30000,
       retryAttempts: config.retryAttempts || 3,
       enableCaching: config.enableCaching ?? true,

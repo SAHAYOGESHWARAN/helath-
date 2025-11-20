@@ -18,7 +18,7 @@ export default defineConfig(() => {
     plugins: [react()],
     resolve: {
       alias: {
-        '@': path.resolve(process.cwd(), './src'),
+        '@': path.resolve((process as any).cwd(), './src'),
       },
     },
     build: {

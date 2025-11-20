@@ -166,7 +166,7 @@ export class APIKeyManager {
     static getAPIKey(): string | null {
         // Priority: Environment variable > Session storage > null
         return (
-            process.env.VITE_EMR_API_KEY ||
+            (import.meta as any).env.VITE_EMR_API_KEY ||
             this.getActiveAPIKey() ||
             null
         );
@@ -174,4 +174,3 @@ export class APIKeyManager {
 }
 
 export default APIKeyManager;
-

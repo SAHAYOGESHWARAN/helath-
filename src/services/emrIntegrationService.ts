@@ -25,8 +25,8 @@ export interface EMRIntegrationService {
 
 export function getEMRIntegrationService(): EMRIntegrationService {
   // Create a client using environment configuration; if not provided, fall back to a light-weight mock implementation.
-  const baseUrl = process.env.VITE_EMR_API_URL || '';
-  const apiKey = process.env.VITE_EMR_API_KEY || '';
+  const baseUrl = (import.meta as any).env.VITE_EMR_API_URL || '';
+  const apiKey = (import.meta as any).env.VITE_EMR_API_KEY || '';
 
   let client: EMRAPIClient | null = null;
   if (baseUrl && apiKey) {

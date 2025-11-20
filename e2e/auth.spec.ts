@@ -1,3 +1,4 @@
+
 import { test, expect } from '@playwright/test';
 
 test.describe('Auth Flows', () => {
@@ -14,20 +15,30 @@ test.describe('Auth Flows', () => {
     await page.waitForURL('**/patient/dashboard');
     await expect(page).toHaveURL(/.*patient\/dashboard/);
 
-    await page.click('button:has-text("Logout")');
+    // Use title attribute for the sidebar logout button which is visible
+    await page.click('button[title="Logout"]');
     await expect(page).toHaveURL('/login');
   });
 
-  test('should allow a user to register', async ({ page }) => {
+  test('should allow a patient to register', async ({ page }) => {
     await page.goto('/register');
-    await page.click('a:has-text("Patient")');
+    // Click the "Create Patient Account" button in the "For Patients" card
+    await page.click('a[href="/register/patient"]');
 
-    await page.fill('input[name="firstName"]', 'John');
-    await page.fill('input[name="lastName"]', 'Doe');
-    await page.fill('input[name="email"]', 'john.doe@email.com');
+    await page.waitForURL('**/register/patient');
+
+    const timestamp = Date.now();
+    await page.fill('input[name="name"]', 'Test Patient');
+    await page.fill('input[name="email"]', `test.patient.${timestamp}@example.com`);
+    await page.fill('input[name="dob"]', '1990-01-01');
+    await page.selectOption('select[name="state"]', 'California');
     await page.fill('input[name="password"]', 'Password123!');
+    await page.fill('input[name="confirmPassword"]', 'Password123!');
+    
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL('/patient/dashboard');
+    await page.waitForURL('**/patient/dashboard');
+    await expect(page).toHaveURL(/.*patient\/dashboard/);
+    await expect(page.locator('h1')).toContainText('Welcome back, Test');
   });
 });

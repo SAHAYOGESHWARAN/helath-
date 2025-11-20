@@ -1,3 +1,4 @@
+
 /* eslint-disable react-refresh/only-export-components */
 import React, { ReactNode, useCallback, useEffect, useMemo, createContext } from 'react';
 import * as api from '@/services/apiService';
@@ -84,23 +85,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } = useAppStore();
 
     useEffect(() => {
-        const checkUser = async () => {
-            const token = sessionStorage.getItem('novopath-token');
-            if (token) {
-                try {
-                    const { user } = await api.apiVerifyToken(token);
-                    setUser(user);
-                    setToken(token);
-                } catch (e) {
-                    console.error("Failed to verify token.", e);
-                    sessionStorage.removeItem('novopath-token');
-                    sessionStorage.removeItem('novopath-user');
-                    setUser(null);
-                    setToken(null);
-                }
-            }
+        const token = sessionStorage.getItem('novopath-token');
+        if (!token) {
             setLoading(false);
+            return;
+        }
+
+        const checkUser = async () => {
+            try {
+                const { user } = await api.apiVerifyToken(token);
+                setUser(user);
+                setToken(token);
+            } catch (e) {
+                console.error("Failed to verify token.", e);
+                sessionStorage.removeItem('novopath-token');
+                sessionStorage.removeItem('novopath-user');
+                setUser(null);
+                setToken(null);
+            } finally {
+                setLoading(false);
+            }
         };
+
         checkUser();
     }, [setUser, setToken, setLoading]);
 
