@@ -1,39 +1,89 @@
 const { docClient, PutCommand, GetCommand, UpdateCommand, DeleteCommand, ScanCommand } = require('../db');
+const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 
 class User {
-  static async create(userData) {
+  constructor(userData) {
+    this.id = userData.id || uuidv4();
+    this.email = userData.email;
+    this.password = userData.password;
+    this.role = userData.role;
+    this.name = userData.name;
+    this.avatarUrl = userData.avatarUrl;
+    this.dob = userData.dob;
+    this.phone = userData.phone;
+    this.address = userData.address;
+    this.state = userData.state;
+    this.status = userData.status;
+    this.createdAt = userData.createdAt || new Date().toISOString();
+    this.conditions = userData.conditions || [];
+    this.allergies = userData.allergies || [];
+    this.medications = userData.medications || [];
+    this.vitals = userData.vitals || [];
+    this.labResults = userData.labResults || [];
+    this.healthGoals = userData.healthGoals || [];
+    this.tasks = userData.tasks || [];
+    this.subscription = userData.subscription;
+    this.insurance = userData.insurance;
+    this.notificationSettings = userData.notificationSettings;
+    this.specialty = userData.specialty;
+    this.licenseNumber = userData.licenseNumber;
+    this.isVerified = userData.isVerified;
+  }
+
+  async save() {
+    // Hash password before saving
+    if (this.password && !this.password.startsWith('$2b$')) {
+      this.password = await bcrypt.hash(this.password, 10);
+    }
+
     const params = {
       TableName: 'users',
       Item: {
-        id: userData.id,
-        email: userData.email,
-        password: userData.password,
-        role: userData.role,
-        name: userData.name,
-        avatarUrl: userData.avatarUrl,
-        dob: userData.dob,
-        phone: userData.phone,
-        address: userData.address,
-        state: userData.state,
-        status: userData.status,
-        createdAt: userData.createdAt,
-        conditions: userData.conditions || [],
-        allergies: userData.allergies || [],
-        medications: userData.medications || [],
-        vitals: userData.vitals || [],
-        labResults: userData.labResults || [],
-        healthGoals: userData.healthGoals || [],
-        tasks: userData.tasks || [],
-        subscription: userData.subscription,
-        insurance: userData.insurance,
-        notificationSettings: userData.notificationSettings,
-        specialty: userData.specialty,
-        licenseNumber: userData.licenseNumber,
-        isVerified: userData.isVerified,
+        id: this.id,
+        email: this.email,
+        password: this.password,
+        role: this.role,
+        name: this.name,
+        avatarUrl: this.avatarUrl,
+        dob: this.dob,
+        phone: this.phone,
+        address: this.address,
+        state: this.state,
+        status: this.status,
+        createdAt: this.createdAt,
+        conditions: this.conditions || [],
+        allergies: this.allergies || [],
+        medications: this.medications || [],
+        vitals: this.vitals || [],
+        labResults: this.labResults || [],
+        healthGoals: this.healthGoals || [],
+        tasks: this.tasks || [],
+        subscription: this.subscription,
+        insurance: this.insurance,
+        notificationSettings: this.notificationSettings,
+        specialty: this.specialty,
+        licenseNumber: this.licenseNumber,
+        isVerified: this.isVerified,
       },
     };
     await docClient.send(new PutCommand(params));
-    return userData;
+    return this;
+  }
+
+  async comparePassword(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+  }
+
+  toJSON() {
+    const { password, ...userWithoutPassword } = this;
+    return userWithoutPassword;
+  }
+
+  static async create(userData) {
+    const user = new User(userData);
+    await user.save();
+    return user;
   }
 
   static async findById(id) {
