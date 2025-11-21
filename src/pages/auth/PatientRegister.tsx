@@ -113,11 +113,11 @@ const PatientRegister: React.FC = () => {
                      <fieldset className="space-y-5 pt-4">
                         <legend className="text-sm font-semibold text-gray-500 mb-2">Personal Information</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField name="dob" type="date" label="Date of Birth" icon={<CalendarIcon className="w-5 h-5" />} error={errors.dob} touched={touched.dob} />
-                            <FormField name="state" as="select" type="" label="State" icon={<MapPinIcon className="w-5 h-5" />} error={errors.state} touched={touched.state}>
-                                <option value="">Select State</option>
-                                {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                            </FormField>
+                        <FormField name="dob" type="date" label="Date of Birth" icon={<CalendarIcon className="w-5 h-5" />} error={errors.dob} touched={touched.dob} />
+                        <FormField name="state" as="select" type="" label="State" icon={<MapPinIcon className="w-5 h-5" />} error={errors.state} touched={touched.state}>
+                            <option value="">Select State</option>
+                            {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </FormField>
                         </div>
                     </fieldset>
                     

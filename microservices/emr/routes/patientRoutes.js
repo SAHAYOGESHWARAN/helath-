@@ -1,5 +1,5 @@
 const express = require('express');
-const { createPatient, getPatients, getPatientById, updatePatient, deletePatient } = require('../controllers/patientController');
+const { createPatient, getAllPatients, getPatients, getPatientById, updatePatient, deletePatient } = require('../controllers/patientController');
 const { protect } = require('../middleware/auth'); // We will create this middleware next
 const router = express.Router();
 
