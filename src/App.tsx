@@ -18,7 +18,7 @@ import WelcomePage from '@/pages/WelcomePage';
 import FeaturesPage from '@/pages/FeaturesPage';
 import TestimonialsPage from '@/pages/TestimonialsPage';
 import ForProvidersPage from '@/pages/ForProvidersPage';
-import { EMRProvider } from '@/hooks/useAdvancedEMR';
+import { EMRProvider } from './hooks/useAdvancedEMR';
 
 
 const AppRoutes: React.FC = () => {

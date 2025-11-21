@@ -3,7 +3,7 @@
  * Includes: Search, Analytics, Reporting, Workflows, Notifications, AI/ML, Scheduling, etc.
  */
 
-import { AdvancedEMRClient } from '../src/services/advancedEMRClient';
+import { AdvancedEMRClient } from './advancedEMRClient';
 
 // ============================================================================
 // SEARCH & FILTERING (15+ Features)
