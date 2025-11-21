@@ -1,14 +1,24 @@
-const { Pool } = require('pg');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand, DeleteCommand, ScanCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
 require('dotenv').config();
 
-const pool = new Pool({
-  user: process.env.POSTGRES_USER || 'user',
-  host: process.env.POSTGRES_HOST || 'localhost',
-  database: process.env.POSTGRES_DB || 'emr',
-  password: process.env.POSTGRES_PASSWORD || 'password',
-  port: process.env.POSTGRES_PORT || 5432,
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000', // For local DynamoDB
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+  },
 });
 
+const docClient = DynamoDBDocumentClient.from(client);
+
 module.exports = {
-  query: (text, params) => pool.query(text, params),
+  docClient,
+  PutCommand,
+  GetCommand,
+  UpdateCommand,
+  DeleteCommand,
+  ScanCommand,
+  QueryCommand,
 };

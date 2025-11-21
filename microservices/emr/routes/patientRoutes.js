@@ -3,7 +3,7 @@ const { createPatient, getPatients, getPatientById, updatePatient, deletePatient
 const { protect } = require('../middleware/auth'); // We will create this middleware next
 const router = express.Router();
 
-router.post('/', protect(['admin']), createPatient);
+router.post('/:user_id', protect(['admin']), createPatient);
 router.get('/', protect(['admin', 'provider']), getPatients);
 router.get('/:id', protect(['admin', 'provider', 'patient']), getPatientById);
 router.put('/:id', protect(['admin']), updatePatient);

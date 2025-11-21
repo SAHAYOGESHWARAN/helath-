@@ -14,7 +14,7 @@ app.use(cors());
 const PORT = process.env.AUTH_SERVICE_PORT;
 const JWT_SECRET = process.env.JWT_SECRET; // Secret for JWT signing
 
-// Simple in-memory user store for demonstration
+// TODO: Replace with a persistent database
 const users = []; // In a real application, this would be a database
 
 // Utility function to generate a JWT token

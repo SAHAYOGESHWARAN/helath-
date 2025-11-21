@@ -1,19 +1,31 @@
-const db = require('../db');
+const User = require('../models/User');
 
 const createPatient = async (req, res) => {
     try {
-        const { email, password, role, first_name, last_name, phone_number, date_of_birth, gender } = req.body;
-        if (!email || !password || !role) {
-            return res.status(400).json({ error: 'Email, password, and role are required' });
+        const { user_id } = req.params;
+        const { first_name, last_name, phone_number, date_of_birth, gender, address, insurance, health_goals, conditions, allergies } = req.body;
+
+        // Find existing user
+        const existingUser = await User.findById(user_id);
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
         }
-        const query = `
-            INSERT INTO users (email, password, role, first_name, last_name, phone_number, date_of_birth, gender)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id, email, role, first_name, last_name, phone_number, date_of_birth, gender, created_at
-        `;
-        const values = [email, password, role, first_name, last_name, phone_number, date_of_birth, gender];
-        const result = await db.query(query, values);
-        res.status(201).json(result.rows[0]);
+
+        // Update user with patient details
+        const updateData = {
+            name: `${first_name} ${last_name}`,
+            phone: phone_number,
+            dob: date_of_birth,
+            gender,
+            address,
+            insurance,
+            healthGoals: health_goals,
+            conditions,
+            allergies,
+        };
+
+        const updatedUser = await User.update(user_id, updateData);
+        res.status(201).json(updatedUser);
     } catch (error) {
         console.error('Error creating patient:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -22,9 +34,8 @@ const createPatient = async (req, res) => {
 
 const getPatients = async (req, res) => {
     try {
-        const query = 'SELECT id, email, role, first_name, last_name, phone_number, date_of_birth, gender, created_at FROM users WHERE role = $1';
-        const result = await db.query(query, ['patient']);
-        res.json(result.rows);
+        const patients = await User.findAllByRole('PATIENT');
+        res.json(patients);
     } catch (error) {
         console.error('Error fetching patients:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -34,12 +45,11 @@ const getPatients = async (req, res) => {
 const getPatientById = async (req, res) => {
     try {
         const { id } = req.params;
-        const query = 'SELECT id, email, role, first_name, last_name, phone_number, date_of_birth, gender, address, insurance, health_goals, conditions, allergies, created_at FROM users WHERE id = $1 AND role = $2';
-        const result = await db.query(query, [id, 'patient']);
-        if (result.rows.length === 0) {
+        const patient = await User.findById(id);
+        if (!patient || patient.role !== 'PATIENT') {
             return res.status(404).json({ error: 'Patient not found' });
         }
-        res.json(result.rows[0]);
+        res.json(patient);
     } catch (error) {
         console.error('Error fetching patient:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -50,18 +60,26 @@ const updatePatient = async (req, res) => {
     try {
         const { id } = req.params;
         const { first_name, last_name, phone_number, date_of_birth, gender, address, insurance, health_goals, conditions, allergies } = req.body;
-        const query = `
-            UPDATE users
-            SET first_name = $1, last_name = $2, phone_number = $3, date_of_birth = $4, gender = $5, address = $6, insurance = $7, health_goals = $8, conditions = $9, allergies = $10, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $11 AND role = $12
-            RETURNING id, email, role, first_name, last_name, phone_number, date_of_birth, gender, address, insurance, health_goals, conditions, allergies, updated_at
-        `;
-        const values = [first_name, last_name, phone_number, date_of_birth, gender, address, insurance, health_goals, conditions, allergies, id, 'patient'];
-        const result = await db.query(query, values);
-        if (result.rows.length === 0) {
+
+        const patient = await User.findById(id);
+        if (!patient || patient.role !== 'PATIENT') {
             return res.status(404).json({ error: 'Patient not found' });
         }
-        res.json(result.rows[0]);
+
+        const updateData = {
+            name: first_name && last_name ? `${first_name} ${last_name}` : patient.name,
+            phone: phone_number || patient.phone,
+            dob: date_of_birth || patient.dob,
+            gender: gender || patient.gender,
+            address: address || patient.address,
+            insurance: insurance || patient.insurance,
+            healthGoals: health_goals || patient.healthGoals,
+            conditions: conditions || patient.conditions,
+            allergies: allergies || patient.allergies,
+        };
+
+        const updatedPatient = await User.update(id, updateData);
+        res.json(updatedPatient);
     } catch (error) {
         console.error('Error updating patient:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -71,11 +89,12 @@ const updatePatient = async (req, res) => {
 const deletePatient = async (req, res) => {
     try {
         const { id } = req.params;
-        const query = 'DELETE FROM users WHERE id = $1 AND role = $2 RETURNING id';
-        const result = await db.query(query, [id, 'patient']);
-        if (result.rows.length === 0) {
+        const patient = await User.findById(id);
+        if (!patient || patient.role !== 'PATIENT') {
             return res.status(404).json({ error: 'Patient not found' });
         }
+
+        await User.delete(id);
         res.json({ message: 'Patient deleted successfully' });
     } catch (error) {
         console.error('Error deleting patient:', error);
