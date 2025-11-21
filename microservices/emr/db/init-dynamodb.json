@@ -1,0 +1,762 @@
+[
+  {
+    "TableName": "users",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "email",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "role",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "email-index",
+        "KeySchema": [
+          {
+            "AttributeName": "email",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "role-index",
+        "KeySchema": [
+          {
+            "AttributeName": "role",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "appointments",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "provider_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "date",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "provider-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "provider_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "claims",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "service_date",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "service_date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "service_date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "billing_invoices",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "date",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "progress_notes",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "provider_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "date",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "provider-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "provider_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "prescriptions",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "date_prescribed",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date_prescribed",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date_prescribed",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "messages",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "sender_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "receiver_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "timestamp",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "sender-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "sender_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "timestamp",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "receiver-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "receiver_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "timestamp",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "lab_orders",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "provider_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "date",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "provider-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "provider_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "referrals",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "patient_id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "sent_date",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "status",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "type",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "urgency",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "patient-id-index",
+        "KeySchema": [
+          {
+            "AttributeName": "patient_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "sent_date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "status-index",
+        "KeySchema": [
+          {
+            "AttributeName": "status",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "sent_date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "type-index",
+        "KeySchema": [
+          {
+            "AttributeName": "type",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "urgency",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  {
+    "TableName": "migrations",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "migration_name",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "executed_at",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "migration-name-index",
+        "KeySchema": [
+          {
+            "AttributeName": "migration_name",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  }
+]

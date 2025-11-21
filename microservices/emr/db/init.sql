@@ -138,4 +138,10 @@ CREATE TABLE IF NOT EXISTS referrals (
     audit_log JSONB
 );
 
+CREATE TABLE IF NOT EXISTS migrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    migration_name VARCHAR(255) NOT NULL,
+    executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 

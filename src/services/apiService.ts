@@ -89,7 +89,7 @@ export const fetchAllData = async () => {
 
 export const apiGetUser = async (userId: string): Promise<User | null> => {
   try {
-    const { data } = await api.get(`/emr/records/${userId}`);
+    const { data } = await api.get(`/emr/auth/user/${userId}`);
     return data;
   } catch (error) {
     console.error('User fetch failed:', error);
