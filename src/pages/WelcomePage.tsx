@@ -13,15 +13,19 @@ import {
     CheckCircleIcon,
 } from '@/components/shared/Icons';
 
-const useOnScreen = (options: IntersectionObserverInit) => {
+const useOnScreen = (options: IntersectionObserverInit, initialVisibility: boolean = false) => {
     const ref = useRef<HTMLDivElement>(null);
-    // Default to true to avoid flash of invisible content if JS/Observer fails
-    const [isVisible, setIsVisible] = useState(true); 
+    const [isVisible, setIsVisible] = useState(initialVisibility);
 
     useEffect(() => {
+        if (initialVisibility) return;
+
+        // Fallback to ensure content becomes visible eventually even if observer fails
+        const safetyTimer = setTimeout(() => setIsVisible(true), 500);
+
         if (typeof IntersectionObserver === 'undefined') {
             setIsVisible(true);
-            return;
+            return () => clearTimeout(safetyTimer);
         }
 
         const observer = new IntersectionObserver(([entry]) => {
@@ -33,23 +37,22 @@ const useOnScreen = (options: IntersectionObserverInit) => {
         
         const currentRef = ref.current;
         if (currentRef) {
-            // Initially set to false only if we can observe it
-            setIsVisible(false);
             observer.observe(currentRef);
         }
 
         return () => {
+            clearTimeout(safetyTimer);
             if (currentRef) {
                 observer.unobserve(currentRef);
             }
         };
-    }, [ref, options]);
+    }, [ref, options, initialVisibility]);
 
     return [ref, isVisible] as const;
 };
 
-const AnimatedSection: React.FC<{children: React.ReactNode, className?: string}> = ({ children, className }) => {
-    const [ref, isVisible] = useOnScreen({ threshold: 0.1 });
+const AnimatedSection: React.FC<{children: React.ReactNode, className?: string, immediate?: boolean}> = ({ children, className, immediate = false }) => {
+    const [ref, isVisible] = useOnScreen({ threshold: 0.1 }, immediate);
     return (
         <div ref={ref} className={`transition-all duration-1000 ease-in-out ${className} ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             {children}
@@ -150,7 +153,7 @@ const WelcomePage: React.FC = () => {
             <div className="absolute bottom-1/2 left-1/4 w-48 h-48 bg-primary-200 rounded-full opacity-20 animate-[floating_18s_ease-in-out_infinite_1s]"></div>
 
             <div className="container mx-auto px-6 relative z-10">
-                <AnimatedSection>
+                <AnimatedSection immediate={true}>
                     <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight gradient-text text-gray-900">
                         Intelligent Healthcare,
                         <br />
