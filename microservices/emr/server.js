@@ -26,7 +26,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes); // Use patient routes
 app.get('/health', async (req, res) => {
     try {
-        await db.query('SELECT NOW()');
+        // Simple DynamoDB health check
+        const { ScanCommand } = require('./db');
+        await db.docClient.send(new ScanCommand({ TableName: 'users', Limit: 1 }));
         res.status(200).json({ status: 'ok', db: 'connected' });
     } catch (err) {
         res.status(500).json({ status: 'error', db: 'disconnected' });

@@ -143,6 +143,17 @@ app.delete('/api/appointments/:id', checkAuth(), async (req, res) => {
     }
 });
 
+app.get('/health', async (req, res) => {
+    try {
+        // Simple DynamoDB health check
+        const { ScanCommand } = require('./db');
+        await db.docClient.send(new ScanCommand({ TableName: 'appointments', Limit: 1 }));
+        res.status(200).json({ status: 'ok', db: 'connected' });
+    } catch (err) {
+        res.status(500).json({ status: 'error', db: 'disconnected' });
+    }
+});
+
 const PORT = process.env.SCHEDULING_PORT || 4002;
 let server;
 

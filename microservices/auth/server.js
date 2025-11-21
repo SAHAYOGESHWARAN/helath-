@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs'); // Import bcryptjs
 const { v4: uuidv4 } = require('uuid'); // Import uuid
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+const User = require('./models/User'); // Import User model
 
 dotenv.config();
 
@@ -13,9 +14,6 @@ app.use(cors());
 
 const PORT = process.env.AUTH_SERVICE_PORT;
 const JWT_SECRET = process.env.JWT_SECRET; // Secret for JWT signing
-
-// TODO: Replace with a persistent database
-const users = []; // In a real application, this would be a database
 
 // Utility function to generate a JWT token
 const generateToken = (user) => {
@@ -59,30 +57,36 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Register route - refactored from server-genai.cjs
 app.post('/api/auth/register', async (req, res) => {
-  const { email, name, password, role, ...otherFields } = req.body;
+  try {
+    const { email, name, password, role, ...otherFields } = req.body;
 
-  if (!email || !name || !password || !role) {
-    return res.status(400).json({ message: 'All fields are required' });
+    if (!email || !name || !password || !role) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({ message: 'User with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash password
+    const newUserData = {
+      id: uuidv4(), // Generate unique ID
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      ...otherFields, // Include additional fields like dob, state, etc.
+    };
+    const newUser = await User.create(newUserData);
+
+    // Return user details without password
+    const { password: _, ...userWithoutPassword } = newUser;
+    res.status(201).json(userWithoutPassword);
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-
-  if (users.find(u => u.email === email)) {
-    return res.status(409).json({ message: 'User with this email already exists' });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10); // Hash password
-  const newUser = {
-    id: uuidv4(), // Generate unique ID
-    name,
-    email,
-    password: hashedPassword,
-    role,
-    ...otherFields, // Include additional fields like dob, state, etc.
-  };
-  users.push(newUser);
-
-  // Return user details without password
-  const { password: _, ...userWithoutPassword } = newUser;
-  res.status(201).json(userWithoutPassword);
 });
 
 // Verify token route
@@ -120,6 +124,17 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
+});
+
+app.get('/health', async (req, res) => {
+  try {
+    // Simple DynamoDB health check
+    const { docClient, ScanCommand } = require('./db');
+    await docClient.send(new ScanCommand({ TableName: 'users', Limit: 1 }));
+    res.status(200).json({ status: 'ok', db: 'connected' });
+  } catch (err) {
+    res.status(500).json({ status: 'error', db: 'disconnected' });
+  }
 });
 
 app.listen(PORT, () => {
