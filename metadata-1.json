@@ -1,6 +1,6 @@
 {
   "name": "novo",
-  "description": "An all-in-one health and wellness dashboard powered by Gemini. Calculate your BMI, track calories, get personalized workout plans, and chat with a health assistant.",
+  "description": "An all-in-one health and wellness dashboard powered by Saha Calculate your BMI, track calories, get personalized workout plans, and chat with a health assistant.",
   "requestFramePermissions": [
     "camera",
     "microphone"

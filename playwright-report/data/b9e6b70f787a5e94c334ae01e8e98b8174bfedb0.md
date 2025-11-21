@@ -1,0 +1,117 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "NovoPath Medical Inc" [ref=e6]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e11]: NovoPath Medical Inc
+      - navigation [ref=e12]:
+        - link "Features" [ref=e13]:
+          - /url: /features
+        - link "Testimonials" [ref=e14]:
+          - /url: /testimonials
+        - link "For Providers" [ref=e15]:
+          - /url: /for-providers
+      - generic [ref=e16]:
+        - link "Sign In" [ref=e17]:
+          - /url: /login
+        - link "Get Started" [ref=e18]:
+          - /url: /register
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e26]:
+        - heading "Intelligent Healthcare, Seamlessly Connected." [level=1] [ref=e27]:
+          - text: Intelligent Healthcare,
+          - text: Seamlessly Connected.
+        - paragraph [ref=e28]: NovoPath Medical Inc is an intelligent, connected platform that empowers both patients and providers with seamless tools for a healthier tomorrow.
+        - generic [ref=e29]:
+          - link "Get Started Free" [ref=e30]:
+            - /url: /register
+            - text: Get Started Free
+            - img [ref=e31]
+          - link "Learn More" [ref=e33]:
+            - /url: /features
+      - img [ref=e35]
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - heading "The Future of Personalized Health" [level=2] [ref=e40]
+        - paragraph [ref=e41]: One platform for every aspect of your healthcare journey.
+      - generic [ref=e42]:
+        - generic [ref=e44]:
+          - img [ref=e47]
+          - heading "AI-Powered Insights" [level=3] [ref=e49]
+          - paragraph [ref=e50]: Leverage Gemini to understand health data, get summaries, and ask questions.
+        - generic [ref=e52]:
+          - img [ref=e55]
+          - heading "Seamless Telehealth" [level=3] [ref=e57]
+          - paragraph [ref=e58]: Connect with your provider through secure, integrated video consultations.
+        - generic [ref=e60]:
+          - img [ref=e63]
+          - heading "Unified Records" [level=3] [ref=e65]
+          - paragraph [ref=e66]: Access all your appointments, lab results, and notes in one organized place.
+        - generic [ref=e68]:
+          - img [ref=e71]
+          - heading "Secure & Compliant" [level=3] [ref=e73]
+          - paragraph [ref=e74]: Built on a foundation of security and HIPAA compliance to protect your data.
+    - generic [ref=e78]:
+      - generic [ref=e79]:
+        - text: For Patients
+        - heading "Take Control of Your Health Journey" [level=3] [ref=e80]
+        - paragraph [ref=e81]: NovoPath Medical Inc gives you direct access to your health information and care team. Schedule appointments, view results, and get personalized insights, all from one secure app.
+        - list [ref=e82]:
+          - listitem [ref=e83]:
+            - img [ref=e84]
+            - generic [ref=e86]: Easily book and manage both virtual and in-person appointments with your providers.
+          - listitem [ref=e87]:
+            - img [ref=e88]
+            - generic [ref=e90]: Get summaries of your health records powered by Gemini, making complex information easy to understand.
+        - link "Sign Up as a Patient" [ref=e91]:
+          - /url: /register/patient
+      - img "Patient using tablet" [ref=e94]
+  - contentinfo [ref=e95]:
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - generic [ref=e98]:
+          - heading "NovoPath Medical Inc" [level=3] [ref=e99]
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - link "Features" [ref=e102]:
+                - /url: /features
+            - listitem [ref=e103]:
+              - link "Testimonials" [ref=e104]:
+                - /url: /testimonials
+        - generic [ref=e105]:
+          - heading "For Patients" [level=3] [ref=e106]
+          - list [ref=e107]:
+            - listitem [ref=e108]:
+              - link "Patient Login" [ref=e109]:
+                - /url: /login
+            - listitem [ref=e110]:
+              - link "Sign Up" [ref=e111]:
+                - /url: /register/patient
+        - generic [ref=e112]:
+          - heading "For Providers" [level=3] [ref=e113]
+          - list [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Platform Overview" [ref=e116]:
+                - /url: /for-providers
+            - listitem [ref=e117]:
+              - link "Join Network" [ref=e118]:
+                - /url: /register/provider
+        - generic [ref=e119]:
+          - heading "Support" [level=3] [ref=e120]
+          - list [ref=e121]:
+            - listitem [ref=e122]:
+              - link "Help Center" [ref=e123]:
+                - /url: "#"
+            - listitem [ref=e124]:
+              - link "Contact Us" [ref=e125]:
+                - /url: "#"
+            - listitem [ref=e126]:
+              - link "Privacy Policy" [ref=e127]:
+                - /url: "#"
+      - paragraph [ref=e129]: © 2025 NovoPath Medical Inc. All Rights Reserved.
+```

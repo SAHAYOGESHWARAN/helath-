@@ -153,7 +153,7 @@ const WelcomePage: React.FC = () => {
             <div className="absolute bottom-1/2 left-1/4 w-48 h-48 bg-primary-200 rounded-full opacity-20 animate-[floating_18s_ease-in-out_infinite_1s]"></div>
 
             <div className="container mx-auto px-6 relative z-10">
-                <AnimatedSection immediate={true}>
+                <div>
                     <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight gradient-text text-gray-900">
                         Intelligent Healthcare,
                         <br />
@@ -170,7 +170,7 @@ const WelcomePage: React.FC = () => {
                             Learn More
                         </Link>
                     </div>
-                </AnimatedSection>
+                </div>
             </div>
              <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                 <ArrowDownIcon className="w-6 h-6 text-gray-400 scroll-indicator"/>

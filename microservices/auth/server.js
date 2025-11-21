@@ -53,12 +53,13 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const token = generateToken(user);
-  res.status(200).json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
+  const { password: _, ...userWithoutPassword } = user;
+  res.status(200).json({ user: userWithoutPassword, token });
 });
 
 // Register route - refactored from server-genai.cjs
 app.post('/api/auth/register', async (req, res) => {
-  const { email, name, password, role } = req.body;
+  const { email, name, password, role, ...otherFields } = req.body;
 
   if (!email || !name || !password || !role) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -75,11 +76,13 @@ app.post('/api/auth/register', async (req, res) => {
     email,
     password: hashedPassword,
     role,
+    ...otherFields, // Include additional fields like dob, state, etc.
   };
   users.push(newUser);
 
   // Return user details without password
-  res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
+  const { password: _, ...userWithoutPassword } = newUser;
+  res.status(201).json(userWithoutPassword);
 });
 
 // Verify token route

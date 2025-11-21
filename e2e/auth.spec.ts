@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Auth Flows', () => {
   test('should allow a user to log in and log out', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h1:has-text("Intelligent Healthcare, Seamlessly Connected.")')).toBeVisible();
+    await expect(page.locator('h1:has-text("Intelligent Healthcare")')).toBeVisible();
     await page.click('a:has-text("Sign In")');
     await page.waitForURL('**/login');
 

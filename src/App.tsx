@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { WebSocketController } from '@/contexts/WebSocketContext';
@@ -84,9 +84,9 @@ function App() {
       >
         <WebSocketController />
         <NotificationProvider>
-          <HashRouter>
+          <BrowserRouter>
             <AppRoutes />
-          </HashRouter>
+          </BrowserRouter>
         </NotificationProvider>
       </EMRProvider>
     </AuthProvider>
