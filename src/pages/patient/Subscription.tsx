@@ -55,7 +55,7 @@ const InvoiceModal: React.FC<{ invoice: BillingHistoryItem | null; planName: str
             <div id="invoice-to-print">
                  <div className="printable-invoice space-y-4 text-sm">
                     <div className="text-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-800">NovoPath Medical</h2>
+                        <h2 className="text-xl font-bold text-gray-800">NovoPath Medical Inc</h2>
                         <p className="text-gray-500">Subscription Invoice</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg border">

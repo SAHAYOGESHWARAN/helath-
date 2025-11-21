@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
@@ -73,7 +74,7 @@ const UserManagement: React.FC = () => {
         requestSort, 
         getSortArrow,
         setColumnFilters,
-    } = useTable(users, 10);
+    } = useTable<User>(users, 10);
     
     useEffect(() => {
         setColumnFilters(prev => ({...prev, role: roleFilter === 'All' ? '' : roleFilter}));

@@ -146,7 +146,7 @@ const EPrescribing: React.FC = () => {
         paginationProps,
         requestSort,
         getSortArrow
-    } = useTable(prescriptions, 10, { initialSort: { key: 'datePrescribed', direction: 'desc' } });
+    } = useTable<Prescription>(prescriptions, 10, { initialSort: { key: 'datePrescribed', direction: 'desc' } });
 
     const columns: ColumnDefinition<Prescription>[] = [
         { accessorKey: 'datePrescribed', header: 'Date', cellClassName: 'font-mono text-gray-600' },

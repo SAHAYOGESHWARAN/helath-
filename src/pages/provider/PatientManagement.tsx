@@ -84,7 +84,7 @@ const PatientManagement: React.FC = () => {
         getSortArrow,
         setGlobalFilter,
         setColumnFilters,
-    } = useTable(patients, 10, { initialSort: { key: 'name', direction: 'asc' } });
+    } = useTable<User>(patients, 10, { initialSort: { key: 'name', direction: 'asc' } });
     
     useEffect(() => {
         setColumnFilters(prev => ({ ...prev, status: statusFilter === 'All' ? '' : statusFilter }));

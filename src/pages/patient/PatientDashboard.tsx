@@ -98,7 +98,7 @@ const PatientDashboard: React.FC = () => {
     setSummaryError('');
         try {
             const ai = await getGenAIClient();
-            const systemInstruction = `You are an AI Health Assistant for NovoPath Medical. Your role is to provide a patient-friendly summary of their electronic medical record. Analyze the provided health data and generate a clear, concise summary covering key health highlights, medications, and general wellness tips. CRITICAL: You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant... consult with your doctor.**"`;
+            const systemInstruction = `You are an AI Health Assistant for NovoPath Medical Inc. Your role is to provide a patient-friendly summary of their electronic medical record. Analyze the provided health data and generate a clear, concise summary covering key health highlights, medications, and general wellness tips. CRITICAL: You MUST end EVERY response with the exact disclaimer: "**Disclaimer: I am an AI assistant... consult with your doctor.**"`;
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",
                 contents: `Please summarize this health data for the patient, ${user.name}: Conditions: ${user.conditions?.map(c => c.name).join(', ') || 'None'}. Medications: ${user.medications?.filter(m => m.status === 'Active').map(m => m.name).join(', ') || 'None'}.`,

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getGenAIClient } from '../../services/gemini';
 import { Card } from '../../components/shared/Card';
@@ -170,7 +171,7 @@ const AIAssistant: React.FC = () => {
       return summary;
     };
 
-    const systemInstruction = `You are NovoPath Medical's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data. Current user: ${user.name}. Today's date: ${new Date().toLocaleDateString()}.
+    const systemInstruction = `You are NovoPath Medical Inc's friendly and helpful AI assistant. Your goal is to assist patients with their health-related questions based on their provided data. Current user: ${user.name}. Today's date: ${new Date().toLocaleDateString()}.
     
     ${buildHealthSummary()}
     
@@ -208,7 +209,8 @@ const AIAssistant: React.FC = () => {
         const newHistory = [...prev];
         const lastMessage = newHistory[newHistory.length - 1];
         
-        if (lastMessage.role === 'model' && lastMessage.parts[0].text === '') {
+        const lastPart = lastMessage.parts[0];
+        if (lastMessage.role === 'model' && 'text' in lastPart && lastPart.text === '') {
           lastMessage.parts = [{ text: `⚠️ **Error:** ${userFriendlyError}` }];
           return newHistory;
         } else {

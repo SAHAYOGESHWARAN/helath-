@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -45,7 +46,7 @@ const Header: React.FC = () => {
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2">
                     <NovoPathLogoIcon className="w-9 h-9" />
-                    <span className="text-2xl font-bold text-gray-900">NovoPath</span>
+                    <span className="text-2xl font-bold text-gray-900">NovoPath Medical Inc</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
                     <Link to="/features" className="text-sm font-medium text-primary-600 font-bold">Features</Link>
@@ -97,7 +98,7 @@ const FeaturesSection: React.FC = () => {
         <section id="features" className="py-24 bg-gray-50">
             <div className="container mx-auto px-6 text-center">
                 <h2 className="text-4xl font-bold text-gray-900">A New Standard for Healthcare</h2>
-                <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">NovoPath combines cutting-edge technology with a user-centric design to deliver a superior healthcare experience.</p>
+                <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">NovoPath Medical Inc combines cutting-edge technology with a user-centric design to deliver a superior healthcare experience.</p>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16 text-left">
                     {features.map((feature, index) => (
                         <FeatureCard key={index} {...feature} index={index} />
@@ -113,7 +114,7 @@ const Footer: React.FC = () => (
         <div className="container mx-auto px-6 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 className="font-bold text-lg mb-4">NovoPath</h3>
+                    <h3 className="font-bold text-lg mb-4">NovoPath Medical Inc</h3>
                     <ul className="space-y-2 text-gray-400 text-sm">
                         <li><Link to="/features" className="hover:text-white">Features</Link></li>
                         <li><Link to="/testimonials" className="hover:text-white">Testimonials</Link></li>
@@ -143,7 +144,7 @@ const Footer: React.FC = () => (
                 </div>
             </div>
             <div className="mt-12 text-center text-gray-500 text-sm border-t border-gray-800 pt-8">
-                <p>&copy; {new Date().getFullYear()} NovoPath Medical. All Rights Reserved.</p>
+                <p>&copy; {new Date().getFullYear()} NovoPath Medical Inc. All Rights Reserved.</p>
             </div>
         </div>
     </footer>

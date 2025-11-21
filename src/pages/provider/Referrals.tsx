@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import { Card } from '../../components/shared/Card';
@@ -225,7 +226,7 @@ const Referrals: React.FC = () => {
         return referrals.filter(r => r.type === typeFilter);
     }, [referrals, typeFilter]);
 
-    const { paginatedItems, paginationProps, requestSort, getSortArrow } = useTable(filteredReferrals, 10, {
+    const { paginatedItems, paginationProps, requestSort, getSortArrow } = useTable<Referral>(filteredReferrals, 10, {
         initialSort: { key: 'createdAt', direction: 'desc' }
     });
 

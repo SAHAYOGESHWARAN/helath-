@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
       <div className="h-20 flex items-center justify-center px-6 border-b border-gray-200">
          <div className="flex items-center space-x-3">
           <NovoPathIcon className="w-9 h-9 text-primary-500"/>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-wider">NovoPath</h1>
+          <h1 className="text-xl font-bold text-gray-800 tracking-wider">NovoPath Medical Inc</h1>
         </div>
       </div>
       

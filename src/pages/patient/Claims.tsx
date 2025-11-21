@@ -120,7 +120,7 @@ const Claims: React.FC = () => {
     getSortArrow,
     setGlobalFilter,
     setColumnFilters
-  } = useTable(myClaims, 10, { initialSort: { key: 'serviceDate', direction: 'desc' }});
+  } = useTable<Claim>(myClaims, 10, { initialSort: { key: 'serviceDate', direction: 'desc' }});
   
   const columns: ColumnDefinition<Claim>[] = [
     { accessorKey: 'id', header: 'Claim ID' },

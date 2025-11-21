@@ -31,7 +31,7 @@ const RegisterPage: React.FC = () => {
             <Link to="/" className="inline-block mb-6">
                 <NovoPathLogoIcon className="w-12 h-12 text-primary-600" />
             </Link>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Join NovoPath</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Join NovoPath Medical Inc</h1>
             <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Choose your account type to get started on your personalized healthcare journey.</p>
         </div>
 

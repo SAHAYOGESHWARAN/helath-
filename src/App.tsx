@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -70,12 +71,16 @@ const AppRoutes: React.FC = () => {
 };
 
 function App() {
-  console.log("Rendering App component");
+  // Safe access to environment variables
+  const env = (import.meta as any).env || {};
+  const apiUrl = env.VITE_EMR_API_URL || 'http://localhost:4000/api';
+  const apiKey = env.VITE_EMR_API_KEY || 'dev-key';
+
   return (
     <AuthProvider>
       <EMRProvider
-        baseUrl={(import.meta as any).env.VITE_EMR_API_URL}
-        apiKey={(import.meta as any).env.VITE_EMR_API_KEY}
+        baseUrl={apiUrl}
+        apiKey={apiKey}
       >
         <WebSocketController />
         <NotificationProvider>

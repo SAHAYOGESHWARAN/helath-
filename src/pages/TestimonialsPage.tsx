@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -47,7 +48,7 @@ const Header: React.FC = () => {
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2">
                     <NovoPathLogoIcon className="w-9 h-9" />
-                    <span className="text-2xl font-bold text-gray-900">NovoPath</span>
+                    <span className="text-2xl font-bold text-gray-900">NovoPath Medical Inc</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
                     <Link to="/features" className="text-sm font-medium text-gray-600 hover:text-primary-600">Features</Link>
@@ -68,9 +69,9 @@ const Header: React.FC = () => {
 };
 
 const MOCK_TESTIMONIALS = [
-    { name: 'Dr. Jane Smith', avatarUrl: 'https://i.pravatar.cc/150?u=pro1', role: 'Cardiologist, NovoPath Provider', rating: 5, feedback: 'NovoPath has revolutionized my practice. The integrated EMR and telehealth features save me hours every week, allowing me to focus more on patient care.' },
-    { name: 'John Doe', avatarUrl: 'https://i.pravatar.cc/150?u=pat1', role: 'NovoPath Patient', rating: 5, feedback: 'Managing my appointments and health records has never been easier. The AI assistant is incredibly helpful for understanding my lab results.' },
-    { name: 'Dr. David Chen', avatarUrl: 'https://i.pravatar.cc/150?u=pro2', role: 'Dermatologist, NovoPath Provider', rating: 4, feedback: 'The e-prescribing and referral system is seamless. It has significantly reduced administrative overhead for my staff.' },
+    { name: 'Dr. Jane Smith', avatarUrl: 'https://i.pravatar.cc/150?u=pro1', role: 'Cardiologist, NovoPath Medical Inc Provider', rating: 5, feedback: 'NovoPath Medical Inc has revolutionized my practice. The integrated EMR and telehealth features save me hours every week, allowing me to focus more on patient care.' },
+    { name: 'John Doe', avatarUrl: 'https://i.pravatar.cc/150?u=pat1', role: 'NovoPath Medical Inc Patient', rating: 5, feedback: 'Managing my appointments and health records has never been easier. The AI assistant is incredibly helpful for understanding my lab results.' },
+    { name: 'Dr. David Chen', avatarUrl: 'https://i.pravatar.cc/150?u=pro2', role: 'Dermatologist, NovoPath Medical Inc Provider', rating: 4, feedback: 'The e-prescribing and referral system is seamless. It has significantly reduced administrative overhead for my staff.' },
 ];
 
 const TestimonialCard: React.FC<{ testimonial: {name: string, avatarUrl: string, role: string, rating: number, feedback: string}, index: number }> = ({ testimonial, index }) => {
@@ -98,7 +99,7 @@ const TestimonialsSection: React.FC = () => {
             <div className="container mx-auto px-6 text-center">
                 <AnimatedSection>
                     <h2 className="text-4xl font-bold text-gray-900">Loved by Patients and Professionals</h2>
-                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Hear from healthcare professionals and patients who trust NovoPath.</p>
+                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Hear from healthcare professionals and patients who trust NovoPath Medical Inc.</p>
                 </AnimatedSection>
                 <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
                     {MOCK_TESTIMONIALS.length > 0 ? (
@@ -121,7 +122,7 @@ const Footer: React.FC = () => (
         <div className="container mx-auto px-6 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 className="font-bold text-lg mb-4">NovoPath</h3>
+                    <h3 className="font-bold text-lg mb-4">NovoPath Medical Inc</h3>
                     <ul className="space-y-2 text-gray-400 text-sm">
                         <li><Link to="/features" className="hover:text-white">Features</Link></li>
                         <li><Link to="/testimonials" className="hover:text-white">Testimonials</Link></li>
@@ -151,7 +152,7 @@ const Footer: React.FC = () => (
                 </div>
             </div>
             <div className="mt-12 text-center text-gray-500 text-sm border-t border-gray-800 pt-8">
-                <p>&copy; {new Date().getFullYear()} NovoPath Medical. All Rights Reserved.</p>
+                <p>&copy; {new Date().getFullYear()} NovoPath Medical Inc. All Rights Reserved.</p>
             </div>
         </div>
     </footer>

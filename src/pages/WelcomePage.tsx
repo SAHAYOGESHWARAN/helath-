@@ -15,9 +15,15 @@ import {
 
 const useOnScreen = (options: IntersectionObserverInit) => {
     const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
+    // Default to true to avoid flash of invisible content if JS/Observer fails
+    const [isVisible, setIsVisible] = useState(true); 
 
     useEffect(() => {
+        if (typeof IntersectionObserver === 'undefined') {
+            setIsVisible(true);
+            return;
+        }
+
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) {
                 setIsVisible(true);
@@ -27,6 +33,8 @@ const useOnScreen = (options: IntersectionObserverInit) => {
         
         const currentRef = ref.current;
         if (currentRef) {
+            // Initially set to false only if we can observe it
+            setIsVisible(false);
             observer.observe(currentRef);
         }
 
@@ -54,8 +62,8 @@ const Header: React.FC = () => {
         <header className="fixed top-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-lg shadow-sm">
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2">
-                    <NovoPathLogoIcon className="w-9 h-9" />
-                    <span className="text-2xl font-bold text-gray-900">NovoPath</span>
+                    <NovoPathLogoIcon className="w-9 h-9 text-primary-600" />
+                    <span className="text-2xl font-bold text-gray-900">NovoPath Medical Inc</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
                     <Link to="/features" className="text-sm font-medium text-gray-600 hover:text-primary-600">Features</Link>
@@ -80,7 +88,7 @@ const Footer: React.FC = () => (
         <div className="container mx-auto px-6 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 className="font-bold text-lg mb-4">NovoPath</h3>
+                    <h3 className="font-bold text-lg mb-4">NovoPath Medical Inc</h3>
                     <ul className="space-y-2 text-gray-400 text-sm">
                         <li><Link to="/features" className="hover:text-white">Features</Link></li>
                         <li><Link to="/testimonials" className="hover:text-white">Testimonials</Link></li>
@@ -110,7 +118,7 @@ const Footer: React.FC = () => (
                 </div>
             </div>
             <div className="mt-12 text-center text-gray-500 text-sm border-t border-gray-800 pt-8">
-                <p>&copy; {new Date().getFullYear()} NovoPath Medical. All Rights Reserved.</p>
+                <p>&copy; {new Date().getFullYear()} NovoPath Medical Inc. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
@@ -143,19 +151,19 @@ const WelcomePage: React.FC = () => {
 
             <div className="container mx-auto px-6 relative z-10">
                 <AnimatedSection>
-                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight gradient-text">
+                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight gradient-text text-gray-900">
                         Intelligent Healthcare,
                         <br />
                         Seamlessly Connected.
                     </h1>
                     <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                        NovoPath is an intelligent, connected platform that empowers both patients and providers with seamless tools for a healthier tomorrow.
+                        NovoPath Medical Inc is an intelligent, connected platform that empowers both patients and providers with seamless tools for a healthier tomorrow.
                     </p>
                     <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link to="/register" className="bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-primary-700 transition-all transform hover:scale-105 shadow-xl inline-flex items-center">
                             Get Started Free <ArrowRightIcon className="w-5 h-5 ml-2" />
                         </Link>
-                        <Link to="/features" className="font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-all">
+                        <Link to="/features" className="font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-all text-primary-600 border border-primary-600">
                             Learn More
                         </Link>
                     </div>
@@ -199,7 +207,7 @@ const WelcomePage: React.FC = () => {
                         <div className="text-center md:text-left">
                             <span className="text-primary-600 font-semibold uppercase tracking-wider">For Patients</span>
                             <h3 className="text-3xl font-bold text-gray-900 mt-2">Take Control of Your Health Journey</h3>
-                            <p className="mt-4 text-gray-600">NovoPath gives you direct access to your health information and care team. Schedule appointments, view results, and get personalized insights, all from one secure app.</p>
+                            <p className="mt-4 text-gray-600">NovoPath Medical Inc gives you direct access to your health information and care team. Schedule appointments, view results, and get personalized insights, all from one secure app.</p>
                             <ul className="mt-6 space-y-3 text-left">
                                 <li className="flex items-start">
                                     <CheckCircleIcon className="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0" />

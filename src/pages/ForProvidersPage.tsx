@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -15,7 +16,7 @@ const Header: React.FC = () => {
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center space-x-2">
                     <NovoPathLogoIcon className="w-9 h-9" />
-                    <span className="text-2xl font-bold text-gray-900">NovoPath</span>
+                    <span className="text-2xl font-bold text-gray-900">NovoPath Medical Inc</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
                     <Link to="/features" className="text-sm font-medium text-gray-600 hover:text-primary-600">Features</Link>
@@ -40,7 +41,7 @@ const Footer: React.FC = () => (
         <div className="container mx-auto px-6 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 className="font-bold text-lg mb-4">NovoPath</h3>
+                    <h3 className="font-bold text-lg mb-4">NovoPath Medical Inc</h3>
                     <ul className="space-y-2 text-gray-400 text-sm">
                         <li><Link to="/features" className="hover:text-white">Features</Link></li>
                         <li><Link to="/testimonials" className="hover:text-white">Testimonials</Link></li>
@@ -70,7 +71,7 @@ const Footer: React.FC = () => (
                 </div>
             </div>
             <div className="mt-12 text-center text-gray-500 text-sm border-t border-gray-800 pt-8">
-                <p>&copy; {new Date().getFullYear()} NovoPath Medical. All Rights Reserved.</p>
+                <p>&copy; {new Date().getFullYear()} NovoPath Medical Inc. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
@@ -88,7 +89,7 @@ const ProviderFeaturesSection: React.FC = () => {
         <section className="py-24 bg-gray-50">
             <div className="container mx-auto px-6 text-center">
                 <h2 className="text-4xl font-bold text-gray-900">Designed for Modern Practices</h2>
-                <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">NovoPath provides the tools you need to deliver exceptional care and run your practice efficiently.</p>
+                <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">NovoPath Medical Inc provides the tools you need to deliver exceptional care and run your practice efficiently.</p>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16 text-left">
                     {features.map((feature, index) => (
                          <div key={index} className="bg-white p-8 rounded-2xl shadow-lg h-full border border-gray-100 hover:shadow-primary-100/50 hover:border-primary-200 transition-all fancy-card">
@@ -115,7 +116,7 @@ const ForProvidersPage: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-800/80 to-transparent"></div>
             <div className="container mx-auto px-6 relative z-10">
                 <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                    Empower Your Practice with NovoPath
+                    Empower Your Practice with NovoPath Medical Inc
                 </h1>
                 <p className="mt-6 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
                     A smarter, faster, and more connected way to manage your patients and your practice.

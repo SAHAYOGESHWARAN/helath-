@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useEMRIntegration } from '../../hooks/useEMRIntegration';
@@ -123,7 +124,7 @@ const AdminDashboard: React.FC = () => {
             const ai = await getGenAIClient();
 
             const prompt = `
-                Analyze the following metrics for the NovoPath Medical platform and provide a concise, insightful summary (around 100-150 words) for an administrator.
+                Analyze the following metrics for the NovoPath Medical Inc platform and provide a concise, insightful summary (around 100-150 words) for an administrator.
                 Focus on key trends, potential areas of concern, and actionable recommendations. Be professional and data-driven.
 
                 **Key Metrics:**
@@ -273,8 +274,8 @@ const AdminDashboard: React.FC = () => {
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={revenueData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${value}`} />
+                                <XAxis dataKey="month" tick={{fontSize: 12}} />
+                                <YAxis tick={{fontSize: 12}} tickFormatter={(value) => `$${value}`} />
                                 <Tooltip cursor={{ fill: 'rgba(239, 246, 255, 0.7)' }} formatter={(value: number) => `$${value.toFixed(2)}`} />
                                 <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" barSize={30} radius={[4, 4, 0, 0]} />
                             </BarChart>

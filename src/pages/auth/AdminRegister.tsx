@@ -55,7 +55,7 @@ const AdminRegister: React.FC = () => {
                 <NovoPathLogoIcon className="w-10 h-10 text-primary-600" />
             </Link>
             <h1 className="text-3xl font-extrabold text-gray-900">Create Administrator Account</h1>
-            <p className="mt-2 text-gray-600">Manage the NovoPath platform.</p>
+            <p className="mt-2 text-gray-600">Manage the NovoPath Medical Inc platform.</p>
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">

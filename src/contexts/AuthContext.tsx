@@ -85,29 +85,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } = useAppStore();
 
     useEffect(() => {
-        const token = sessionStorage.getItem('novopath-token');
-        if (!token) {
-            setLoading(false);
-            return;
-        }
+        let mounted = true;
 
         const checkUser = async () => {
             try {
+                const token = sessionStorage.getItem('novopath-token');
+                if (!token) {
+                    if (mounted) setLoading(false);
+                    return;
+                }
                 const { user } = await api.apiVerifyToken(token);
-                setUser(user);
-                setToken(token);
+                if (mounted) {
+                    setUser(user);
+                    setToken(token);
+                }
             } catch (e) {
-                console.error("Failed to verify token.", e);
-                sessionStorage.removeItem('novopath-token');
-                sessionStorage.removeItem('novopath-user');
-                setUser(null);
-                setToken(null);
+                console.error("Failed to verify token or load session.", e);
+                try {
+                    sessionStorage.removeItem('novopath-token');
+                    sessionStorage.removeItem('novopath-user');
+                } catch { /* ignore storage errors */ }
+                
+                if (mounted) {
+                    setUser(null);
+                    setToken(null);
+                }
             } finally {
-                setLoading(false);
+                if (mounted) setLoading(false);
             }
         };
 
         checkUser();
+
+        return () => { mounted = false; };
     }, [setUser, setToken, setLoading]);
 
     useEffect(() => {
@@ -129,7 +139,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                     const fullUser = data.users.find(u => u.id === user.id) || user;
                     setUser(fullUser);
-                    sessionStorage.setItem('novopath-user', JSON.stringify(fullUser));
+                    try {
+                        sessionStorage.setItem('novopath-user', JSON.stringify(fullUser));
+                    } catch { /* ignore */ }
                 })
                 .catch(error => {
                     console.error("Error fetching data:", error);
@@ -482,7 +494,7 @@ export const useAuth = () => {
     return {
         user,
         users,
-        loading: isLoading, // Use the explicit isLoading state from store
+        loading: isLoading,
         login,
         logout,
         register,

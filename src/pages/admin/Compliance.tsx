@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/shared/Card';
@@ -46,7 +47,7 @@ const Compliance: React.FC = () => {
         requestSort,
         getSortArrow,
         setGlobalFilter,
-    } = useTable(auditLog, 10, { initialSort: { key: 'timestamp', direction: 'desc' } });
+    } = useTable<SystemAuditLog>(auditLog, 10, { initialSort: { key: 'timestamp', direction: 'desc' } });
 
     const handleExport = () => {
         exportToCsv('compliance_audit_log.csv', sortedAndFilteredItems);

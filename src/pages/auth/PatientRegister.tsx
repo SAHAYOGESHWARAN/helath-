@@ -60,11 +60,11 @@ const PatientRegister: React.FC = () => {
         <div>
           <Link to="/" className="flex items-center space-x-3">
               <NovoPathLogoIcon className="w-10 h-10" />
-              <span className="text-2xl font-bold">NovoPath</span>
+              <span className="text-2xl font-bold">NovoPath Medical Inc</span>
           </Link>
           <div className="mt-16 animate-slide-in-up" style={{animationDelay: '200ms'}}>
             <h1 className="text-4xl font-bold leading-tight">Your Path to Personalized Health Starts Here.</h1>
-            <p className="mt-4 text-primary-100 max-w-md">Join NovoPath to take control of your healthcare journey with tools designed for you.</p>
+            <p className="mt-4 text-primary-100 max-w-md">Join NovoPath Medical Inc to take control of your healthcare journey with tools designed for you.</p>
           </div>
         </div>
         <div className="space-y-4 text-primary-100 animate-slide-in-up" style={{animationDelay: '400ms'}}>

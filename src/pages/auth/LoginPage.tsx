@@ -26,7 +26,7 @@ const LoginPage: React.FC = () => {
                 <NovoPathLogoIcon className="w-10 h-10 text-primary-600" />
             </Link>
             <h1 className="text-3xl font-extrabold text-gray-900">Sign in to your account</h1>
-            <p className="mt-2 text-gray-600">Welcome back to NovoPath.</p>
+            <p className="mt-2 text-gray-600">Welcome back to NovoPath Medical Inc.</p>
         </div>
         
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">

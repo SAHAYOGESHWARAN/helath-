@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card } from '../../components/shared/Card';
 import { Claim, ClaimStatus, ClaimType, UserRole } from '../../types';
@@ -165,7 +166,7 @@ const Billing: React.FC = () => {
         outstanding: claims.filter(c => [ClaimStatus.SUBMITTED, ClaimStatus.PROCESSING].includes(c.status)).reduce((acc, c) => acc + c.totalClaimChargeAmount, 0)
     }), [claims]);
 
-    const { paginatedItems, paginationProps, requestSort, getSortArrow, setColumnFilters, columnFilters } = useTable(claims, 10, {
+    const { paginatedItems, paginationProps, requestSort, getSortArrow, setColumnFilters, columnFilters } = useTable<Claim>(claims, 10, {
         initialSort: { key: 'createdAt', direction: 'desc' },
     });
 
