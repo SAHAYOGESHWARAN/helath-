@@ -16,10 +16,6 @@ const requiredEnvVars = [
   'DB_PORT',
   'VITE_API_KEY',
   'VITE_API_GATEWAY_URL',
-  'NOVO_PATH_API_URL',
-  'NOVO_PATH_API_KEY',
-  'DOSESPOT_API_URL',
-  'DOSESPOT_API_KEY',
 ];
 
 const envFilePath = path.resolve(__dirname, '../.env');

@@ -22,9 +22,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.936.0",
-    "@aws-sdk/lib-dynamodb": "^3.936.0",
-    "@google/genai": "^0.10.0",
+    "@google/genai": "^0.1.1",
     "@google/generative-ai": "^0.19.0",
     "@stripe/react-stripe-js": "^5.3.0",
     "@stripe/stripe-js": "^8.3.0",

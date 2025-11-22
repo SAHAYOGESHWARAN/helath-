@@ -632,7 +632,7 @@
             "S": "Dr. Jane Smith"
           },
           "date": {
-            "S": "2025-11-24"
+            "S": "2025-11-15"
           },
           "time": {
             "S": "10:30 AM"
@@ -674,7 +674,7 @@
             "S": "Dr. Jane Smith"
           },
           "date": {
-            "S": "2025-11-26"
+            "S": "2025-11-17"
           },
           "time": {
             "S": "11:00 AM"
@@ -979,7 +979,7 @@
             "S": "Hello John, just a reminder about your upcoming appointment."
           },
           "timestamp": {
-            "S": "2025-11-21T05:17:55.452Z"
+            "S": "2025-11-12T00:17:00.990Z"
           },
           "isRead": {
             "BOOL": false
@@ -1003,7 +1003,7 @@
             "S": "Thanks Dr. Smith! I\\'ll be there."
           },
           "timestamp": {
-            "S": "2025-11-21T06:17:55.452Z"
+            "S": "2025-11-12T01:17:00.990Z"
           },
           "isRead": {
             "BOOL": true

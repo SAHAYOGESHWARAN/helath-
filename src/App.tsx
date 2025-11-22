@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { WebSocketController } from '@/contexts/WebSocketContext';
@@ -18,7 +18,7 @@ import WelcomePage from '@/pages/WelcomePage';
 import FeaturesPage from '@/pages/FeaturesPage';
 import TestimonialsPage from '@/pages/TestimonialsPage';
 import ForProvidersPage from '@/pages/ForProvidersPage';
-import { EMRProvider } from './hooks/useAdvancedEMR';
+import { EMRProvider } from '@/hooks/useAdvancedEMR';
 
 
 const AppRoutes: React.FC = () => {
@@ -84,9 +84,9 @@ function App() {
       >
         <WebSocketController />
         <NotificationProvider>
-          <BrowserRouter>
+          <HashRouter>
             <AppRoutes />
-          </BrowserRouter>
+          </HashRouter>
         </NotificationProvider>
       </EMRProvider>
     </AuthProvider>

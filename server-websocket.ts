@@ -1,80 +1,73 @@
-import express from 'express';
-import cors from 'cors';
-import WebSocket from 'ws';
-import { IncomingMessage } from 'http';
+// @ts-nocheck
+import { WebSocketServer, WebSocket } from 'ws';
+import { URL } from 'url';
 
-const PORT: number = parseInt(process.env.WEBSOCKET_PORT || '4001', 10);
+const PORT: number = parseInt(process.env.WEBSOCKET_PORT || '8080', 10);
 
-interface WebSocketMessage {
-  type: string;
-  data?: any;
-}
+const wss = new WebSocketServer({ port: PORT });
 
-function createWebSocketServer(): WebSocketServer {
-  const wss = new WebSocketServer({ noServer: true });
+const clients = new Map<string, WebSocket>();
 
-  wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
-    console.log('WebSocket connection established');
+console.log(`WebSocket server running on port ${PORT}`);
+
+wss.on('connection', (ws: WebSocket, req: { url?: string }) => {
+    const urlObj = new URL(req.url || '', 'http://localhost');
+    const id = urlObj.searchParams.get('id');
+    const token = urlObj.searchParams.get('token');
+
+    if (!id || !token || !token.startsWith('demo-jwt-')) {
+        console.warn('Connection attempt without valid ID or token. Closing.');
+        ws.close();
+        return;
+    }
+
+    clients.set(id, ws);
+    console.log(`Client connected: ${id}`);
 
     ws.on('message', (message: WebSocket.RawData) => {
-      try {
-        const parsedMessage: WebSocketMessage = JSON.parse(message.toString());
-        console.log('Received message:', parsedMessage);
+        let parsedMessage;
+        try {
+            parsedMessage = JSON.parse(message.toString());
+        } catch {
+            console.error('Failed to parse message:', message);
+            return;
+        }
 
-        // Echo the message back for now
-        ws.send(JSON.stringify({ type: 'echo', data: parsedMessage }));
-      } catch (err) {
-        console.error('Error parsing WebSocket message:', err);
-        ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format' }));
-      }
+        console.log(`Received message from ${id}:`, parsedMessage);
+
+        const { payload } = parsedMessage;
+        const recipientId = payload?.receiverId;
+
+        if (!recipientId) {
+            console.warn(`Message from ${id} is missing a receiverId.`);
+            return;
+        }
+
+        const recipientSocket = clients.get(recipientId);
+        if (recipientSocket && recipientSocket.readyState === WebSocket.OPEN) {
+            recipientSocket.send(JSON.stringify({ ...parsedMessage, sender: id }));
+            console.log(`Sent message from ${id} to ${recipientId}`);
+        } else {
+            console.warn(`Recipient ${recipientId} not connected or socket not open.`);
+            // In a real app, you might queue this message.
+        }
     });
 
     ws.on('close', () => {
-      console.log('WebSocket connection closed');
+        clients.delete(id);
+        console.log(`Client disconnected: ${id}`);
     });
 
-    ws.on('error', (err: Error) => {
-      console.error('WebSocket error:', err);
+    ws.on('error', (error: Error) => {
+        console.error(`WebSocket error for client ${id}:`, error);
+        clients.delete(id);
     });
-  });
+});
 
-  return wss;
-}
-
-async function main(): Promise<void> {
-  const app = express();
-  app.use(cors({ origin: true }));
-  app.use(express.json());
-
-  const wss = createWebSocketServer();
-
-  app.get('/health', (req: express.Request, res: express.Response) => {
-    res.json({ status: 'WebSocket server is running' });
-  });
-
-  const server = app.listen(PORT, () => {
-    console.log(`WebSocket server listening on port ${PORT}`);
-  });
-
-  server.on('upgrade', (request: IncomingMessage, socket: any, head: Buffer) => {
-    wss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-      wss.emit('connection', ws, request);
+process.on('SIGINT', () => {
+    console.log('Shutting down WebSocket server...');
+    wss.close(() => {
+        console.log('Server has been shut down.');
+        process.exit(0);
     });
-  });
-
-  // Keep the process alive and log unhandled errors for easier debugging in dev
-  process.on('uncaughtException', (err: Error) => {
-    console.error('Uncaught exception in WebSocket server:', err);
-    // don't exit in dev
-  });
-
-  process.on('unhandledRejection', (reason: unknown, p: Promise<unknown>) => {
-    console.error('Unhandled Rejection at Promise', p, 'reason:', reason);
-    // don't exit in dev
-  });
-}
-
-main().catch(err => {
-  console.error('Fatal error starting WebSocket server', err);
-  process.exit(1);
 });
